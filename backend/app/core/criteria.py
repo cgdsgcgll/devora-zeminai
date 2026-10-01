@@ -4,7 +4,7 @@ from typing import Literal
 from app.core.skills import normalize_skill
 
 CriterionKind = Literal['technical_skill', 'project_experience', 'education', 'certification', 'hackathon', 'community', 'event']
-TECHNICAL_KEYS = frozenset('python fastapi postgresql react nextjs docker docker-compose javascript typescript java kotlin swift go rust cpp csharp sql mysql sqlite redis mongodb aws azure kubernetes git linux django flask spring nodejs express tensorflow pytorch torch transformers openai'.split())
+TECHNICAL_KEYS = frozenset('python fastapi postgresql react nextjs docker docker-compose javascript typescript java kotlin swift go rust cpp csharp sql mysql sqlite redis mongodb aws azure kubernetes git linux django flask spring nodejs express tensorflow pytorch torch transformers openai ospf packet-tracer'.split())
 
 # Canonical key -> family, display label, explicit request expression.
 CATALOG = {
