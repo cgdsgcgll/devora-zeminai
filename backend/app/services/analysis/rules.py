@@ -105,7 +105,7 @@ class RuleNeedAnalyzer:
     def analyze_need(self, data: NeedAnalysisInput) -> NeedAnalysisResult:
         criteria: dict[str, CriterionInput] = {}
         text = '\n'.join(filter(None, [data.description, data.target_role, data.expected_output]))
-        for clause in re.split(r'[;\n!?]|(?<!\w)\.(?!\w)', text):
+        for clause in re.split(r'[;,\n!?]|(?<!\w)\.(?!\w)', text):
             if re.search(r'gerekmiyor|gerekmez|istemiyoruz|not required|do not need', clause, re.I):
                 continue
             preferred = bool(re.search(r'tercih|opsiyonel|preferred|optional|nice.to.have', clause, re.I))

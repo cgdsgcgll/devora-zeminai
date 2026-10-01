@@ -1,6 +1,7 @@
 """Bounded nontechnical criteria. Unsupported requests stay uncertain, never become bonuses."""
 import re
 from typing import Literal
+from app.core.skills import normalize_skill
 
 CriterionKind = Literal['technical_skill', 'project_experience', 'education', 'certification', 'hackathon', 'community', 'event']
 TECHNICAL_KEYS = frozenset('python fastapi postgresql react nextjs docker docker-compose javascript typescript java kotlin swift go rust cpp csharp sql mysql sqlite redis mongodb aws azure kubernetes git linux django flask spring nodejs express tensorflow pytorch torch transformers openai'.split())
@@ -16,6 +17,7 @@ CATALOG = {
     'hackathon_finalist': ('hackathon', 'Hackathon finalistliği', r'hackathon.{0,25}finalist'),
     'hackathon_winner': ('hackathon', 'Hackathon birinciliği', r'hackathon.{0,25}(?:kazanan|birinci|winner)'),
     'community_experience': ('community', 'Topluluk deneyimi', r'topluluk(?:larında|ta|larda|ta)? (?:aktif|deneyimi|katkı)|community experience'),
+    'technology_community_experience': ('community', 'Teknoloji topluluğu deneyimi', r'teknoloji topluluk(?:larında|ları|ta|larda)?|technology communit'),
     'community_organizer': ('community', 'Topluluk organizatörlüğü', r'topluluk.{0,20}organizatör|community organizer'),
     'event_experience': ('event', 'Etkinlik katılımı', r'etkinlik (?:deneyimi|katılımı)|event participation'),
     'event_speaker': ('event', 'Etkinlik konuşmacılığı', r'etkinlik.{0,20}konuşmacı|event speaker'),
@@ -26,6 +28,14 @@ def requested(key: str, text: str) -> bool:
     return key in CATALOG and bool(re.search(CATALOG[key][2], text, re.I))
 
 
+def normalize_criterion_key(value: str) -> str:
+    if isinstance(value, str):
+        candidate = re.sub(r'[\s-]+', '_', value.strip().lower())
+        if candidate in CATALOG:
+            return candidate
+    return normalize_skill(value)
+
+
 def explicit_profile_criteria(text: str):
     result = {}
     for clause in re.split(r'[;\n!?]|,(?!\d)', text):
@@ -33,7 +43,7 @@ def explicit_profile_criteria(text: str):
             continue
         keys = [key for key in CATALOG if requested(key, clause)]
         for broad, specific in [('hackathon_experience', ['hackathon_finalist', 'hackathon_winner']),
-                                ('community_experience', ['community_organizer']),
+                                ('community_experience', ['community_organizer', 'technology_community_experience']),
                                 ('event_experience', ['event_speaker']),
                                 ('education_student', ['education_year_3_4'])]:
             if broad in keys and any(key in keys for key in specific):

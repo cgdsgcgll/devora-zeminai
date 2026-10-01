@@ -66,6 +66,26 @@ def test_explicit_education_eligibility():
         assert calculate_match([need], [], 'test', profile_evidence=[item]).score == expected
 
 
+def test_technology_community_does_not_match_unrelated_community():
+    need = experience('technology_community_experience', 'community')
+    assert calculate_match([need], [], 'test', profile_evidence=[profile('community')]).score == 0
+    assert calculate_match([need], [], 'test', profile_evidence=[profile('community', metadata_json={'focus':'technology'})]).score == 100
+
+
+def test_family_key_normalization_and_event_community_separation():
+    need = experience('Community Experience', 'community')
+    assert need.skill_key == 'community_experience'
+    assert calculate_match([need], [], 'test', profile_evidence=[profile('event', metadata_json={'participation_type':'organizer'})]).score == 0
+    speaker = experience('event-speaker', 'event')
+    assert calculate_match([speaker], [], 'test', profile_evidence=[profile('event', metadata_json={'participation_type':'speaker','responsibility':'Presented a talk'})]).score == 100
+    assert calculate_match([speaker], [], 'test', profile_evidence=[profile('event', metadata_json={'participation_type':'participant'})]).score == 0
+
+
+def test_priority_does_not_leak_between_comma_separated_families():
+    result = RuleNeedAnalyzer().analyze_need(NeedAnalysisInput(need_id=uuid4(), description='Python gerekli, hackathon deneyimi tercih edilir'))
+    assert {c.skill_key:c.priority for c in result.criteria} == {'python':'required','hackathon_experience':'preferred'}
+
+
 def test_project_experience_requires_source_code_not_profile_or_readme():
     criteria = [experience('ai_project_experience', 'project_experience')]
     item = evidence('python')

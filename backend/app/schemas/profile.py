@@ -45,6 +45,7 @@ class ProfileMetadata(ProfileContract):
     project_name: str | None = Field(default=None, max_length=200)
     result: Literal['participant', 'finalist', 'winner'] | None = None
     participation_type: Participation | None = None
+    focus: Literal['technology', 'other'] | None = None
     responsibility: str | None = Field(default=None, max_length=1000)
 
     @model_validator(mode='after')
@@ -59,7 +60,7 @@ METADATA_FIELDS = {
     'certification': {'credential_id', 'issued_at', 'expires_at'},
     'hackathon': {'project_name', 'result'},
     'event': {'participation_type', 'responsibility'},
-    'community': {'participation_type', 'responsibility'},
+    'community': {'participation_type', 'responsibility', 'focus'},
 }
 
 

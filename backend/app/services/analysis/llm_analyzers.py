@@ -1,6 +1,6 @@
 from app.core.errors import AppError
 from app.core.skills import normalize_skill, supported_skill
-from app.core.criteria import CATALOG, TECHNICAL_KEYS, explicit_profile_criteria
+from app.core.criteria import CATALOG, TECHNICAL_KEYS, explicit_profile_criteria, normalize_criterion_key
 from app.schemas.domain import (CriterionInput, EvidenceInput, NeedAnalysisInput, NeedAnalysisResult,
                                 ProjectAnalysisInput, ProjectAnalysisResult)
 from app.services.analysis.context import encode_context, project_context
@@ -134,7 +134,7 @@ class LLMNeedAnalyzer:
         criteria = []
         try:
             for item in draft.criteria:
-                key = item.skill_key if item.kind != 'technical_skill' else normalize_skill(item.skill_key)
+                key = normalize_criterion_key(item.skill_key) if item.kind != 'technical_skill' else normalize_skill(item.skill_key)
                 if item.kind == 'technical_skill' and normalize_skill(item.skill_label) != key:
                     raise invalid()
                 quote = item.source_excerpt

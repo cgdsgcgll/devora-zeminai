@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from app.core.skills import normalize_skill
-from app.core.criteria import CATALOG, CriterionKind
+from app.core.criteria import CATALOG, CriterionKind, normalize_criterion_key
 from app.schemas.profile import ProfileEvidenceItem
 
 
@@ -130,7 +130,7 @@ class CriterionInput(Contract):
     priority: Priority
     reason: str | None = None
 
-    _normalize = field_validator('skill_key', mode='before')(lambda value: value if isinstance(value, str) and value in CATALOG else normalize_skill(value))
+    _normalize = field_validator('skill_key', mode='before')(normalize_criterion_key)
 
     @model_validator(mode='after')
     def supported_family(self):

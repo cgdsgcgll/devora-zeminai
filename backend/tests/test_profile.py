@@ -60,3 +60,15 @@ def test_unknown_candidate_and_cors(client):
         response = client.options('/profile-evidence/' + str(uuid4()), headers={
             'Origin': 'http://localhost:3000', 'Access-Control-Request-Method': method})
         assert response.status_code == 200
+
+
+def test_sql_and_html_are_data_and_cannot_change_other_candidates(client):
+    first, second = candidate(client), candidate(client)
+    payload = {'category':'event','title':"'; DROP TABLE candidates; --", 'description':'<script>alert(1)</script>',
+        'metadata_json':{'participation_type':'volunteer','responsibility':'Registration desk'}}
+    response = client.post(f'/candidates/{first}/profile-evidence', json=payload)
+    assert response.status_code == 201
+    assert response.json()['title'] == payload['title']
+    assert response.json()['metadata_json']['responsibility'] == 'Registration desk'
+    assert client.get(f'/candidates/{second}').status_code == 200
+    assert client.get(f'/candidates/{second}/profile-evidence').json() == []

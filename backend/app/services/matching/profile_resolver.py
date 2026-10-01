@@ -18,6 +18,8 @@ def profile_matches(criterion: NeedCriterion, item: ProfileEvidenceItem) -> bool
         return meta.result == 'finalist'
     if key == 'community_organizer':
         return meta.participation_type == 'organizer'
+    if key == 'technology_community_experience':
+        return meta.focus == 'technology'
     if key == 'event_speaker':
         return meta.participation_type == 'speaker'
     return key in {'certification_experience', 'hackathon_experience', 'community_experience', 'event_experience'}
