@@ -33,7 +33,7 @@ class Candidate(Identity, Updated, Base):
 class ProfileEvidenceItem(Identity, Updated, Base):
     __tablename__ = 'profile_evidence_items'
     __table_args__ = (
-        CheckConstraint("category IN ('education', 'certification', 'hackathon', 'event', 'community')"),
+        CheckConstraint("category IN ('education', 'certification', 'hackathon', 'event', 'community', 'portfolio')", name='ck_profile_category'),
         CheckConstraint("verification_status IN ('declared_only', 'linked', 'verified')"),
     )
     candidate_id: Mapped[UUID] = mapped_column(ForeignKey('candidates.id'), index=True)

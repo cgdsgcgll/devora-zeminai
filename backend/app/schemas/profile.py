@@ -6,7 +6,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-Category = Literal['education', 'certification', 'hackathon', 'event', 'community']
+Category = Literal['education', 'certification', 'hackathon', 'event', 'community', 'portfolio']
 Participation = Literal['participant', 'organizer', 'speaker', 'mentor', 'volunteer', 'member', 'leader']
 
 
@@ -35,6 +35,7 @@ class ProfileContract(BaseModel):
 
 
 class ProfileMetadata(ProfileContract):
+    output_type: Literal['web_app', 'demo', 'package', 'article', 'service'] | None = None
     program: str | None = Field(default=None, max_length=200)
     education_type: Literal['degree', 'course', 'bootcamp', 'other'] | None = None
     status: Literal['ongoing', 'completed', 'left'] | None = None
@@ -56,6 +57,7 @@ class ProfileMetadata(ProfileContract):
 
 
 METADATA_FIELDS = {
+    'portfolio': {'output_type'},
     'education': {'program', 'education_type', 'status', 'student_year'},
     'certification': {'credential_id', 'issued_at', 'expires_at'},
     'hackathon': {'project_name', 'result'},

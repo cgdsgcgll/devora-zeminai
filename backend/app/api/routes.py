@@ -1,6 +1,7 @@
+from datetime import date
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -15,10 +16,32 @@ from app.services.analysis.interfaces import NeedAnalyzer, SkillAnalyzer
 from app.services.analysis.factory import need_analyzer, skill_analyzer
 from app.services.github.provider import GitHubProvider
 from app.schemas.profile import ProfileEvidenceCreate, ProfileEvidencePatch, ProfileEvidenceItem
-from app.services import profile
+from app.services import profile, living
+from app.schemas import living as living_schema
 from fastapi import Response
 
 router = APIRouter(responses={status: {'model': s.ErrorResponse} for status in [400, 404, 409, 422, 500, 502, 503, 504]})
+
+
+@router.get('/candidates/{candidate_id}/living-profile', response_model=living_schema.LivingProfile)
+def living_profile(candidate_id: UUID, since: date | None = None, db: Session = Depends(get_db)):
+    return living.profile(db, candidate_id, since)
+
+
+@router.get('/needs/{need_id}/discovery', response_model=living_schema.Discovery)
+def discover(need_id: UUID, anonymous: bool = True, offset: int = Query(0, ge=0, le=100000),
+             limit: int = Query(20, ge=1, le=50), db: Session = Depends(get_db)):
+    return living.discovery(db, need_id, anonymous, offset, limit)
+
+
+@router.post('/needs/{need_id}/team-coverage', response_model=living_schema.TeamCoverage)
+def team_coverage(need_id: UUID, data: living_schema.TeamCreate, db: Session = Depends(get_db)):
+    return living.team(db, need_id, data)
+
+
+@router.get('/matches/{match_id}/gaps', response_model=living_schema.GapSummary)
+def match_gaps(match_id: UUID, db: Session = Depends(get_db)):
+    return living.gaps(db, match_id)
 
 
 def get_github() -> GitHubProvider:
