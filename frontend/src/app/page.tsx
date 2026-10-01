@@ -16,14 +16,15 @@ export default function Home() {
             Akıllı Eşleşme Platformu
           </p>
           <p className="lead">
-            Projelerdeki teknik kanıtları görünür kılın. Kurum ihtiyacıyla
-            uyumu, kaynağına kadar izlenebilen bir sonuçla değerlendirin.
+            Ne ürettiğinizi, ne öğrendiğinizi ve nerelerde katkı verdiğinizi
+            görünür kılın. Kurum ihtiyaçlarıyla uyumu, her kriterin dayanağını
+            görerek değerlendirin.
           </p>
           <Link className="button" href="/aday">
             Demoyu başlat <span aria-hidden="true">↗</span>
           </Link>
           <p className="small">
-            Herkese açık GitHub projeleriyle gerçek analiz akışı.
+            GitHub teknik kanıtları · Eğitim · Sertifika · Hackathon · Topluluk
           </p>
         </div>
         <div
@@ -38,7 +39,7 @@ export default function Home() {
             <span className="diagram-number">01</span>
             <div>
               <strong>Kaynak</strong>
-              <p>Depo · dosya · alıntı</p>
+              <p>Proje · öğrenme · deneyim · katkı</p>
             </div>
           </div>
           <div className="diagram-row">
@@ -64,7 +65,7 @@ export default function Home() {
         <div className="section-heading">
           <p className="eyebrow">ÜÇ ADIMDA</p>
           <h2>
-            Projenin anlattığını
+            Profilinizin anlattığını
             <br />
             ihtiyaçla buluşturun.
           </h2>
@@ -73,8 +74,8 @@ export default function Home() {
           {[
             [
               "01",
-              "Projeyi analiz et",
-              "Herkese açık GitHub deposundaki beceri kanıtlarını inceleyin.",
+              "Profilini görünür kıl",
+              "GitHub projelerinizi analiz edin; eğitim, sertifika, hackathon ve topluluk kayıtlarınızı ekleyin.",
             ],
             [
               "02",
@@ -98,8 +99,9 @@ export default function Home() {
       <aside className="home-note">
         <strong>Skor bir işe alınma olasılığı değildir.</strong>
         <p>
-          Eşleşme, yalnız mevcut ihtiyaç ile erişilebilen proje kanıtlarının
-          uyumunu gösterir. Kararınızın yerini almaz; dayanağını görünür kılar.
+          Eşleşme, açık ihtiyaç kriterleri ile ilgili kaynakların uyumunu
+          gösterir. Profil bağlantıları bağımsız doğrulama değildir. Okul
+          prestiji veya kayıt sayısı bonus getirmez.
         </p>
       </aside>
     </>

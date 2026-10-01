@@ -108,12 +108,12 @@ export default function NeedPage() {
           <p>
             <strong>Gerekli</strong>
             <br />
-            İhtiyacın temel teknik beklentileri.
+            İhtiyacın zorunlu beceri veya deneyim kriterleri.
           </p>
           <p>
             <strong>Tercih edilen</strong>
             <br />
-            Olması avantaj sağlayan beceriler.
+            Tercih edilen beceri veya deneyim kriterleri.
           </p>
           <div className="divider" />
           <p>
@@ -142,8 +142,8 @@ export default function NeedPage() {
                 <section key={priority}>
                   <h3>
                     {priority === "required"
-                      ? "Gerekli beceriler"
-                      : "Tercih edilen beceriler"}
+                      ? "Gerekli kriterler"
+                      : "Tercih edilen kriterler"}
                   </h3>
                   {s.data
                     .need!.criteria.filter((c) => c.priority === priority)

@@ -1,18 +1,19 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession } from "./session";
 
 const links = [
   ["/", "Ana sayfa"],
-  ["/aday", "Aday & Proje"],
+  ["/aday", "Aday & Profil"],
   ["/ihtiyac", "Kurum İhtiyacı"],
   ["/eslesme", "Eşleşme"],
 ];
 export function AppHeader() {
   const path = usePathname();
   const { busy, ready, reset } = useSession();
+  const [confirmReset, setConfirmReset] = useState(false);
   return (
     <header className="app-header">
       <div className="header-inner">
@@ -36,18 +37,41 @@ export function AppHeader() {
         <button
           className="text-button reset"
           disabled={!!busy || !ready}
-          onClick={() => {
-            if (
-              window.confirm(
-                "Bu tarayıcıdaki demo seçimi temizlensin mi? Backend kayıtları silinmez.",
-              )
-            )
-              reset();
-          }}
+          onClick={() => setConfirmReset(true)}
         >
           Demoyu sıfırla
         </button>
       </div>
+      {confirmReset && (
+        <div
+          className="reset-confirm callout"
+          role="region"
+          aria-label="Demo sıfırlama onayı"
+        >
+          <p>
+            Bu tarayıcıdaki demo seçimi temizlensin mi? Backend kayıtları
+            silinmez.
+          </p>
+          <div className="profile-actions">
+            <button
+              className="button"
+              disabled={!!busy || !ready}
+              onClick={() => {
+                reset();
+                setConfirmReset(false);
+              }}
+            >
+              Sıfırlamayı Onayla
+            </button>
+            <button
+              className="button secondary"
+              onClick={() => setConfirmReset(false)}
+            >
+              Vazgeç
+            </button>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

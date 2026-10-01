@@ -55,6 +55,43 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/candidates/{candidate_id}/profile-evidence": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Profile */
+    get: operations["list_profile_candidates__candidate_id__profile_evidence_get"];
+    put?: never;
+    /** Create Profile */
+    post: operations["create_profile_candidates__candidate_id__profile_evidence_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/profile-evidence/{evidence_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get Profile */
+    get: operations["get_profile_profile_evidence__evidence_id__get"];
+    put?: never;
+    post?: never;
+    /** Delete Profile */
+    delete: operations["delete_profile_profile_evidence__evidence_id__delete"];
+    options?: never;
+    head?: never;
+    /** Update Profile */
+    patch: operations["update_profile_profile_evidence__evidence_id__patch"];
+    trace?: never;
+  };
   "/candidates/{candidate_id}/projects": {
     parameters: {
       query?: never;
@@ -309,6 +346,19 @@ export interface components {
     };
     /** CriterionInput */
     CriterionInput: {
+      /**
+       * Kind
+       * @default technical_skill
+       * @enum {string}
+       */
+      kind:
+        | "technical_skill"
+        | "project_experience"
+        | "education"
+        | "certification"
+        | "hackathon"
+        | "community"
+        | "event";
       /** Skill Key */
       skill_key: string;
       /** Skill Label */
@@ -319,6 +369,21 @@ export interface components {
     };
     /** CriterionMatch */
     CriterionMatch: {
+      /**
+       * Kind
+       * @default technical_skill
+       * @enum {string}
+       */
+      kind:
+        | "technical_skill"
+        | "project_experience"
+        | "education"
+        | "certification"
+        | "hackathon"
+        | "community"
+        | "event";
+      /** Profile Evidence */
+      profile_evidence?: components["schemas"]["ProfileEvidenceItem"][];
       /**
        * Criterion Id
        * Format: uuid
@@ -455,7 +520,10 @@ export interface components {
        * @default evidence-coverage-v0.2
        * @enum {string}
        */
-      scoring_version: "evidence-coverage-v0.1" | "evidence-coverage-v0.2";
+      scoring_version:
+        | "evidence-coverage-v0.1"
+        | "evidence-coverage-v0.2"
+        | "evidence-coverage-v0.3";
       /** Matched Criteria */
       matched_criteria: components["schemas"]["CriterionMatch"][];
       /** Unmatched Criteria */
@@ -494,6 +562,19 @@ export interface components {
     };
     /** NeedCriterion */
     NeedCriterion: {
+      /**
+       * Kind
+       * @default technical_skill
+       * @enum {string}
+       */
+      kind:
+        | "technical_skill"
+        | "project_experience"
+        | "education"
+        | "certification"
+        | "hackathon"
+        | "community"
+        | "event";
       /** Skill Key */
       skill_key: string;
       /** Skill Label */
@@ -552,6 +633,164 @@ export interface components {
      * @enum {string}
      */
     Priority: "required" | "preferred";
+    /** ProfileEvidenceCreate */
+    ProfileEvidenceCreate: {
+      /**
+       * Category
+       * @enum {string}
+       */
+      category:
+        "education" | "certification" | "hackathon" | "event" | "community";
+      /** Title */
+      title: string;
+      /**
+       * Organization
+       * @default
+       */
+      organization: string;
+      /**
+       * Role
+       * @default
+       */
+      role: string;
+      /**
+       * Description
+       * @default
+       */
+      description: string;
+      /** Started At */
+      started_at?: string | null;
+      /** Ended At */
+      ended_at?: string | null;
+      /** Source Url */
+      source_url?: string | null;
+      /**
+       * Source Label
+       * @default
+       */
+      source_label: string;
+      metadata_json?: components["schemas"]["ProfileMetadata"];
+    };
+    /** ProfileEvidenceItem */
+    ProfileEvidenceItem: {
+      /**
+       * Category
+       * @enum {string}
+       */
+      category:
+        "education" | "certification" | "hackathon" | "event" | "community";
+      /** Title */
+      title: string;
+      /**
+       * Organization
+       * @default
+       */
+      organization: string;
+      /**
+       * Role
+       * @default
+       */
+      role: string;
+      /**
+       * Description
+       * @default
+       */
+      description: string;
+      /** Started At */
+      started_at?: string | null;
+      /** Ended At */
+      ended_at?: string | null;
+      /** Source Url */
+      source_url?: string | null;
+      /**
+       * Source Label
+       * @default
+       */
+      source_label: string;
+      metadata_json?: components["schemas"]["ProfileMetadata"];
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /**
+       * Candidate Id
+       * Format: uuid
+       */
+      candidate_id: string;
+      /**
+       * Verification Status
+       * @enum {string}
+       */
+      verification_status: "declared_only" | "linked" | "verified";
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string;
+    };
+    /** ProfileEvidencePatch */
+    ProfileEvidencePatch: {
+      /** Title */
+      title?: string | null;
+      /** Organization */
+      organization?: string | null;
+      /** Role */
+      role?: string | null;
+      /** Description */
+      description?: string | null;
+      /** Started At */
+      started_at?: string | null;
+      /** Ended At */
+      ended_at?: string | null;
+      /** Source Url */
+      source_url?: string | null;
+      /** Source Label */
+      source_label?: string | null;
+      metadata_json?: components["schemas"]["ProfileMetadata"] | null;
+    };
+    /** ProfileMetadata */
+    ProfileMetadata: {
+      /** Program */
+      program?: string | null;
+      /** Education Type */
+      education_type?: ("degree" | "course" | "bootcamp" | "other") | null;
+      /** Status */
+      status?: ("ongoing" | "completed" | "left") | null;
+      /** Student Year */
+      student_year?: number | null;
+      /** Credential Id */
+      credential_id?: string | null;
+      /** Issued At */
+      issued_at?: string | null;
+      /** Expires At */
+      expires_at?: string | null;
+      /** Project Name */
+      project_name?: string | null;
+      /** Result */
+      result?: ("participant" | "finalist" | "winner") | null;
+      /** Participation Type */
+      participation_type?:
+        | (
+            | "participant"
+            | "organizer"
+            | "speaker"
+            | "mentor"
+            | "volunteer"
+            | "member"
+            | "leader"
+          )
+        | null;
+      /** Focus */
+      focus?: ("technology" | "other") | null;
+      /** Responsibility */
+      responsibility?: string | null;
+    };
     /** Project */
     Project: {
       /** Name */
@@ -939,6 +1178,482 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["Candidate"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Unprocessable Entity */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Bad Gateway */
+      502: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Service Unavailable */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Gateway Timeout */
+      504: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+  };
+  list_profile_candidates__candidate_id__profile_evidence_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        candidate_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ProfileEvidenceItem"][];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Unprocessable Entity */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Bad Gateway */
+      502: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Service Unavailable */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Gateway Timeout */
+      504: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+  };
+  create_profile_candidates__candidate_id__profile_evidence_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        candidate_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ProfileEvidenceCreate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ProfileEvidenceItem"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Unprocessable Entity */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Bad Gateway */
+      502: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Service Unavailable */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Gateway Timeout */
+      504: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+  };
+  get_profile_profile_evidence__evidence_id__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        evidence_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ProfileEvidenceItem"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Unprocessable Entity */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Bad Gateway */
+      502: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Service Unavailable */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Gateway Timeout */
+      504: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+  };
+  delete_profile_profile_evidence__evidence_id__delete: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        evidence_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Unprocessable Entity */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Bad Gateway */
+      502: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Service Unavailable */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Gateway Timeout */
+      504: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+  };
+  update_profile_profile_evidence__evidence_id__patch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        evidence_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ProfileEvidencePatch"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ProfileEvidenceItem"];
         };
       };
       /** @description Bad Request */
