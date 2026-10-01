@@ -1,6 +1,6 @@
 # ZeminAI MVP güvenlik değerlendirmesi
 
-Tarih: 1 Ekim 2026. Branch: `feat/frontend-mvp`. Sonuç: **SAFE_FOR_CONTROLLED_DEMO**.
+Tarih: 1 Ekim 2026. Branch: `feat/profile-evidence-sources`. Sonuç: **SAFE_FOR_CONTROLLED_DEMO**.
 Bu sonuç yalnız loopback arayüzlerine bağlı, güvenilir operatörün kullandığı, sentetik
 aday/ihtiyaç verileri içeren yerel jüri demosu içindir. İnternete açık yayın onayı,
 penetrasyon testi veya tüm açıkların bulunmuş olduğuna dair güvence değildir.
@@ -28,7 +28,7 @@ hesap yetkileri ve provider veri saklama politikaları bu incelemenin dışında
   API client ham HTML/stack cevabını göstermez; backend envelope mesajı metin olarak render edilir.
 - **XSS / navigation:** `dangerouslySetInnerHTML`, `innerHTML`, `eval`, `new Function`
   veya ham Markdown renderer kullanılmıyor. Model/repository metni JSX text
-  olarak gösteriliyor. Dış kaynak linkleri HTTPS `github.com`, credentialsız ve
+  olarak gösteriliyor. GitHub kanıt linkleri HTTPS `github.com`, credentialsız ve
   standart portla sınırlandırılmış; `noopener noreferrer` mevcut. Dahili yollar
   sabit; kanıt linkleri fragment. Kullanıcı girdisini yönlendirme hedefi yapan
   uygulama kodu bulunmadı. Framework/proxy yönlendirmeleri ayrıca deployment incelemesi ister.
@@ -55,7 +55,7 @@ hesap yetkileri ve provider veri saklama politikaları bu incelemenin dışında
   header'ı korunur. Disconnect ve tam sınır test edildi. Bu buffering sınırı
   eşzamanlı istek ve slow-client DoS koruması değildir.
 - **CORS:** varsayılan yalnız `http://localhost:3000` ve
-  `http://127.0.0.1:3000`; GET/POST ve Content-Type. Credentials açılmıyor.
+  `http://127.0.0.1:3000`; GET/POST/PATCH/DELETE ve Content-Type. Credentials açılmıyor.
   Yeni startup doğrulaması wildcard, path ve credential içeren originleri reddeder.
   Açık bir HTTPS deployment origin'i hâlâ tanımlanabilir. CORS authentication değildir;
   curl ve diğer doğrudan istemcilerin API kullanımını engellemez.
@@ -229,3 +229,23 @@ Gerçek Uvicorn HTTP smoke, yeni venv + izole DB + `rule_based` ile
 Python/FastAPI/Docker kriterleri, izinli CORS, reddedilen origin ve 1 MiB üstü
 istekte 413 standart envelope/CORS doğrulandı. Canlı Gemini çağrısı yapılmadı.
 `git diff --check` başarılı. Authentication ve rate-limit HIGH bulguları **açık**.
+
+
+## Profile evidence genişlemesi — güncel inceleme
+
+Sonuç **SAFE_FOR_CONTROLLED_DEMO**; auth/authorization/IDOR ve rate-limit **HIGH / OPEN**, production blocker olmaya devam eder. Yeni PATCH/DELETE uçları da ownership kontrolü gerektirir. UUID erişim kontrolü değildir. Önceki Starlette HIGH advisory bulgusu RESOLVED kalır; bağımlılıklar düşürülmedi.
+
+- Beş kategori CRUD: education, certification, hackathon, event, community. Mass assignment extra=forbid; kullanıcı verified, owner ID veya zaman damgası atayamaz. Category PATCH ile değişmez. Metadata alanları kategoriyle sınırlı; participation_type/result bounded enum.
+- Profil URL'leri yalnız credentialsız HTTPS ve standart port; IP/local adlar ve unsafe schemes reddedilir. Backend bu bağlantıları fetch/crawl etmez. Bu yüzden link varlığı içerik doğrulaması değildir; linked olarak gösterilir. Tarayıcıda dış link açılması kullanıcının tercihidir; noopener/noreferrer uygulanır.
+- JSX text rendering korunur. Gerçek ProfileCard bileşeni script/img-onerror metinleriyle render edilerek HTML kaçışı doğrulandı. SQL injection biçimli başlık veritabanında yalnız metin olarak saklandı; başka adayın kayıtları değişmedi. Bu test ownership güvenliği olduğu anlamına gelmez.
+- Input uzunlukları ve tarih sırası kontrol edilir; mevcut 1 MiB body sınırı profil uçlarını da kapsar. Listeleme şu an sayfalama/tenant kotası içermez; kontrollü demo kapsamındadır.
+- CORS varsayılan origin listesi aynı; CRUD için PATCH/DELETE eklendi. Browser QA'da 3001 portu ayrıca process environment üzerinden açıkça izinli hale getirildi. Wildcard ve credential izni yok.
+- Eşleşme doğru evidence ailesini kullanır; unrelated kayıtlar teknik skoru değiştirmez. Kayıt sayısı, GPA, okul prestiji veya çıkarılmış soft skill puanlanmaz. Teknoloji topluluğu kriteri için explicit focus=technology gerekir; herhangi bir topluluk kaydı yeterli değildir.
+- Profil eşleşmesi kayıtların immutable JSON kopyasını taşır. Düzenleme/silme geçmiş sonucu değiştirmez. Profil silme geçmiş kopyaları silmez: production öncesinde retention/erasure politikası gereklidir.
+- LLM need çıktısı family/key kataloğu, sınırlı teknik sözlük, schema ve exact source excerpt ile kontrol edilir. Prompt injection tamamen çözülmüş sayılmaz; insan kriter incelemesi gerekir. LLM final skor üretmez. Project provider sözleşmesi değişmedi.
+- DB preflight açık PostgreSQL config, bağlantı ve migration head doğrular. Varsayılan örnek credentials ile sessiz başarı veya SQLite fallback yok. Script hata çıktısı URL/hostname/password/trace içermez.
+- Tracked/untracked uygulama dosyalarında anahtar/private-key pattern bulgusu yok; .env ve çalışma çıktıları ignored. Frontend yalnız public API base URL kullanır.
+
+Son backend regresyonu: **204 test SQLite + 204 test temiz PostgreSQL**, compileall, pip check ve Alembic check başarılı. İzole PostgreSQL'de upgrade/check/downgrade/upgrade eski candidate/project/snapshot/skill evidence verilerini korudu. pip-audit: **32 dependency, 0 advisory**. Frontend: 11 test, lint ve production build başarılı; npm audit (tüm/dev hariç) 0 bulgu. Browser ve komut ayrıntıları [profil doğrulama kaydında](PROFILE_VALIDATION.md).
+
+İlk canlı GitHub/PostgreSQL/rule_based smoke 27 evidence ve 80 skorla geçti. Sonraki browser analizinde anonim GitHub kotası 0 olduğu için kontrollü GITHUB_FETCH_FAILED alındı; application bug veya başarılı analiz olarak raporlanmadı. Gemini: **BLOCKED_BY_MISSING_KEY**; sahte canlı sonuç yok.

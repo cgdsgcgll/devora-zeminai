@@ -22,3 +22,13 @@ Uvicorn `startup complete` yalnız uygulamanın açıldığını gösterir. SQLA
 `DATABASE_URL` process environment değeri `.env` değerini geçersiz kılar. Kök `.env` mutlak dosya yolu ile okunur; backend çalışma dizini değişse de başka `.env` seçilmez. CORS için frontend origin'ini backend `CORS_ORIGINS` listesine açıkça ekleyin.
 
 Auth/authorization ve rate limiting bulunmadığından demo yalnız kontrollü, yerel ortam içindir.
+
+## Profil ve eşleşme demosu
+
+Aday oluşturun; isteğe bağlı GitHub projesi ekleyip analiz edin. Gelişim ve Deneyim bölümünden eğitim, sertifika, hackathon, etkinlik veya topluluk kaydı oluşturun. Link olmadan “Beyan”, HTTPS linkiyle “Kaynak bağlantısı mevcut” görünür; bu provider doğrulaması değildir.
+
+Örnek ihtiyaç: `Python gerekli; hackathon deneyimi tercih edilir; topluluk deneyimi tercih edilir`. Teknik kriter yalnız observed proje kanıtıyla karşılanır. Teknik kanıt yoksa profil kayıtları Python puanını yükseltmez. Profil değişikliğinden sonra “Eşleşmeyi Yenile” kullanın; eski sonuç kayıt kopyasını korur. “Demoyu sıfırla” yalnız tarayıcının seçimini temizler, backend verilerini silmez.
+
+Anonim GitHub kotası dolarsa gerçek analiz kontrollü hata verir. Tekrar tekrar denemeyin; kota yenilenmesini bekleyin veya yetkili operatör kendi yerel `GITHUB_TOKEN` ayarını kullanabilir. Token'ı arayüze, loga veya commit'e yazmayın. Gemini anahtarı yoksa canlı test `BLOCKED_BY_MISSING_KEY`; rule_based modu anahtarsız çalışır.
+
+3000 meşgulse production frontend `npm.cmd start -- --hostname 127.0.0.1 --port 3001` ile açılabilir. Backend'i başlatan terminalde `CORS_ORIGINS` içine yalnız gerekli local origin'i açıkça koyun; örnek PowerShell: `$env:CORS_ORIGINS='["http://127.0.0.1:3001"]'`. CORS değişikliği backend restart gerektirir. Eski sürecin yeni kodu çalıştırdığını varsaymayın.

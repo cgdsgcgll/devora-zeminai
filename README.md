@@ -2,7 +2,9 @@
 
 **Doğrulanabilir Yetenek ve Akıllı Eşleşme Platformu**
 
-ZeminAI, adayların public GitHub projelerinden gözlemlenebilir teknik kanıtlar çıkarır ve kurum ihtiyaçlarını yapılandırılmış kriterlere dönüştürür. CV ve öz-beyanın yanında incelenebilir kaynaklar sunar; eşleşme sonucunu hangi kriterin hangi proje kanıtıyla karşılandığını göstererek açıklar. Çalışan MVP, Next.js arayüzü ve FastAPI backend’i üzerinden aday → proje analizi → kurum ihtiyacı → eşleşme akışını sunar.
+ZeminAI, gençleri yalnızca okul, diploma veya CV anahtar kelimeleriyle değil; ürettikleri projeler, geliştirdikleri beceriler, aldıkları eğitimler, sertifikalar, hackathonlar ve topluluk katkıları üzerinden görünür kılan; kurum ihtiyaçlarıyla kanıta dayalı ve açıklanabilir şekilde eşleştiren bir yetenek platformudur.
+
+Çalışan MVP, GitHub teknik analizini isteğe bağlı eğitim, sertifika, hackathon, etkinlik ve topluluk kayıtlarıyla birleştirir. Kullanıcı bağlantıları bağımsız doğrulama değildir. Sürekli profil senkronizasyonu ve dış provider doğrulaması henüz yoktur. [Windows demo kurulumu](docs/LOCAL_DEMO.md) · [Profil kanıtları sözleşmesi](docs/PROFILE_EVIDENCE.md).
 
 ## Problem
 
@@ -17,6 +19,8 @@ flowchart LR
     S --> E[Beceri ve kanıt analizi]
     N[Kurum ihtiyacı] --> C[Required / preferred kriterler]
     E --> M[Deterministik matching]
+    A --> P[Eğitim / sertifika / deneyim kayıtları]
+    P --> M
     C --> M
     M --> R[Skor, karşılanan kriterler ve kaynak kanıtları]
 ```
@@ -25,7 +29,7 @@ Snapshot, incelenen dosyaları ve commit referansını saklar. Eşleşme sonucu 
 
 ## Neden Farklı?
 
-- Beyan (`declared_only`) ile gözlemlenen kanıt (`observed`) ayrılır; yalnız observed kanıt skora girer.
+- Teknik kriterleri yalnız `observed` proje kanıtı karşılar. Profil kriterlerini ilgili ailedeki kayıt karşılar; `declared_only` / `linked` durumu açıkça gösterilir ve teknik beceriye çevrilmez.
 - Kanıt gücü, kişinin beceri seviyesi değildir. Kanıt bulunamaması da becerinin olmadığı anlamına gelmez.
 - LLM final skoru üretmez; matching aynı girdilerle aynı sonucu veren bir fonksiyondur.
 - LLM çıktısı ortak JSON Schema, strict Pydantic ve kaynak/alıntı kontrollerinden geçer.
@@ -41,7 +45,7 @@ Snapshot, incelenen dosyaları ve commit referansını saklar. Eşleşme sonucu 
 6. Aday ve ihtiyaç için match oluşturun.
 7. Skor, required/preferred kapsamı, matched/unmatched kriterler ve ilişkili kanıtları okuyun.
 
-En az bir başarılı proje analizi olmadan match oluşturulamaz. Kanıt üretilmemesi geçerli bir analiz sonucu olabilir.
+İsteğe bağlı Gelişim ve Deneyim bölümünden profil kayıtlarını ekleyin. Match için en az bir başarılı proje analizi veya profil kaydı gerekir. Yalnız profil kaydı teknik kriterleri karşılamaz. GitHub-only akışı korunur; kanıt üretilmemesi geçerli bir analiz sonucudur.
 
 ## Mimari
 
@@ -85,7 +89,7 @@ LLM analizinde README/açıklama/beyan kanıtı `declared_only / weak` olarak s�
 
 ## Eşleşme / Scoring
 
-[Scorer](backend/app/services/matching/scorer.py), normalize edilmiş `skill_key` eşleşmesini ve yalnız `observed` kanıtları kullanır. Bir kriterin birden fazla kanıtı olması kapsamı artırmaz; evidence strength bir puan çarpanı değildir.
+[Scorer](backend/app/services/matching/scorer.py), teknik kriterlerde normalize `skill_key` ve `observed` kanıtları, diğer kriterlerde ilgili proje/profil ailesini kullanır. Okul prestiji, GPA veya kayıt sayısı bonus getirmez. Bir kriterin birden fazla kanıtı olması kapsamı artırmaz; evidence strength bir puan çarpanı değildir.
 
 `requiredCoverage` ve `preferredCoverage`, ilgili grupta kanıtla karşılanan kriter sayısının toplam kriter sayısına oranıdır.
 
@@ -254,7 +258,7 @@ Gemini anahtarı [Google AI Studio](https://aistudio.google.com/apikey) üzerind
 
 ## Testler ve Doğrulama
 
-**163 backend testi geçti** (CORS ve güvenlik regresyonları dahil). Frontend lint, TypeScript production build ve 7 mantık testiyle kontrol edilir. CORS eklenmeden önceki 131 test PostgreSQL 18.6 üzerinde de doğrulanmıştır.
+**204 backend testi SQLite ve temiz PostgreSQL üzerinde geçti.** Frontend lint, TypeScript production build ve 11 test başarılı. Gerçek kart bileşeninde HTML/script kaçışı, HTTPS URL kontrolü ve PATCH/DELETE sözleşmesi test edildi. PostgreSQL upgrade/check/downgrade/upgrade döngüsünde eski aday/proje/snapshot ve 27 teknik kanıt korundu.
 
 Kapsam: matching sınır durumları, API oluşturma/okuma akışları, GitHub HTTP mock’ları, evidence semantiği, provider timeout/429/5xx hataları, Gemini istek sözleşmesi, structured output doğrulaması, metadata ve migration upgrade/downgrade ile eski kayıtların korunması. Testler gerçek API anahtarı veya internet gerektirmez. Starlette TestClient’ın httpx kullanımına ilişkin deprecation uyarısı testleri başarısız kılmaz.
 
@@ -297,6 +301,8 @@ sınırlar [güvenlik değerlendirmesinde](docs/SECURITY_REVIEW.md) açıklanır
 - Aday, proje, ihtiyaç ve eşleşme oluşturma/okuma; Swagger sözleşmesi.
 - Public GitHub snapshot, kaynaklı evidence, üç analiz modu ve kalıcı analiz kayıtları.
 - Deterministik scoring, kriter/kanıt ilişkileri, PostgreSQL modeli ve Alembic migration’ları.
+
+- Profil evidence CRUD, beyan/bağlantı ayrımı, deneyim kriterleri ve geçmiş sonuçlarda dondurulmuş kaynaklar.
 
 ### Sonraki Adımlar
 
