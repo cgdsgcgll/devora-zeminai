@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parseApiError } from "../src/lib/api/client.ts";
+import { parseApiError, userError } from "../src/lib/api/client.ts";
 import {
   safeSource,
   statusLabels,
@@ -11,6 +11,10 @@ import {
   validateName,
   validateNeed,
 } from "../src/lib/presentation.ts";
+test("database error gives safe actionable guidance", () => {
+  assert.equal(userError(parseApiError({ error: { code: "DATABASE_ERROR", message: "internal" } }, 503)),
+    "Veritabanı bağlantısı hazır değil. Yerel demo servislerini kontrol edin.");
+});
 test("backend envelope preserves safe message and retryability", () => {
   const e = parseApiError(
     {
