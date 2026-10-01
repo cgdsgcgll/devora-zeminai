@@ -72,11 +72,11 @@ Docker komutunu atlayın. Uygulama başlangıcı tablo oluşturmaz; migration ko
 | DATABASE_URL | `postgresql+psycopg://postgres:postgres@localhost:5432/zeminai` yerel Compose örneği |
 | GITHUB_TOKEN | İsteğe bağlı GitHub token; token ile erişilse bile private repo reddedilir |
 | LLM_API_KEY | OpenAI modunda gerekli; rule_based modunda kullanılmaz |
-| LLM_PROVIDER | `rule_based` (varsayılan), `openai` veya `gemini`; bilinmeyen değer analizde kontrollü hata verir |
+| LLM_PROVIDER | `rule_based` (kod varsayılanı), `openai` veya `gemini` (`.env.example` demo seçimi); bilinmeyen değer analizde kontrollü hata verir |
 | LLM_MODEL | OpenAI modunda gerekli; model kodda sabitlenmez |
 | GEMINI_API_KEY | Gemini modunda gerekli; yalnızca sunucuda tutulur |
 | GEMINI_MODEL | Gemini modunda gerekli; model kodda sabitlenmez |
-| LLM_TIMEOUT_SECONDS | HTTP timeout: 30 saniye; her deneme için geçerli |
+| LLM_TIMEOUT_SECONDS | HTTP timeout: kod varsayılanı 30, demo örneği 120 saniye; her deneme için geçerli |
 | LLM_MAX_RETRIES | Geçici HTTP/network hatalarında ek deneme sayısı; 0–2, varsayılan 2 |
 | LLM_MAX_INPUT_BYTES | Serialize edilmiş kullanıcı bağlamı UTF-8 sınırı: 24000 bayt |
 | LLM_MAX_OUTPUT_TOKENS | OpenAI/Gemini çıktı token sınırı: 4000 |
@@ -203,15 +203,15 @@ Sözleşme [resmi Structured Outputs belgesine](https://developers.openai.com/ap
 sessiz rule-based fallback **yoktur**. Açık `criteria` ile oluşturulan ihtiyaçlar LLM çağırmaz.
 Hatalı provider, key ve model ayarları analiz run kaydında failed olarak izlenebilir.
 
-### Gemini analizi
+### Gemini demo kurulumu
 
 Repo kökündeki ignore edilen `.env` dosyasında:
 
 ```env
 LLM_PROVIDER=gemini
 GEMINI_API_KEY=
-GEMINI_MODEL=
-LLM_TIMEOUT_SECONDS=30
+GEMINI_MODEL=gemini-3.1-flash-lite
+LLM_TIMEOUT_SECONDS=120
 LLM_MAX_RETRIES=2
 LLM_MAX_INPUT_BYTES=24000
 LLM_MAX_OUTPUT_TOKENS=4000
@@ -219,8 +219,21 @@ LLM_MAX_OUTPUT_TOKENS=4000
 
 [Google AI Studio](https://aistudio.google.com/apikey) üzerinden API key oluşturup
 `GEMINI_API_KEY` değerini yerel olarak doldurun ([resmi anahtar kılavuzu](https://ai.google.dev/gemini-api/docs/api-key)).
-`GEMINI_MODEL` için hesabınızda erişilebilir structured output destekli model kimliğini yazın;
-kodun varsayılan modeli yoktur. Key/model eksikse `LLM_NOT_CONFIGURED` döner; fallback yapılmaz.
+Canlı olarak doğrulanan demo modeli `gemini-3.1-flash-lite`, kullanılan HTTP timeout 120 saniyedir.
+Model `GEMINI_MODEL` environment değişkeninden okunur; kodda sabitlenmez.
+Key/model eksikse `LLM_NOT_CONFIGURED` döner; fallback yapılmaz.
+
+Kullanıcının bildirdiği gerçek API smoke testi sonucu:
+
+- Gemini live smoke test passed.
+- Project structured output validated (Pydantic).
+- Need structured output validated (Pydantic).
+- Evidence grounding validated.
+
+Python `observed / repository_language / weak`, FastAPI `observed / source_file / strong` olarak doğrulandı.
+İhtiyaç analizinde Python ve FastAPI required, Docker preferred çıktı; uydurma kriter görülmedi.
+`gemini-3.8-flash` ile 30 saniyelik istekte timeout yaşandığından demo örneği doğrulanan 3.1 Flash Lite'ı kullanır.
+Bu kayıt demo smoke doğrulamasıdır; production-ready değerlendirmesi değildir.
 
 Resmi Python SDK `google-genai` Pydantic destekler; bu projede mevcut `httpx` transport/retry yapısını
 korumak için tek bir [generateContent REST adaptörü](https://ai.google.dev/api/generate-content) kullanılır.
@@ -272,7 +285,7 @@ python scripts/smoke_llm.py
 ```
 
 Seçilen OpenAI/Gemini provider için key/model yoksa `SKIPPED` döner. Mevcutsa iki canlı çağrı yapar; ücret doğurabilir.
-Unit testler gerçek API anahtarı veya internet gerektirmez. Bu teslimde canlı LLM doğrulaması yapılmadı.
+Unit testler gerçek API anahtarı veya internet gerektirmez. Kullanıcının doğruladığı canlı Gemini sonucu yukarıdaki demo bölümündedir.
 
 ### GitHub sınırları
 
@@ -361,7 +374,7 @@ python -m pytest -q
 - PostgreSQL modeli, Alembic migration, yerel PostgreSQL Compose servisi.
 - Bounded public GitHub fetch; commit referanslı snapshot ve kanıt saklama.
 - Sınırlı kural tabanlı proje/ihtiyaç analizi; provider-independent LLM arayüzü.
-- OpenAI Responses ve Gemini generateContent adapter; ortak project/need LLM analyzer'ları; mock HTTP ile doğrulandı, canlı API henüz doğrulanmadı.
+- OpenAI Responses ve Gemini generateContent adapter; ortak project/need LLM analyzer'ları; mock HTTP testleri ve kullanıcı tarafından doğrulanan canlı Gemini demo smoke testi.
 - Pydantic strict çıktı ve kaynak/alıntı doğrulaması; normalizasyon, timeout/retry ve kontrollü hatalar.
 - Deterministik, açıklanabilir ve kalıcı matching; criterion/evidence ilişkileri.
 - Standart hatalar, analysis run kayıtları ve DB health check.
