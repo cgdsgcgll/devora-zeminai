@@ -31,7 +31,11 @@ Pasaport gerçek kaynak ailesi + provenance sayılarını gösterir:
 
 Persisted match, discovery ve team aynı `load_material` + `calculate_for_need` yolunu kullanır. Mevcut formül değişmez: iki grup varsa `100 × (0.8 × required_coverage + 0.2 × preferred_coverage)`; tek grup varsa onun kapsamı %100 ağırlıktadır. Kanıt sayısı, okul, GPA, organizatör/konuşmacı rolünden çıkarılan soft skill bonus değildir. Portföy bağlantıları teknik kriterleri karşılamaz; yeni portfolio criterion eklenmedi, NeedAnalyzer sözleşmesi korundu.
 
-Keşif **global top-N sıralama değildir**. Adaylar `created_at ASC, id ASC` ile sınırlı sayfalara ayrılır; yalnız getirilen sayfa `score DESC, created_at ASC, id ASC` sırasına konur. Varsayılan 20, maksimum 50 aday; offset 0–100000. Sayfalar arasında skor sırası vaat edilmez. Büyük ölçek için tenant filtreli, versiyonlu match projection ve cursor pagination gelecekte değerlendirilebilir; mevcut demo tüm aday evrenini taramaz.
+Keşif belirli ihtiyacın **tam aday havuzunu önce skorlar**, sonra `score DESC, required_coverage DESC, preferred_coverage DESC, candidate_id ASC` ile deterministik sıralar ve en son offset/limit uygular. Normal ve kanıt odaklı mod aynı sıralamayı kullanır. İlk sayfa bu ihtiyacın en yüksek Kanıt Uyumu sonuçlarını içerir; genel yetenek değerlendirmesi değildir.
+
+Kontrollü demo için tam havuz maksimum **100 adaydır**. Sorgu en fazla 101 aday okur; 101. aday varsa **hiçbir kısmi sıralama döndürmeden** 422 `DISCOVERY_POOL_LIMIT_EXCEEDED` ve `details.max_candidates=100` döner. Sınır içindeki tüm adaylar değerlendirilir, ilk 100'ün sessizce seçilmesi söz konusu değildir. Sayfa varsayılan 20/maksimum 50, offset 0–100000; `has_more` global sıralamadaki kalan sonuçları ifade eder. Boş/sonrası sayfa boş liste döndürür.
+
+Her istek güncel veriden yeniden hesaplar: istekler arasında aday, kanıt veya ihtiyaç değişirse sıra değişebilir; snapshot pagination garantisi yoktur. Production için tenant/uygunluk kapsamlı, need/evidence sürümüyle ilişkilendirilmiş kalıcı match projection, DB'de aynı composite ordering ve snapshot/cursor pagination gerekir. Bu demo sınırı production ölçek çözümü olarak sunulmaz.
 
 İsimsiz görünüm API'de ad yerine `Aday #<UUID ilk 8 karakter>` döndürür. Okul, kurum, profil başlığı, açıklama, kaynak URL ve excerpt dönmez: bunlar dolaylı kimlik içerebilir. Kriter adı, durumu, kaynak ailesi/provenance ve destekleyen kayıt sayısı korunur. Fotoğraf/GPA alanı eklenmedi. Normal görünümde aday adı ve profil/kalıcı eşleşme bağlantıları vardır. Bu **tam anonimleştirme veya erişim kontrolü değildir**: aday UUID'si gönderilir ve auth olmayan diğer uçlar açık kalır. Bias'ın ortadan kalktığı iddia edilmez.
 
@@ -52,7 +56,7 @@ Matched criterion → strength; unmatched required → required_gap; unmatched p
 | POST | `/needs/{id}/team-coverage` | `{candidate_ids: [2–4 UUID], anonymous: true}` |
 | GET | `/matches/{id}/gaps` | Geçmiş eşleşmeden boşluklar ve sonraki adımlar |
 
-Standart 404/422/error envelope korunur. Material okuyucu projeleri, pencere fonksiyonuyla son başarılı run'ları, tamamlanmamış son analiz zamanlarını, evidence ve profile kayıtlarını toplu sorgular. Keşif 1 veya 12 aday/24 projede **8 SELECT** yapar; aday/proje başına ek sorgu yoktur. Her material sorgusu en fazla 5001 satır okur; 5000 üzeri kontrollü `READ_LIMIT_EXCEEDED` döner. Sessiz eksik skor/özet üretilmez. Timeline özetleri aynı material üzerinden hesaplanır. Bu sınırlar rate limiting veya tenant kotası değildir.
+Standart 404/422/error envelope korunur. Material okuyucu projeleri, pencere fonksiyonuyla son başarılı run'ları, tamamlanmamış son analiz zamanlarını, evidence ve profile kayıtlarını toplu sorgular. Keşif 1 veya 12 aday/24 projede **8 SELECT** yapar; aday/proje başına ek sorgu yoktur. Sayfa büyüklüğü skorlanan havuzu daraltmaz; en fazla 100 adayın skor ve sıralaması bellekte tutulur. Her material sorgusu en fazla 5001 satır okur; 5000 üzeri kontrollü `READ_LIMIT_EXCEEDED` döner. Sessiz eksik skor/özet üretilmez. Timeline özetleri aynı material üzerinden hesaplanır. Bu sınırlar rate limiting veya tenant kotası değildir.
 
 ## Portföy ve migration
 

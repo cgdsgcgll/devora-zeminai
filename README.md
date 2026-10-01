@@ -51,7 +51,7 @@ Snapshot, incelenen dosyaları ve commit referansını saklar. Eşleşme sonucu 
 
 `/profil` üzerinden özet, Yetenek Haritası, kronolojik Gelişim Zaman Çizelgesi ve Kanıt Pasaportu arasında geçin. Counts kalite puanı değildir; tarihi olmayan olaylar sisteme eklenme tarihiyle açıkça etiketlenir. `/aday` içindeki açılır deneyim bölümünde portföy dahil kayıtlar düzenlenir.
 
-`/kesif` seçili ihtiyacın aynı 80/20 Kanıt Uyumu formülünü kullanır. Adaylar eklenme sırasıyla sayfalanır; skor sırası yalnız sayfa içindedir, global top-N değildir. Kanıt odaklı mod isim/okul/kaynak serbest metinlerini API yanıtından çıkarır; tam anonimlik ve erişim kontrolü sağlamaz. 2–4 aday seçerek criterion union kapsamını inceleyin. Takım başarısı tahmin edilmez.
+`/kesif` seçili ihtiyacın aynı 80/20 Kanıt Uyumu formülünü kullanır. En fazla 100 adaylık tam havuz önce Kanıt Uyumu ve kriter kapsamlarına göre deterministik sıralanır, ardından sayfalanır. Havuz sınırı aşılırsa kısmi sonuç yerine açık hata döner. Kanıt odaklı mod isim/okul/kaynak serbest metinlerini API yanıtından çıkarır; tam anonimlik ve erişim kontrolü sağlamaz. 2–4 aday seçerek criterion union kapsamını inceleyin. Takım başarısı tahmin edilmez.
 
 `/eslesme` kanıt boşluklarını dondurulmuş sonuçtan açıklar; “kanıt bulunamadı” hiçbir zaman “beceri yok” anlamına gelmez. Yeni görünümler AI veya GitHub çağrısı yapmaz. [Sözleşme, sınırlar ve gelecek kapsamı](docs/LIVING_PROFILE.md).
 
@@ -266,7 +266,7 @@ Gemini anahtarı [Google AI Studio](https://aistudio.google.com/apikey) üzerind
 
 ## Testler ve Doğrulama
 
-**220 backend testi SQLite ve temiz PostgreSQL üzerinde geçti.** Frontend lint, TypeScript production build ve 13 test başarılı. Gerçek kart bileşeninde HTML/script kaçışı, HTTPS URL kontrolü ve PATCH/DELETE sözleşmesi test edildi. PostgreSQL upgrade/check/downgrade/upgrade döngüsünde eski aday/proje/snapshot ve 27 teknik kanıt korundu.
+**225 backend testi SQLite üzerinde geçti; discovery regresyonları ayrıca 20 test ile PostgreSQL üzerinde doğrulandı. Önceki fazda tam PostgreSQL suite 220 testle geçmişti.** Frontend lint, TypeScript production build ve 13 test başarılı. Gerçek kart bileşeninde HTML/script kaçışı, HTTPS URL kontrolü ve PATCH/DELETE sözleşmesi test edildi. PostgreSQL upgrade/check/downgrade/upgrade döngüsünde eski aday/proje/snapshot ve 27 teknik kanıt korundu.
 
 Kapsam: matching sınır durumları, API oluşturma/okuma akışları, GitHub HTTP mock’ları, evidence semantiği, provider timeout/429/5xx hataları, Gemini istek sözleşmesi, structured output doğrulaması, metadata ve migration upgrade/downgrade ile eski kayıtların korunması. Testler gerçek API anahtarı veya internet gerektirmez. Starlette TestClient’ın httpx kullanımına ilişkin deprecation uyarısı testleri başarısız kılmaz.
 

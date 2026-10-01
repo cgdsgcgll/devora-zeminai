@@ -63,3 +63,15 @@ GitHub `/rate_limit` bir kez kontrol edildi: HTTP 200, core **60/60** kullanıla
 Gemini **BLOCKED_BY_MISSING_KEY**. Canlı başarı iddiası yok; deterministik özellikler Gemini'ye bağlı değil.
 
 Sonuç: **READY_FOR_REVIEW**, güvenlik durumu **SAFE_FOR_CONTROLLED_DEMO**. Auth/authorization/IDOR ve rate limiting **HIGH / OPEN production blockers** olarak kalır.
+
+## Merge öncesi discovery sıralama düzeltmesi
+
+Önceki sürüm SQL offset/limit ile sayfayı seçiyor, sonra yalnız o sayfayı skorlayıp sıralıyordu. Önceki page-local raporu doğruydu, ancak ilk sayfa ihtiyacın en yüksek Kanıt Uyumu sonuçlarını garanti etmiyordu. A/B/C eklenme sırası ve 0/80/100 skorlarıyla limit=2 regresyonu eski kodda başarısız oldu: C ikinci sayfada kalıyordu.
+
+Düzeltme: tam havuz önce skorlanır; score DESC, required coverage DESC, preferred coverage DESC, candidate UUID ASC sırası kurulur; offset/limit en son uygulanır. Normal ve anonymous mod sırası aynıdır. Tam havuz maksimum 100; 101. aday tespit edilirse hiçbir kısmi sıralama döndürülmez (422 DISCOVERY_POOL_LIMIT_EXCEEDED, details.max_candidates=100). Mevcut 5000 material satırı sınırı korunur. Sayfalar arası veri değişikliği sonucu sıranın değişebileceği API açıklamasında belirtilir.
+
+Yeni regresyonlar: global ilk/ikinci/boş sayfa ve has_more; eşit skorda required coverage önceliği ve eşit coverage'da UUID tie-break; iki modun aynı sıra üretmesi; 100 aday kabul/101 aday kontrollü ret; 1 ve 12 adaylık tam havuzda soğuk ORM oturumuyla sabit 8 SELECT. N+1 veya AI çağrısı eklenmedi. Production için sürümlü match projection ve snapshot/cursor stratejisi LIVING_PROFILE.md'de ayrıldı.
+
+Bu düzeltmenin backend kalite kapısı: tam SQLite suite **225 passed**; PostgreSQL'de `tests/test_living.py` **20 passed**. Compileall, pip check ve gerçek PostgreSQL üzerinde Alembic check başarılı. Önceki 220 PostgreSQL tam suite sonucu önceki fazın kaydıdır; bu düzeltmede tam PostgreSQL suite tekrar çalıştırılmadı.
+
+Frontend kalite kapısı: `npm run lint`, `npm test` (**13 passed**) ve `npm run build` başarılı. İlk lint CLI denemeleri çıktı üretmeden bekledi; aynı yapılandırmalı programatik ESLint temizdi. Standart `npm run lint`, yalnız o süreçte `NODE_DISABLE_COMPILE_CACHE=1` ile tekrar çalıştırılıp exit 0 verdi; proje lint kuralları veya bağımlılıkları değiştirilmedi. `git diff --check` başarılı. Yeni feature, migration veya frontend davranış değişikliği yok; mevcut commitler korundu, push yapılmadı.

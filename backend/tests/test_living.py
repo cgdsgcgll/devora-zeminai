@@ -131,3 +131,86 @@ def test_portfolio_mass_assignment_and_metadata(client):
     cid = client.post('/candidates',json={'name':'A'}).json()['id']
     for extra in [{'verification_status':'verified'}, {'metadata_json':{'output_type':'arbitrary'}}, {'metadata_json':{'student_year':4}}]:
         assert client.post(f'/candidates/{cid}/profile-evidence',json={'category':'portfolio','title':'Demo',**extra}).status_code == 422
+
+
+def test_discovery_scores_whole_pool_before_pagination(client):
+    ids = [client.post('/candidates', json={'name':name}).json()['id'] for name in ['A','B','C']]
+    add(client, ids[1], 'hackathon')
+    add(client, ids[2], 'hackathon')
+    add(client, ids[2], 'community')
+    nid = client.post('/needs', json={'description':'hackathon deneyimi gerekli; topluluk deneyimi tercih edilir'}).json()['id']
+    for anonymous in ['true', 'false']:
+        first = client.get(f'/needs/{nid}/discovery?limit=2&anonymous={anonymous}').json()
+        second = client.get(f'/needs/{nid}/discovery?limit=2&offset=2&anonymous={anonymous}').json()
+        assert [r['candidate_id'] for r in first['candidates']] == [ids[2], ids[1]]
+        assert [r['score'] for r in first['candidates']] == [100, 80]
+        assert first['has_more'] is True
+        assert [r['candidate_id'] for r in second['candidates']] == [ids[0]]
+        assert second['candidates'][0]['score'] == 0
+        assert second['has_more'] is False
+        assert client.get(f'/needs/{nid}/discovery?offset=3').json()['candidates'] == []
+
+
+def test_discovery_equal_scores_use_coverage_then_stable_id(client, db):
+    from datetime import datetime, timezone
+    from uuid import UUID
+    from app.models import domain as m
+    # Equal score 20: 1/4 required beats 0/4 required + 1/1 preferred.
+    rows = [m.Candidate(id=UUID(int=n), name=name, created_at=datetime(2025,1,1,tzinfo=timezone.utc))
+            for n, name in [(1,'Z'), (3,'A'), (2,'M')]]
+    db.add_all(rows); db.commit()
+    add(client, str(rows[0].id), 'event')
+    add(client, str(rows[1].id), 'hackathon')
+    add(client, str(rows[2].id), 'hackathon')
+    criteria = [dict(kind=family, skill_key=key, skill_label=key, priority=priority) for family,key,priority in [
+        ('hackathon','hackathon_experience','required'), ('community','community_experience','required'),
+        ('certification','certification_experience','required'), ('education','education_student','required'),
+        ('event','event_experience','preferred')]]
+    nid = client.post('/needs',json={'description':'Explicit coverage tie', 'criteria':criteria}).json()['id']
+    for anonymous in ['true','false','true']:
+        results = [client.get(f'/needs/{nid}/discovery?limit=1&offset={offset}&anonymous={anonymous}').json()['candidates'][0] for offset in range(3)]
+        assert [r['score'] for r in results] == [20,20,20]
+        assert [r['candidate_id'] for r in results] == [str(rows[2].id), str(rows[1].id), str(rows[0].id)]
+        assert [r['required_coverage'] for r in results] == [.25,.25,0]
+
+
+def test_discovery_pool_limit_never_returns_truncated_ranking(client, db, monkeypatch):
+    from app.models import domain as m
+    from app.services import living
+    nid = client.post('/needs',json={'description':'Python gerekli'}).json()['id']
+    db.add_all([m.Candidate(name=str(i)) for i in range(living.DISCOVERY_MAX_CANDIDATES)])
+    db.commit()
+    at_limit = client.get(f'/needs/{nid}/discovery?limit=50')
+    assert at_limit.status_code == 200
+    assert len(at_limit.json()['candidates']) == 50 and at_limit.json()['has_more']
+    db.add(m.Candidate(name='One over the limit')); db.commit()
+    def forbidden(*args, **kwargs):
+        raise AssertionError('Oversized pool must be rejected before loading evidence')
+    monkeypatch.setattr(living, 'load_material', forbidden)
+    for offset in [0, 100]:
+        response = client.get(f'/needs/{nid}/discovery?offset={offset}')
+        assert response.status_code == 422
+        assert response.json()['error']['code'] == 'DISCOVERY_POOL_LIMIT_EXCEEDED'
+        assert response.json()['error']['details']['max_candidates'] == living.DISCOVERY_MAX_CANDIDATES
+        assert 'candidates' not in response.json()
+
+
+@pytest.mark.parametrize('pool_size', [1,12])
+def test_global_discovery_query_count_does_not_grow_with_pool(client, db, pool_size):
+    nid = client.post('/needs',json={'description':'Python gerekli'}).json()['id']
+    for i in range(pool_size):
+        cid = client.post('/candidates',json={'name':str(i)}).json()['id']
+        for j in range(2):
+            client.post(f'/candidates/{cid}/projects',json={'name':str(j),'source_url':'https://github.com/test/repo'})
+    db.expunge_all()  # Measure a cold ORM identity map, like a new HTTP request.
+    queries = []
+    def record(*args):
+        if args[2].lstrip().upper().startswith('SELECT'):
+            queries.append(args[2])
+    event.listen(db.bind, 'before_cursor_execute', record)
+    try:
+        response = client.get(f'/needs/{nid}/discovery?limit=1')
+        assert response.status_code == 200
+        assert len(queries) == 8
+    finally:
+        event.remove(db.bind, 'before_cursor_execute', record)

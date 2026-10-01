@@ -13,6 +13,7 @@ from app.services.matching.material import load_material, calculate_for_need
 from app.services.workflows import get_or_404, serialize_match
 
 AUTHORSHIP = 'Repository-level evidence; individual authorship not verified. Repo bağlantısı adayın kodu yazdığını doğrulamaz.'
+DISCOVERY_MAX_CANDIDATES = 100
 COUNTS = 'Sayılar kayıt kapsamını gösterir; kalite, yetenek veya gelişim puanı değildir.'
 FAMILIES = {'education': 'Eğitim', 'certification': 'Sertifika', 'hackathon': 'Hackathon',
             'community': 'Topluluk', 'event': 'Etkinlik', 'portfolio': 'Portföy'}
@@ -98,15 +99,19 @@ def need_and_views(db, need_id, candidates, anonymous):
 
 
 def discovery(db, need_id, anonymous=True, offset=0, limit=20):
-    # Stable candidate cohorts, not an unbounded global ranking or page-local top-N claim.
-    candidates = db.scalars(select(m.Candidate).order_by(m.Candidate.created_at, m.Candidate.id).offset(offset).limit(limit + 1)).all()
-    _, views = need_and_views(db, need_id, candidates[:limit], anonymous)
-    order = {c.id: i for i, c in enumerate(candidates)}
-    views.sort(key=lambda v: (-v.score, order[v.candidate_id]))
+    # Never rank a silently truncated pool. Score all candidates or fail explicitly.
+    candidates = db.scalars(select(m.Candidate).order_by(m.Candidate.id).limit(DISCOVERY_MAX_CANDIDATES + 1)).all()
+    if len(candidates) > DISCOVERY_MAX_CANDIDATES:
+        raise AppError('DISCOVERY_POOL_LIMIT_EXCEEDED',
+            f'Keşif en fazla {DISCOVERY_MAX_CANDIDATES} adaylık tam havuzu destekler; eksik sıralama döndürülmedi.',
+            422, details={'max_candidates': DISCOVERY_MAX_CANDIDATES})
+    _, views = need_and_views(db, need_id, candidates, anonymous)
+    views.sort(key=lambda v: (-v.score, -v.required_coverage, -v.preferred_coverage, str(v.candidate_id)))
     return s.Discovery(need_id=need_id, anonymous=anonymous, offset=offset, limit=limit,
-        has_more=len(candidates) > limit, candidates=views,
-        ordering='Adaylar eklenme sırasıyla sayfalanır. Yalnız bu sayfadaki adaylar Kanıt Uyumu azalan sırayla gösterilir; eşitlikte eklenme sırası ve kayıt kimliği kullanılır.',
+        has_more=offset + limit < len(views), candidates=views[offset:offset + limit],
+        ordering='Bu ihtiyaca ilişkin tüm adaylar önce Kanıt Uyumu, gerekli kapsam ve tercih edilen kapsam azalan sırayla; eşitlikte kayıt kimliği artan sırayla sıralanır. Sayfalama bundan sonra uygulanır.',
         limitations=[AUTHORSHIP, 'Bu bir genel aday sıralaması değildir. 80/20 kriter kapsamı formülü korunur; kayıt sayısı bonus vermez.',
+            f'Tam keşif havuzu en fazla {DISCOVERY_MAX_CANDIDATES} adaydır. Sınır aşılırsa sonuç yerine hata döner. Sayfalar ayrı isteklerde güncel veriden hesaplanır; veri değişirse sıra değişebilir.',
             'Kanıt odaklı görünüm kimlik alanlarını ve kaynak serbest metinlerini çıkarır; tam anonimleştirme veya erişim kontrolü değildir. UUID ile diğer açık API’lere erişim mümkündür.'])
 
 
