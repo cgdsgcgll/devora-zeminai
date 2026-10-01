@@ -1,4 +1,5 @@
 export const categoryLabels = {
+  portfolio: "Portföy",
   education: "Eğitim",
   certification: "Sertifika",
   hackathon: "Hackathon",
@@ -44,3 +45,26 @@ export function safeProfileSource(value?: string | null): string | undefined {
     return;
   }
 }
+
+export const outputLabels = {
+  web_app: "Canlı web uygulaması",
+  demo: "Ürün demosu",
+  package: "Paket",
+  article: "Teknik makale",
+  service: "Yayınlanmış servis",
+} as const;
+export const provenanceLabels: Record<string, string> = {
+  ...verificationLabels,
+  observed: "Gözlemlenen repo kanıtı",
+  not_found: "Kanıt bulunamadı",
+};
+export const sourceLabels: Record<string, string> = {
+  ...familyLabels,
+  project: "Proje",
+  source_file: "Kaynak dosya",
+  dependency_file: "Bağımlılık dosyası",
+  repository_language: "Repo dili",
+  readme: "README",
+  project_description: "Proje açıklaması",
+  user_claim: "Kullanıcı beyanı",
+};

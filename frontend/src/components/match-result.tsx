@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { api, userError, type Match, type Evidence } from "@/lib/api/client";
 import { scoreLabel, scoreExplanation } from "@/lib/presentation";
 import { EvidenceCard, Notes } from "./ui";
+import { EvidenceGaps } from "./evidence-gaps";
 import { ProfileCard } from "./profile-card";
 import { familyLabels } from "@/lib/profile";
 export function MatchResult({ result }: { result: Match }) {
@@ -148,7 +149,7 @@ export function MatchResult({ result }: { result: Match }) {
         değiştirilmez.
       </p>
       <Notes title="Desteklenen kriterler" items={result.strengths} />
-      <Notes title="Kanıt kapsamındaki eksikler" items={result.gaps} />
+      <EvidenceGaps key={result.id} matchId={result.id} />
       <Notes title="Belirsizlikler" items={result.uncertainties} />
       <section className="result-section">
         <div className="section-heading">

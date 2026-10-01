@@ -4,6 +4,74 @@
  */
 
 export interface paths {
+  "/candidates/{candidate_id}/living-profile": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Living Profile */
+    get: operations["living_profile_candidates__candidate_id__living_profile_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/needs/{need_id}/discovery": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Discover */
+    get: operations["discover_needs__need_id__discovery_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/needs/{need_id}/team-coverage": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Team Coverage */
+    post: operations["team_coverage_needs__need_id__team_coverage_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/matches/{match_id}/gaps": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Match Gaps */
+    get: operations["match_gaps_matches__match_id__gaps_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/health": {
     parameters: {
       query?: never;
@@ -344,6 +412,13 @@ export interface components {
       /** Name */
       name: string;
     };
+    /** CountFact */
+    CountFact: {
+      /** Label */
+      label: string;
+      /** Count */
+      count: number;
+    };
     /** CriterionInput */
     CriterionInput: {
       /**
@@ -401,6 +476,64 @@ export interface components {
       /** Explanation */
       explanation: string;
     };
+    /** Discovery */
+    Discovery: {
+      /**
+       * Need Id
+       * Format: uuid
+       */
+      need_id: string;
+      /** Anonymous */
+      anonymous: boolean;
+      /** Offset */
+      offset: number;
+      /** Limit */
+      limit: number;
+      /** Has More */
+      has_more: boolean;
+      /** Candidates */
+      candidates: components["schemas"]["DiscoveryCandidate"][];
+      /** Ordering */
+      ordering: string;
+      /** Limitations */
+      limitations: string[];
+    };
+    /** DiscoveryCandidate */
+    DiscoveryCandidate: {
+      /**
+       * Candidate Id
+       * Format: uuid
+       */
+      candidate_id: string;
+      /** Label */
+      label: string;
+      /** Score */
+      score: number;
+      /** Required Coverage */
+      required_coverage: number;
+      /** Preferred Coverage */
+      preferred_coverage: number;
+      /** Criteria */
+      criteria: components["schemas"]["DiscoveryCriterion"][];
+    };
+    /** DiscoveryCriterion */
+    DiscoveryCriterion: {
+      /**
+       * Criterion Id
+       * Format: uuid
+       */
+      criterion_id: string;
+      /** Label */
+      label: string;
+      /** Family */
+      family: string;
+      /** Priority */
+      priority: string;
+      /** Matched */
+      matched: boolean;
+      /** Sources */
+      sources: components["schemas"]["EvidenceReference"][];
+    };
     /** ErrorDetail */
     ErrorDetail: {
       /** Code */
@@ -438,6 +571,15 @@ export interface components {
       /** Limitations */
       limitations?: string[];
     };
+    /** EvidenceReference */
+    EvidenceReference: {
+      /** Family */
+      family: string;
+      /** Status */
+      status: string;
+      /** Count */
+      count: number;
+    };
     /**
      * EvidenceStatus
      * @enum {string}
@@ -459,6 +601,37 @@ export interface components {
       | "dependency_file"
       | "repository_language"
       | "user_claim";
+    /** GapItem */
+    GapItem: {
+      /**
+       * Criterion Id
+       * Format: uuid
+       */
+      criterion_id: string;
+      /** Label */
+      label: string;
+      /** Priority */
+      priority: string;
+      /**
+       * State
+       * @enum {string}
+       */
+      state: "strength" | "required_gap" | "preferred_gap";
+      /** Explanation */
+      explanation: string;
+      /** Next Step */
+      next_step: string | null;
+    };
+    /** GapSummary */
+    GapSummary: {
+      /**
+       * Match Id
+       * Format: uuid
+       */
+      match_id: string;
+      /** Items */
+      items: components["schemas"]["GapItem"][];
+    };
     /** Health */
     Health: {
       /**
@@ -477,6 +650,26 @@ export interface components {
        * @enum {string}
        */
       database: "ok" | "unavailable";
+    };
+    /** LivingProfile */
+    LivingProfile: {
+      /**
+       * Candidate Id
+       * Format: uuid
+       */
+      candidate_id: string;
+      /** Summary */
+      summary: components["schemas"]["CountFact"][];
+      /** Talent Map */
+      talent_map: {
+        [key: string]: components["schemas"]["CountFact"][];
+      };
+      /** Passport */
+      passport: components["schemas"]["PassportFact"][];
+      /** Timeline */
+      timeline: components["schemas"]["TimelineItem"][];
+      /** Limitations */
+      limitations: string[];
     };
     /** MatchCreate */
     MatchCreate: {
@@ -628,6 +821,19 @@ export interface components {
       /** Analysis Version */
       analysis_version: string;
     };
+    /** PassportFact */
+    PassportFact: {
+      /** Family */
+      family: string;
+      /**
+       * Status
+       * @enum {string}
+       */
+      status:
+        "declared_only" | "linked" | "observed" | "verified" | "not_found";
+      /** Count */
+      count: number;
+    };
     /**
      * Priority
      * @enum {string}
@@ -640,7 +846,12 @@ export interface components {
        * @enum {string}
        */
       category:
-        "education" | "certification" | "hackathon" | "event" | "community";
+        | "education"
+        | "certification"
+        | "hackathon"
+        | "event"
+        | "community"
+        | "portfolio";
       /** Title */
       title: string;
       /**
@@ -678,7 +889,12 @@ export interface components {
        * @enum {string}
        */
       category:
-        "education" | "certification" | "hackathon" | "event" | "community";
+        | "education"
+        | "certification"
+        | "hackathon"
+        | "event"
+        | "community"
+        | "portfolio";
       /** Title */
       title: string;
       /**
@@ -756,6 +972,9 @@ export interface components {
     };
     /** ProfileMetadata */
     ProfileMetadata: {
+      /** Output Type */
+      output_type?:
+        ("web_app" | "demo" | "package" | "article" | "service") | null;
       /** Program */
       program?: string | null;
       /** Education Type */
@@ -963,6 +1182,95 @@ export interface components {
       /** Source Url */
       source_url: string;
     };
+    /** TeamCoverage */
+    TeamCoverage: {
+      /**
+       * Need Id
+       * Format: uuid
+       */
+      need_id: string;
+      /** Required Coverage */
+      required_coverage: number;
+      /** Preferred Coverage */
+      preferred_coverage: number;
+      /** Matched Count */
+      matched_count: number;
+      /** Total Count */
+      total_count: number;
+      /** Criteria */
+      criteria: components["schemas"]["TeamCriterion"][];
+      /** Limitations */
+      limitations: string[];
+    };
+    /** TeamCreate */
+    TeamCreate: {
+      /** Candidate Ids */
+      candidate_ids: string[];
+      /**
+       * Anonymous
+       * @default true
+       */
+      anonymous: boolean;
+    };
+    /** TeamCriterion */
+    TeamCriterion: {
+      /**
+       * Criterion Id
+       * Format: uuid
+       */
+      criterion_id: string;
+      /** Label */
+      label: string;
+      /** Priority */
+      priority: string;
+      /** Supporters */
+      supporters: components["schemas"]["TeamSupport"][];
+    };
+    /** TeamSupport */
+    TeamSupport: {
+      /**
+       * Candidate Id
+       * Format: uuid
+       */
+      candidate_id: string;
+      /** Label */
+      label: string;
+      /** Sources */
+      sources: components["schemas"]["EvidenceReference"][];
+    };
+    /** TimelineItem */
+    TimelineItem: {
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string;
+      /**
+       * Date
+       * Format: date
+       */
+      date: string;
+      /**
+       * Date Basis
+       * @enum {string}
+       */
+      date_basis: "started_at" | "issued_at" | "ended_at" | "recorded_at";
+      /** Category */
+      category: string;
+      /** Title */
+      title: string;
+      /** Organization */
+      organization: string;
+      /** Role */
+      role: string;
+      /**
+       * Status
+       * @enum {string}
+       */
+      status: "declared_only" | "linked" | "observed" | "verified";
+      /** Source Url */
+      source_url: string | null;
+    };
   };
   responses: never;
   parameters: never;
@@ -972,6 +1280,392 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+  living_profile_candidates__candidate_id__living_profile_get: {
+    parameters: {
+      query?: {
+        since?: string | null;
+      };
+      header?: never;
+      path: {
+        candidate_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["LivingProfile"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Unprocessable Entity */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Bad Gateway */
+      502: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Service Unavailable */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Gateway Timeout */
+      504: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+  };
+  discover_needs__need_id__discovery_get: {
+    parameters: {
+      query?: {
+        anonymous?: boolean;
+        offset?: number;
+        limit?: number;
+      };
+      header?: never;
+      path: {
+        need_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Discovery"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Unprocessable Entity */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Bad Gateway */
+      502: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Service Unavailable */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Gateway Timeout */
+      504: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+  };
+  team_coverage_needs__need_id__team_coverage_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        need_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["TeamCreate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TeamCoverage"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Unprocessable Entity */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Bad Gateway */
+      502: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Service Unavailable */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Gateway Timeout */
+      504: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+  };
+  match_gaps_matches__match_id__gaps_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        match_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["GapSummary"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Unprocessable Entity */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Bad Gateway */
+      502: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Service Unavailable */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Gateway Timeout */
+      504: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+  };
   health_health_get: {
     parameters: {
       query?: never;

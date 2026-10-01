@@ -103,11 +103,47 @@ async function request<T>(
   } else if (path.endsWith("/profile-evidence") && body === undefined) {
     if (!Array.isArray(data) || !data.every(hasId))
       throw new ApiError("INVALID_RESPONSE", "Profil kayıtları okunamadı.");
+  } else if (
+    /\/(living-profile|discovery|team-coverage|gaps)(\?|$)/.test(path)
+  ) {
+    const field = path.includes("/living-profile")
+      ? "candidate_id"
+      : path.endsWith("/gaps")
+        ? "match_id"
+        : "need_id";
+    const collection = path.includes("/living-profile")
+      ? "timeline"
+      : path.includes("/discovery")
+        ? "candidates"
+        : path.endsWith("/gaps")
+          ? "items"
+          : "criteria";
+    if (
+      typeof data !== "object" ||
+      !(field in data) ||
+      typeof (data as Record<string, unknown>)[field] !== "string" ||
+      !Array.isArray((data as Record<string, unknown>)[collection])
+    )
+      throw new ApiError("INVALID_RESPONSE", "Görünüm verileri okunamadı.");
   } else if (!hasId(data))
     throw new ApiError("INVALID_RESPONSE", "Servis kaydının kimliği eksik.");
   return data as T;
 }
 export const api = {
+  livingProfile: (id: string, since = "") =>
+    request<Model<"LivingProfile">>(
+      `/candidates/${id}/living-profile${since ? `?since=${encodeURIComponent(since)}` : ""}`,
+    ),
+  discovery: (id: string, anonymous = true, offset = 0) =>
+    request<Model<"Discovery">>(
+      `/needs/${id}/discovery?anonymous=${anonymous}&offset=${offset}&limit=20`,
+    ),
+  team: (id: string, candidate_ids: string[], anonymous = true) =>
+    request<Model<"TeamCoverage">>(`/needs/${id}/team-coverage`, {
+      candidate_ids,
+      anonymous,
+    }),
+  gaps: (id: string) => request<Model<"GapSummary">>(`/matches/${id}/gaps`),
   profiles: (id: string) =>
     request<ProfileEvidence[]>(`/candidates/${id}/profile-evidence`),
   createProfile: (id: string, data: Model<"ProfileEvidenceCreate">) =>

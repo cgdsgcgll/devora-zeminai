@@ -1,6 +1,7 @@
 import type { ProfileEvidence } from "../lib/api/client";
 import {
   categoryLabels,
+  outputLabels,
   participationLabels,
   safeProfileSource,
   verificationLabels,
@@ -33,6 +34,7 @@ export function ProfileCard({ item }: { item: ProfileEvidence }) {
               : "Bitiş belirtilmedi")}
         </p>
       )}
+      {meta?.output_type && <p>{outputLabels[meta.output_type]}</p>}
       {meta?.program && <p>{meta.program}</p>}
       {meta?.focus && (
         <p className="meta">

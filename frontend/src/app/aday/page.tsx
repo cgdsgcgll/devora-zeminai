@@ -45,6 +45,11 @@ export default function CandidatePage() {
   }
   return (
     <>
+      <p>
+        <Link href="/profil">
+          Profil özeti, zaman çizelgesi ve kanıt pasaportu →
+        </Link>
+      </p>
       <PageHeader
         step="01 / ADAY & PROFİL"
         title="Üretiminizi ve gelişiminizi görünür kılın."
@@ -191,7 +196,10 @@ export default function CandidatePage() {
         </aside>
       </div>
       {candidate && (
-        <ProfilePanel key={candidate.id} candidateId={candidate.id} />
+        <details className="result-section">
+          <summary>Gelişim & Deneyim kayıtlarını düzenle</summary>
+          <ProfilePanel key={candidate.id} candidateId={candidate.id} />
+        </details>
       )}
       {run && (
         <section className="result-section">

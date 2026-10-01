@@ -17,8 +17,8 @@ export default function Home() {
           </p>
           <p className="lead">
             Ne ürettiğinizi, ne öğrendiğinizi ve nerelerde katkı verdiğinizi
-            görünür kılın. Kurum ihtiyaçlarıyla uyumu, her kriterin dayanağını
-            görerek değerlendirin.
+            zaman içinde görünür kılın. Kurum ihtiyaçlarıyla uyumu, her kriterin
+            dayanağını görerek değerlendirin.
           </p>
           <Link className="button" href="/aday">
             Demoyu başlat <span aria-hidden="true">↗</span>

@@ -1257,3 +1257,67 @@ pre {
     padding-left: 0.75rem;
   }
 }
+
+/* Living profile: factual summaries and progressively disclosed evidence. */
+.view-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin: 1.5rem 0;
+}
+.view-switch button[aria-pressed="true"] {
+  background: var(--forest, #125548);
+  color: white;
+}
+.fact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 1rem;
+}
+.fact-count {
+  font-size: 2rem;
+  color: #125548;
+}
+.talent-timeline {
+  list-style: none;
+  padding: 0 0 0 1rem;
+  border-left: 2px solid #d2ded5;
+}
+.talent-timeline li {
+  margin: 1.5rem 0;
+}
+.discovery-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+.discovery-grid .panel {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.discovery-score {
+  margin-top: 1rem;
+  color: #125548;
+}
+.team-select {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0;
+  cursor: pointer;
+}
+.team-select input {
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+  flex-shrink: 0;
+  accent-color: #125548;
+}
+.discovery-grid details {
+  margin: 1rem 0;
+}
+@media (max-width: 800px) {
+  .discovery-grid {
+    grid-template-columns: 1fr;
+  }
+}
