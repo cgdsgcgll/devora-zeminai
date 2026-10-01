@@ -30,7 +30,7 @@ class GeminiProvider:
             'contents': [{'role': 'user', 'parts': [{'text': context}]}],
             'generationConfig': {
                 'candidateCount': 1, 'maxOutputTokens': self.max_output_tokens,
-                'responseFormat': {'text': {'mimeType': 'application/json', 'schema': schema}},
+                'responseFormat': {'text': {'mimeType': 'APPLICATION_JSON', 'schema': schema}},
             },
         }
         url = f'https://generativelanguage.googleapis.com/v1beta/models/{model_id}:generateContent'

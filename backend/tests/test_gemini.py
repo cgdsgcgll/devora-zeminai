@@ -39,7 +39,7 @@ def test_request_contract():
         config = payload['generationConfig']
         assert config['maxOutputTokens'] == 1234
         assert config['candidateCount'] == 1
-        assert config['responseFormat']['text'] == {'mimeType': 'application/json', 'schema': NeedDraft.model_json_schema()}
+        assert config['responseFormat']['text'] == {'mimeType': 'APPLICATION_JSON', 'schema': NeedDraft.model_json_schema()}
         return httpx.Response(200, json=envelope('{"criteria":[],"uncertainties":[]}'))
     client = GeminiProvider('mock-key', 'models/configured-model', timeout=7,
         max_output_tokens=1234, transport=httpx.MockTransport(handle))

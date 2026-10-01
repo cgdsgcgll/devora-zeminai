@@ -225,7 +225,7 @@ kodun varsayılan modeli yoktur. Key/model eksikse `LLM_NOT_CONFIGURED` döner; 
 Resmi Python SDK `google-genai` Pydantic destekler; bu projede mevcut `httpx` transport/retry yapısını
 korumak için tek bir [generateContent REST adaptörü](https://ai.google.dev/api/generate-content) kullanılır.
 Yeni bağımlılık eklenmedi. Key URL parametresi yerine `x-goog-api-key` header'ında gönderilir.
-`generationConfig.responseFormat.text` içinde `mimeType=application/json` ve ortak Pydantic modellerinin
+`generationConfig.responseFormat.text` içinde `mimeType=APPLICATION_JSON` ve ortak Pydantic modellerinin
 JSON Schema çıktısı gönderilir. [Structured output](https://ai.google.dev/gemini-api/docs/generate-content/structured-output)
 yanıtı JSON olarak okunur, ardından mevcut strict Pydantic ve kaynak doğrulamasından geçer;
 markdown/regex ile JSON onarımı yapılmaz. Tamamlanmamış veya hatalı çıktı reddedilir.
