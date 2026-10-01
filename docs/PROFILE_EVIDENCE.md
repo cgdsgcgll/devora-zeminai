@@ -1,8 +1,8 @@
 # Gelişim ve deneyim kaynakları
 
-`ProfileEvidenceItem` aday seviyesindedir; `Project` ve `SkillEvidence` yerine geçmez. Kategoriler: education, certification, hackathon, event, community. Gönüllülük etkinlik/topluluk `participation_type=volunteer` ile temsil edilir.
+`ProfileEvidenceItem` aday seviyesindedir; `Project` ve `SkillEvidence` yerine geçmez. Kategoriler: education, certification, hackathon, event, community, portfolio. Gönüllülük etkinlik/topluluk `participation_type=volunteer` ile temsil edilir.
 
-Başlık, kurum, rol, açıklama, tarihler, kaynak URL/etiketi, kategori, doğrulama durumu ve zaman damgaları ayrı kolonlardır. Sınırlı metadata: eğitimde program/tür/durum/sınıf; sertifikada credential ID/veriliş/son geçerlilik; hackathonda proje adı/sonuç; etkinlik/toplulukta katılım türü/sorumluluk; toplulukta ayrıca teknoloji/diğer alanı. Başlık/kurum/rol 200, açıklama 4000, URL 2000, sorumluluk 1000 karakterle sınırlı. Bilinmeyen alanlar ve başka kategoriye ait metadata reddedilir.
+Başlık, kurum, rol, açıklama, tarihler, kaynak URL/etiketi, kategori, doğrulama durumu ve zaman damgaları ayrı kolonlardır. Sınırlı metadata: eğitimde program/tür/durum/sınıf; sertifikada credential ID/veriliş/son geçerlilik; hackathonda proje adı/sonuç; etkinlik/toplulukta katılım türü/sorumluluk; toplulukta ayrıca teknoloji/diğer alanı; portföyde web_app/demo/package/article/service çıktı türü. Başlık/kurum/rol 200, açıklama 4000, URL 2000, sorumluluk 1000 karakterle sınırlı. Bilinmeyen alanlar ve başka kategoriye ait metadata reddedilir.
 
 ## Doğrulama
 
@@ -61,3 +61,9 @@ GitHub-only sonuçlar evidence-coverage-v0.2, genişletilmiş sonuçlar v0.3 res
 `python -m alembic upgrade head`; `python -m alembic check`. İki migration reversible. Downgrade yeni feature kolonlarını/kayıtlarını kaldırır; gerçek ortamda önceden yedek alın. Otomatik downgrade yapılmaz. Test döngüsü ayrı yerel PostgreSQL üzerinde eski proje/kanıt verileriyle uygulandı.
 
 Gelecek: trusted certificate/event provider doğrulaması, contributor attribution, continuous profil güncelleme. Bunlar mevcut özellik değildir.
+
+## Yaşayan profil genişlemesi
+
+Portföy mevcut CRUD, güvenli HTTPS ve declared_only/linked semantiğini kullanır; dış kaynak indirilmez. Portföy teknik skora dönüşmez ve NeedAnalyzer kriter kataloğunu değiştirmez. `529ac1_living_portfolio` kategori CHECK koşulunu genişletir. Portföy kaydı varsa downgrade veri kaybını önlemek için durur; eski kayıtlarda upgrade/check/downgrade/upgrade veriyi korur.
+
+Timeline, harita ve pasaport aynı gerçek DB verilerinden türetilir; discovery ve team aynı scorer/material okuyucusunu paylaşır. [Yaşayan profil sözleşmesi](LIVING_PROFILE.md), API sınırları ve CURRENT/FUTURE ayrımı için referanstır.

@@ -249,3 +249,18 @@ Sonuç **SAFE_FOR_CONTROLLED_DEMO**; auth/authorization/IDOR ve rate-limit **HIG
 Son backend regresyonu: **204 test SQLite + 204 test temiz PostgreSQL**, compileall, pip check ve Alembic check başarılı. İzole PostgreSQL'de upgrade/check/downgrade/upgrade eski candidate/project/snapshot/skill evidence verilerini korudu. pip-audit: **32 dependency, 0 advisory**. Frontend: 11 test, lint ve production build başarılı; npm audit (tüm/dev hariç) 0 bulgu. Browser ve komut ayrıntıları [profil doğrulama kaydında](PROFILE_VALIDATION.md).
 
 İlk canlı GitHub/PostgreSQL/rule_based smoke 27 evidence ve 80 skorla geçti. Sonraki browser analizinde anonim GitHub kotası 0 olduğu için kontrollü GITHUB_FETCH_FAILED alındı; application bug veya başarılı analiz olarak raporlanmadı. Gemini: **BLOCKED_BY_MISSING_KEY**; sahte canlı sonuç yok.
+
+## Living Talent Profile — 2026-10-01
+
+Durum: **SAFE_FOR_CONTROLLED_DEMO**. Auth/authorization/tenant isolation/IDOR **HIGH / OPEN**, rate limiting **HIGH / OPEN** kalır. Yeni living-profile, discovery ve team-coverage uçları da public üretimde erişim kontrolü gerektirir. Kanıt odaklı görünüm kimlik alanlarını yanıttan çıkarır fakat UUID üzerinden açık diğer API'lere erişimi engellemez; anonimlik veya yetkilendirme çözümü değildir. Starlette bulgusu RESOLVED; bağımlılıklar değiştirilmedi.
+
+- Yeni portföy kategori/alt türleri bounded; extra=forbid ve mevcut uzunluk/tarih kuralları korunur. Kullanıcı verified/observed atayamaz. HTTPS linkler server-side fetch edilmez; javascript/data/file/vbscript, credentials, IP/local adlar ve alternatif portlar reddedilir. Yeni SSRF yüzeyi eklenmedi.
+- Timeline/discovery serbest metinleri JSX metin düğümü olarak render eder; unsafe HTML API'si yoktur. Dış bağlantılar yeniden filtrelenir ve noopener/noreferrer kullanır. Sorgular SQLAlchemy bind parametreleriyle çalışır.
+- Discovery 20 varsayılan/50 maksimum aday ve sınırlı offset ile çalışır. Toplu material sorguları 5000 satırı aşarsa kontrollü hata verir; sessiz eksik skor üretmez. Team 2–4 farklı UUID kabul eder, keyfi match_ids/need_id/score kabul etmez. Bu sınırlamalar rate limit yerine geçmez.
+- Repo kodu aday yazarlığına çevrilmez. Yeni commit/contributor/PR/changed-file fetch yok; bu fazın attribution bütçeleri 0. Mevcut allow-list, quota hata handling ve bounded repo fetch değişmedi.
+- 1 MiB istek sınırı ve açık CORS origin listesi yeni uçlara da uygulanır. Profil ve takım verileri herkese açık production'a uygun sayılmaz. Geçmiş snapshot retention/erasure gereksinimi devam eder.
+- Yeni özellikler AI/provider çağırmaz; scorer aynı kalır. Discovery/team güncel okuma, gap endpointi immutable match okumasıdır. Kimliksiz yanıtta ad/okul/serbest metin/URL/excerpt yok; criterion ve source family/provenance sayıları korunur.
+
+Gates: **220 SQLite + 220 PostgreSQL backend testi**, compileall, pip check, Alembic check; PostgreSQL'de ayrı DB'lerde eski teknik ve profil kayıtlarını koruyan upgrade/check/downgrade/upgrade. Portföy varsa downgrade veri kaybını önlemek için reddedilir. TestClient'in mevcut httpx deprecation uyarısı devam eder, test hatası değildir.
+
+Frontend: **13 test**, lint ve production build. npm audit ve npm audit --omit=dev: 0 bulgu. İzole pip-audit: 32 dependency, 0 advisory. Kimliksiz veri, takım birleşimi, boşluklar, kronoloji ve mobil/desktop tarayıcı kontrolleri [yaşayan profil doğrulama kaydında](LIVING_PROFILE_VALIDATION.md).
