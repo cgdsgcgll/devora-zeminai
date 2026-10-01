@@ -20,10 +20,10 @@ export default function Home() {
             uyumu, kaynağına kadar izlenebilen bir sonuçla değerlendirin.
           </p>
           <Link className="button" href="/aday">
-            Demoyu Başlat <span aria-hidden="true">↗</span>
+            Demoyu başlat <span aria-hidden="true">↗</span>
           </Link>
           <p className="small">
-            Public GitHub projeleriyle gerçek analiz akışı.
+            Herkese açık GitHub projeleriyle gerçek analiz akışı.
           </p>
         </div>
         <div
@@ -38,7 +38,7 @@ export default function Home() {
             <span className="diagram-number">01</span>
             <div>
               <strong>Kaynak</strong>
-              <p>Repository · dosya · alıntı</p>
+              <p>Depo · dosya · alıntı</p>
             </div>
           </div>
           <div className="diagram-row">
@@ -74,7 +74,7 @@ export default function Home() {
             [
               "01",
               "Projeyi analiz et",
-              "Public GitHub repository’sinden kaynaklı beceri kanıtları çıkarın.",
+              "Herkese açık GitHub deposundaki beceri kanıtlarını inceleyin.",
             ],
             [
               "02",

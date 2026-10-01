@@ -13,7 +13,7 @@ export const typeLabels = {
   readme: "README",
   source_file: "Kaynak dosya",
   dependency_file: "Bağımlılık dosyası",
-  repository_language: "Repository dili",
+  repository_language: "Depo dili",
   user_claim: "Kullanıcı beyanı",
 };
 export const scoreLabel = "Kanıt Uyumu";
@@ -50,7 +50,7 @@ export function validateGithub(value: string): string | undefined {
     )
       return;
   } catch {}
-  return "https://github.com/sahip/repository biçiminde public bir repository URL’si girin.";
+  return "https://github.com/sahip/depo biçiminde herkese açık bir GitHub deposunun adresini girin.";
 }
 export function validateNeed(value: string): string | undefined {
   return !value.trim()

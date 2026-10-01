@@ -141,14 +141,15 @@ export default function CandidatePage() {
                   rows={3}
                 />
                 <label htmlFor="github-url">
-                  Public GitHub URL’si <span className="required">*</span>
+                  Herkese açık GitHub deposunun adresi{" "}
+                  <span className="required">*</span>
                 </label>
                 <input
                   id="github-url"
                   type="url"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
-                  placeholder="https://github.com/sahip/repository"
+                  placeholder="https://github.com/sahip/depo"
                   maxLength={500}
                   required
                   aria-invalid={!!validation && !!validateGithub(url)}
@@ -157,7 +158,7 @@ export default function CandidatePage() {
                   }
                 />
                 <p id="github-help" className="field-help">
-                  Yalnız herkese açık repository’ler analiz edilebilir.
+                  Yalnızca herkese açık GitHub depoları analiz edilebilir.
                 </p>
                 <button className="button" disabled={disabled}>
                   Projeyi Kaydet
@@ -173,7 +174,7 @@ export default function CandidatePage() {
             dayanak.
           </h2>
           <p>
-            Kaynak dosyalar, bağımlılıklar ve repository dil bilgisi birlikte
+            Kaynak dosyalar, bağımlılıklar ve deponun dil bilgisi birlikte
             değerlendirilir.
           </p>
           <div className="divider" />
@@ -196,7 +197,7 @@ export default function CandidatePage() {
               </p>
             </div>
             <Link className="button secondary" href="/ihtiyac">
-              Kurum ihtiyacına geç →
+              Kurum ihtiyacına geç <span aria-hidden="true">→</span>
             </Link>
           </div>
           {evidence.length ? (
@@ -233,7 +234,7 @@ export default function CandidatePage() {
           ) : (
             <Empty title="Bu projede kanıt bulunamadı">
               Bu sonuç, adayın beceriye sahip olmadığı anlamına gelmez.
-              İncelenen repository içeriği sınırlıdır.
+              İncelenen depo içeriği sınırlıdır.
             </Empty>
           )}
           <Notes title="Analiz sınırlamaları" items={run.limitations} />

@@ -106,12 +106,12 @@ export default function NeedPage() {
             tercihten ayırın.
           </h2>
           <p>
-            <strong>Required / Gerekli</strong>
+            <strong>Gerekli</strong>
             <br />
             İhtiyacın temel teknik beklentileri.
           </p>
           <p>
-            <strong>Preferred / Tercih edilen</strong>
+            <strong>Tercih edilen</strong>
             <br />
             Olması avantaj sağlayan beceriler.
           </p>
@@ -133,7 +133,7 @@ export default function NeedPage() {
               </p>
             </div>
             <Link href="/eslesme" className="button secondary">
-              Eşleşmeye geç →
+              Eşleşmeye geç <span aria-hidden="true">→</span>
             </Link>
           </div>
           {s.data.need.criteria.length ? (

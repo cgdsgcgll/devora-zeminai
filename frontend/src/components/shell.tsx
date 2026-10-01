@@ -45,7 +45,7 @@ export function AppHeader() {
               reset();
           }}
         >
-          Yeni demo
+          Demoyu sıfırla
         </button>
       </div>
     </header>
@@ -66,8 +66,8 @@ export function SessionStatus() {
             <strong>{busy || "Demo yükleniyor…"}</strong>
             {busy.includes("analiz") && (
               <p>
-                Repository okunur ve kanıtlar hazırlanır. Bu işlem birkaç dakika
-                sürebilir. Sayfayı yenilemeden bekleyin.
+                Proje analizi sürüyor. Bu işlem birkaç dakika sürebilir. Sayfayı
+                yenilemeden bekleyin.
               </p>
             )}
           </div>
@@ -101,7 +101,15 @@ export function Steps() {
     <ol className="steps" aria-label="Demo adımları">
       {links.slice(1).map(([href, label], i) => (
         <li key={href}>
-          <Link href={href} aria-current={path === href ? "step" : undefined}>
+          <Link
+            href={href}
+            aria-current={path === href ? "step" : undefined}
+            data-complete={Boolean(
+              (i === 0 && data.run) ||
+              (i === 1 && data.need) ||
+              (i === 2 && data.match),
+            )}
+          >
             <span>
               {(i === 0 && data.run) ||
               (i === 1 && data.need) ||
