@@ -5,6 +5,8 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from app.core.skills import normalize_skill
+from app.core.criteria import CATALOG, CriterionKind
+from app.schemas.profile import ProfileEvidenceItem
 
 
 def utcnow() -> datetime:
@@ -122,12 +124,21 @@ class SkillEvidence(Entity, EvidenceInput):
 
 
 class CriterionInput(Contract):
+    kind: CriterionKind = 'technical_skill'
     skill_key: SkillKey
     skill_label: Name
     priority: Priority
     reason: str | None = None
 
-    _normalize = field_validator('skill_key', mode='before')(normalize_skill)
+    _normalize = field_validator('skill_key', mode='before')(lambda value: value if isinstance(value, str) and value in CATALOG else normalize_skill(value))
+
+    @model_validator(mode='after')
+    def supported_family(self):
+        if self.kind != 'technical_skill' and (self.skill_key not in CATALOG or CATALOG[self.skill_key][0] != self.kind):
+            raise ValueError('Unsupported criterion key for this evidence family.')
+        if self.kind == 'technical_skill' and self.skill_key in CATALOG:
+            raise ValueError('Profile criteria cannot be technical skills.')
+        return self
 
 
 class NeedCriterion(Entity, CriterionInput):
@@ -219,6 +230,8 @@ class AnalysisRun(Contract):
 
 
 class CriterionMatch(Contract):
+    kind: CriterionKind = 'technical_skill'
+    profile_evidence: list[ProfileEvidenceItem] = Field(default_factory=list)
     criterion_id: UUID
     skill_key: SkillKey
     skill_label: str
@@ -238,7 +251,7 @@ class MatchCalculation(Contract):
     gaps: list[str]
     uncertainties: list[str]
     analysis_version: str
-    scoring_version: Literal['evidence-coverage-v0.1', 'evidence-coverage-v0.2'] = 'evidence-coverage-v0.2'
+    scoring_version: Literal['evidence-coverage-v0.1', 'evidence-coverage-v0.2', 'evidence-coverage-v0.3'] = 'evidence-coverage-v0.2'
     matched_criteria: list[CriterionMatch]
     unmatched_criteria: list[CriterionMatch]
 

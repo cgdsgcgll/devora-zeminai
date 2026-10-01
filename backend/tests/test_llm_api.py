@@ -26,7 +26,7 @@ def test_llm_full_api_flow_and_metadata(client, db, monkeypatch, mode):
         name = (payload['text']['format']['name'] if mode == 'openai' else
                 ('project_analysis' if 'evidence' in payload['generationConfig']['responseFormat']['text']['schema']['properties'] else 'need_analysis'))
         output = evidence_draft() if name == 'project_analysis' else {'criteria': [{
-            'skill_key': 'FastAPI', 'skill_label': 'FastAPI', 'priority': 'preferred',
+            'kind': 'technical_skill', 'skill_key': 'FastAPI', 'skill_label': 'FastAPI', 'priority': 'preferred',
             'reason': 'Explicit preference', 'source_excerpt': 'FastAPI'}], 'uncertainties': []}
         return httpx.Response(200, json=(envelope if mode == 'openai' else gemini_envelope)(json.dumps(output)))
     monkeypatch.setattr(settings, 'llm_provider', mode)
@@ -39,7 +39,7 @@ def test_llm_full_api_flow_and_metadata(client, db, monkeypatch, mode):
     assert run['analysis_version'] == 'project-analysis-v0.2'
     need = client.post('/needs', json={'description': 'FastAPI tercih edilir'})
     assert need.status_code == 201, need.text
-    assert need.json()['analysis_version'] == 'need-analysis-v0.2'
+    assert need.json()['analysis_version'] == 'need-analysis-v0.3'
     result = client.post('/matches', json={'candidate_id': cid, 'need_id': need.json()['id']})
     assert result.status_code == 201, result.text
     assert result.json()['score'] == 100

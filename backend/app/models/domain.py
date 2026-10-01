@@ -93,6 +93,7 @@ class NeedCriterion(Identity, Created, Base):
     __table_args__ = (UniqueConstraint('need_id', 'skill_key'),
                       CheckConstraint("priority IN ('required', 'preferred')"))
     need_id: Mapped[UUID] = mapped_column(ForeignKey('organization_needs.id'), index=True)
+    kind: Mapped[str] = mapped_column(String(30), default='technical_skill', server_default='technical_skill')
     skill_key: Mapped[str] = mapped_column(String(64))
     skill_label: Mapped[str] = mapped_column(String(200))
     priority: Mapped[str] = mapped_column(String(20))
@@ -173,6 +174,9 @@ class MatchCriterion(Identity, Base):
     __table_args__ = (UniqueConstraint('match_id', 'criterion_id'),)
     match_id: Mapped[UUID] = mapped_column(ForeignKey('match_results.id'), index=True)
     criterion_id: Mapped[UUID] = mapped_column(ForeignKey('need_criteria.id'))
+    kind: Mapped[str] = mapped_column(String(30), default='technical_skill', server_default='technical_skill')
+    # Immutable snapshots allow edits/deletions without rewriting historical results.
+    profile_evidence: Mapped[list] = mapped_column(JSON, default=list, server_default='[]')
     # Freeze labels/priority so historical explanations remain reproducible.
     skill_key: Mapped[str] = mapped_column(String(64))
     skill_label: Mapped[str] = mapped_column(String(200))

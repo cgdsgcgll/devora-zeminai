@@ -1,6 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 
 from app.schemas.domain import EvidenceStatus, EvidenceStrength, EvidenceType, Priority
+from app.core.criteria import CriterionKind
 
 
 class Structured(BaseModel):
@@ -27,6 +28,7 @@ class ProjectDraft(Structured):
 
 
 class CriterionDraft(Structured):
+    kind: CriterionKind
     skill_key: str
     skill_label: str
     priority: Priority

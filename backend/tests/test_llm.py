@@ -188,7 +188,7 @@ def test_malformed_project_model_output(raw):
 
 def test_need_required_preferred():
     description = 'Python ve FastAPI zorunlu, Docker tercih sebebi.'
-    output = {'criteria': [dict(skill_key=key, skill_label=label, priority=priority,
+    output = {'criteria': [dict(kind='technical_skill', skill_key=key, skill_label=label, priority=priority,
         reason='Explicit requirement', source_excerpt=label) for key, label, priority in [
             ('python', 'Python', 'required'), ('FastAPI', 'FastAPI', 'required'), ('Docker', 'Docker', 'preferred')]],
         'uncertainties': []}
@@ -201,7 +201,7 @@ def test_generic_need_no_invented_stack():
     data = NeedAnalysisInput(need_id=uuid4(), description='Backend geliştirici arıyoruz.')
     valid = LLMNeedAnalyzer(FakeProvider({'criteria': [], 'uncertainties': ['Teknoloji belirtilmedi.']})).analyze_need(data)
     assert valid.criteria == []
-    invented = {'criteria': [dict(skill_key='python', skill_label='Python', priority='required',
+    invented = {'criteria': [dict(kind='technical_skill', skill_key='python', skill_label='Python', priority='required',
         reason='Industry standard', source_excerpt='Backend geliştirici')], 'uncertainties': []}
     with pytest.raises(AppError) as caught:
         LLMNeedAnalyzer(FakeProvider(invented)).analyze_need(data)

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.errors import AppError
 from app.models import domain as m
 from app.schemas import domain as s
+from app.schemas.profile import ProfileEvidenceItem
 from app.services.analysis.interfaces import NeedAnalyzer, SkillAnalyzer, validate_model_output
 from app.services.github.provider import GitHubProvider
 from app.services.matching.scorer import calculate_match
@@ -112,6 +113,7 @@ def analyze_project(db: Session, project_id: UUID, provider: GitHubProvider,
 
 def serialize_match(row: m.MatchResult) -> s.MatchResult:
     details = [s.CriterionMatch(criterion_id=c.criterion_id, skill_key=c.skill_key,
+        kind=c.kind, profile_evidence=c.profile_evidence,
         skill_label=c.skill_label, priority=c.priority, matched=c.matched,
         evidence_ids=[e.evidence_id for e in c.evidence], explanation=c.explanation) for c in row.criteria]
     fields = {name: getattr(row, name) for name in s.MatchResult.model_fields
@@ -140,17 +142,20 @@ def create_match(db: Session, data: s.MatchCreate) -> s.MatchResult:
                 uncertainties.append(f'{project.name}: sonraki analiz tamamlanmadı; son başarılı snapshot kullanıldı.')
         else:
             uncertainties.append(f'{project.name}: tamamlanmış analiz yok; eşleşmeye dahil edilmedi.')
-    if not runs:
+    profiles = db.scalars(select(m.ProfileEvidenceItem).where(m.ProfileEvidenceItem.candidate_id == candidate.id)).all()
+    if not runs and not profiles:
         raise AppError('INSUFFICIENT_PROJECT_DATA', 'Önce en az bir proje için /projects/{id}/analyze çalıştırın.', 409)
     evidence = db.scalars(select(m.SkillEvidence).where(m.SkillEvidence.analysis_run_id.in_([r.id for r in runs]))).all()
     versions = ','.join(sorted({r.analysis_version for r in runs} | {need.analysis_version}))
     result = calculate_match([s.NeedCriterion.model_validate(c) for c in need.criteria],
-                             [s.SkillEvidence.model_validate(e) for e in evidence], versions, uncertainties)
+                             [s.SkillEvidence.model_validate(e) for e in evidence], versions, uncertainties,
+                             [ProfileEvidenceItem.model_validate(p) for p in profiles])
     row = m.MatchResult(**data.model_dump(), **result.model_dump(exclude={'matched_criteria', 'unmatched_criteria'}))
     db.add(row)
     db.flush()
     for criterion in result.matched_criteria + result.unmatched_criteria:
-        item = m.MatchCriterion(match_id=row.id, **criterion.model_dump(exclude={'evidence_ids'}))
+        item = m.MatchCriterion(match_id=row.id, **criterion.model_dump(exclude={'evidence_ids', 'profile_evidence'}),
+            profile_evidence=[p.model_dump(mode='json') for p in criterion.profile_evidence])
         item.evidence = [m.MatchEvidence(evidence_id=eid) for eid in criterion.evidence_ids]
         db.add(item)
     db.commit()

@@ -2,6 +2,7 @@ import ast
 import json
 import re
 import tomllib
+from app.core.criteria import CATALOG, explicit_profile_criteria
 from pathlib import PurePosixPath
 
 from app.schemas.domain import (CriterionInput, EvidenceInput, NeedAnalysisInput,
@@ -97,7 +98,7 @@ class RuleSkillAnalyzer:
 
 
 class RuleNeedAnalyzer:
-    version = 'rules-need-v0.1'
+    version = 'rules-need-v0.3'
     provider = 'rule_based'
     model = None
 
@@ -112,6 +113,10 @@ class RuleNeedAnalyzer:
                 priority = 'preferred' if preferred else 'required'
                 if key not in criteria or priority == 'required':
                     criteria[key] = CriterionInput(skill_key=key, skill_label=LABELS[key], priority=priority)
+        for key, priority in explicit_profile_criteria(text).items():
+            family, label, _ = CATALOG[key]
+            criteria[key] = CriterionInput(kind=family, skill_key=key, skill_label=label, priority=priority,
+                reason='İhtiyaçta açıkça belirtilen deneyim; yetkinlik veya kişilik çıkarımı yapılmadı.')
         return NeedAnalysisResult(criteria=[criteria[k] for k in sorted(criteria)],
             uncertainties=['Sınırlı anahtar kelime analizi; priority cümlecik bazında belirlenir. Kesin öncelikler için açık criteria gönderin.'],
             analysis_version=self.version)
