@@ -14,6 +14,9 @@ from app.services import workflows
 from app.services.analysis.interfaces import NeedAnalyzer, SkillAnalyzer
 from app.services.analysis.factory import need_analyzer, skill_analyzer
 from app.services.github.provider import GitHubProvider
+from app.schemas.profile import ProfileEvidenceCreate, ProfileEvidencePatch, ProfileEvidenceItem
+from app.services import profile
+from fastapi import Response
 
 router = APIRouter(responses={status: {'model': s.ErrorResponse} for status in [400, 404, 409, 422, 500, 502, 503, 504]})
 
@@ -51,6 +54,33 @@ def create_candidate(data: s.CandidateCreate, db: Session = Depends(get_db)):
 @router.get('/candidates/{candidate_id}', response_model=s.Candidate)
 def get_candidate(candidate_id: UUID, db: Session = Depends(get_db)):
     return workflows.get_or_404(db, m.Candidate, candidate_id)
+
+
+@router.post('/candidates/{candidate_id}/profile-evidence', response_model=ProfileEvidenceItem, status_code=201)
+def create_profile(candidate_id: UUID, data: ProfileEvidenceCreate, db: Session = Depends(get_db)):
+    return profile.create(db, candidate_id, data)
+
+
+@router.get('/candidates/{candidate_id}/profile-evidence', response_model=list[ProfileEvidenceItem])
+def list_profile(candidate_id: UUID, db: Session = Depends(get_db)):
+    return profile.list_items(db, candidate_id)
+
+
+@router.get('/profile-evidence/{evidence_id}', response_model=ProfileEvidenceItem)
+def get_profile(evidence_id: UUID, db: Session = Depends(get_db)):
+    return workflows.get_or_404(db, m.ProfileEvidenceItem, evidence_id)
+
+
+@router.patch('/profile-evidence/{evidence_id}', response_model=ProfileEvidenceItem)
+def update_profile(evidence_id: UUID, data: ProfileEvidencePatch, db: Session = Depends(get_db)):
+    return profile.update(db, evidence_id, data)
+
+
+@router.delete('/profile-evidence/{evidence_id}', status_code=204)
+def delete_profile(evidence_id: UUID, db: Session = Depends(get_db)):
+    db.delete(workflows.get_or_404(db, m.ProfileEvidenceItem, evidence_id))
+    db.commit()
+    return Response(status_code=204)
 
 
 @router.post('/candidates/{candidate_id}/projects', response_model=s.Project, status_code=201)
