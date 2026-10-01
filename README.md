@@ -188,7 +188,7 @@ Platformunuza göre environment dosyasını kopyalayın ve sanal ortamı etkinle
 Repo kökündeki `.env` içinde Gemini anahtarınızı yerel olarak tanımlayın; anahtarı Git’e eklemeyin. Anahtarsız deneme için `LLM_PROVIDER=rule_based` seçin. Ardından ortak adımları çalıştırın:
 
 ```bash
-python -m pip install -r backend/requirements.txt
+python -m pip install --upgrade --upgrade-strategy eager -r backend/requirements.txt
 docker compose up -d --wait
 cd backend
 python -m alembic upgrade head
@@ -196,6 +196,15 @@ python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 Swagger’ı açıp MVP akışını izleyin. Sunucuyu durdurduktan sonra aynı ortamda `python -m pytest -q` çalıştırabilirsiniz. Yerel PostgreSQL kullanıyorsanız Compose adımını atlayıp `DATABASE_URL` değerini kendi geliştirme veritabanınıza göre düzenleyin. Uygulama başlangıcı tablo oluşturmaz; migration adımı gereklidir.
+
+Dependency hardening ile FastAPI **0.142.2**, transitif Starlette **1.7.0** ve
+pytest **9.0.3** temiz Python 3.12 ortamında doğrulandı. Starlette doğrudan pinlenmez.
+Mevcut venv'de eski transitif sürümün korunmaması için yukarıdaki `--upgrade-strategy eager`
+önemlidir; tercihen temiz venv kullanın. Kurulumdan sonra doğrulayın:
+
+```bash
+python -c "import fastapi, starlette; from packaging.version import Version; print(fastapi.__version__, starlette.__version__); assert Version(starlette.__version__) >= Version('1.3.1')"
+```
 
 ### Web arayüzünü başlatma
 
@@ -247,7 +256,7 @@ Gemini anahtarı [Google AI Studio](https://aistudio.google.com/apikey) üzerind
 
 **163 backend testi geçti** (CORS ve güvenlik regresyonları dahil). Frontend lint, TypeScript production build ve 7 mantık testiyle kontrol edilir. CORS eklenmeden önceki 131 test PostgreSQL 18.6 üzerinde de doğrulanmıştır.
 
-Kapsam: matching sınır durumları, API oluşturma/okuma akışları, GitHub HTTP mock’ları, evidence semantiği, provider timeout/429/5xx hataları, Gemini istek sözleşmesi, structured output doğrulaması, metadata ve migration upgrade/downgrade ile eski kayıtların korunması. Testler gerçek API anahtarı veya internet gerektirmez. Mevcut Starlette/AnyIO deprecation uyarısı testleri başarısız kılmaz.
+Kapsam: matching sınır durumları, API oluşturma/okuma akışları, GitHub HTTP mock’ları, evidence semantiği, provider timeout/429/5xx hataları, Gemini istek sözleşmesi, structured output doğrulaması, metadata ve migration upgrade/downgrade ile eski kayıtların korunması. Testler gerçek API anahtarı veya internet gerektirmez. Starlette TestClient’ın httpx kullanımına ilişkin deprecation uyarısı testleri başarısız kılmaz.
 
 Etkin sanal ortamla `backend/` içinde:
 
@@ -265,8 +274,8 @@ python -m alembic check
 ## Güvenlik ve Güvenilirlik İlkeleri
 
 **MVP kontrollü yerel demo içindir.** Public deployment öncesinde authentication,
-kayıt sahipliği kontrolleri, abuse/kota koruması ve Python dependency güvenlik
-güncellemeleri gerekir. CORS authentication değildir. Kapsam, bulgular ve
+kayıt sahipliği kontrolleri, abuse/kota koruması ve deployment güvenlik
+kontrolleri gerekir. CORS authentication değildir. Kapsam, bulgular ve
 sınırlar [güvenlik değerlendirmesinde](docs/SECURITY_REVIEW.md) açıklanır.
 
 İstek gövdeleri JSON parse öncesinde 1 MiB ile sınırlıdır; aşımda

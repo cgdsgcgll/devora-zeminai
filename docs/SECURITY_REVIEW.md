@@ -88,7 +88,7 @@ Severity, herkese açık deployment etkisini dikkate alır; yerel demo kapsamı 
 |---|---|---|---|
 | HIGH | Authentication ve kayıt sahipliği/tenant kontrolü yok; herkes kayıt oluşturabilir ve ID'sini bildiği kayıtları okuyabilir | Açık — production blocker | Kimlik doğrulama, sahiplik kontrolleri, izolasyon ve negatif yetki testleri |
 | HIGH | Analiz/ihtiyaç çağrıları rate limit veya kotaya tabi değil; ücret, DB büyümesi ve worker tüketimi mümkün | Açık — production blocker | Gateway rate limit, kimliğe bağlı kota, concurrency ve maliyet bütçesi; in-memory limiter eklenmedi |
-| HIGH | Kurulu Starlette 0.46.2, aşağıdaki HIGH duyurularının sürüm aralığında | Ertelendi — mevcut kod ilgili form/dosya servislerini kullanmıyor | Public deployment öncesi uyumlu FastAPI/Starlette yükseltmesi ve tam dependency taraması; sürüm zorlaması yapılmadı |
+| HIGH | Önceki Starlette 0.46.2 advisory riski | **RESOLVED** — doğrulanan zincir FastAPI 0.142.2 / Starlette 1.7.0 | Temiz kurulum, 163 regresyon testi, aynı OpenAPI ve pip-audit doğrulandı; eski ortamlar yeniden kurulmalı/güncellenmeli |
 | MEDIUM | JSON gövdesi parse öncesi sınırsızdı | Düzeltildi | 1 MiB toplam sınır; streamed/header bypass ve sınır testleri |
 | MEDIUM | Prompt injection / yanıltıcı kaynak yorumuyla kanıt kalitesi etkilenebilir | Kısmen azaltılmış, devam eden risk | Mevcut grounding ve strict validation korunur; insan incelemesi ve adversarial kalite değerlendirmesi gerekir |
 | MEDIUM | Deployment güven sınırları henüz tanımlı değil: TLS, Host/proxy güveni, erişim, retention/backup, secret yönetimi | Açık — production blocker | Yerel loopback demo; public ingress ve operasyon tasarımı ayrı yapılmalı |
@@ -96,32 +96,76 @@ Severity, herkese açık deployment etkisini dikkate alır; yerel demo kapsamı 
 | LOW | Frontend kaynak linki standart dışı GitHub portunu kabul ediyordu | Düzeltildi | Port reddi ve saldırgan URL testleri |
 | LOW | Frontend güvenlik response header'ları eksikti | Düzeltildi | Dört header; çalışan production sunucusunda kontrol |
 | LOW | `.env.production` gibi bazı environment dosyaları ignore kapsamında değildi | Düzeltildi | `.env.*`, yalnız example istisnası; gerçek dosya sızıntısı tespit edilmedi |
-| INFO | `pip-audit` mevcut değil; Python dependency vulnerability taraması tamamlanmadı | Doğrulama sınırı | Ayrı ortam/CI'da çalıştır; pip check sadece bağımlılık uyumluluğunu denetler |
+| MEDIUM | Audit sırasında pytest 8.3.5 için Unix tmpdir advisory bulundu | **RESOLVED** | Yamalı pytest 9.0.3; tüm testler tekrar geçti |
+| INFO | İlk turda eksik olan Python dependency taraması | Tamamlandı | İzole audit venv ile 32 paket, 0 bulgu, 0 atlanan paket |
 
 ## Dependency audit
 
-- `npm audit --json` ve `npm audit --omit=dev`: **0 vulnerability**.
-  Lockfile değiştirilmedi; bu sonuç gelecekteki duyuruları veya tüm saldırı sınıflarını kapsamaz.
-- `pip-audit` Python modülü kurulu değil; `pip-audit -r requirements.txt` çalıştırılamadı.
-  `python -m pip check`: **No broken requirements found**.
-- Resmî Starlette duyuruları ayrıca incelendi. Kurulu sürüm **0.46.2**:
-  - [GHSA-82w8-qh3p-5jfq](https://github.com/Kludex/starlette/security/advisories/GHSA-82w8-qh3p-5jfq): HIGH, urlencoded form parsing DoS; düzeltilmiş sürüm 1.3.1.
-  - [GHSA-wqp7-x3pw-xc5r](https://github.com/Kludex/starlette/security/advisories/GHSA-wqp7-x3pw-xc5r): HIGH, Windows StaticFiles UNC/NTLM riski; düzeltilmiş sürüm 1.1.0.
-  - [GHSA-7f5h-v6xp-fcq8](https://github.com/Kludex/starlette/security/advisories/GHSA-7f5h-v6xp-fcq8): HIGH, FileResponse Range DoS; düzeltilmiş sürüm 0.49.1.
-  - [GHSA-2c2j-9gv5-cj73](https://github.com/encode/starlette/security/advisories/GHSA-2c2j-9gv5-cj73): MEDIUM, multipart büyük dosya parsing DoS; duyuruda patched sürüm 0.47.2.
-  Backend route'larında `request.form`, `Form`, `UploadFile`, `StaticFiles` veya
-  `FileResponse` yok; UI dosyalarını Next.js sunuyor. Dolayısıyla bu duyuruların
-  exploit önkoşullarının mevcut endpointlerde sağlanmadığı kod incelemesinden
-  çıkarılmıştır; paketlerin yamalı olduğu iddia edilmez. FastAPI 0.115.12'nin
-  Starlette sürüm kısıtı nedeniyle transitif paketi tek başına zorla yükseltmek
-  uygun değildir. Bu liste tam Python dependency audit yerine geçmez.
+1 Ekim 2026 dependency hardening turu:
+
+| Paket | Önce | Doğrulanan yeni sürüm |
+|---|---|---|
+| FastAPI | 0.115.12 | **0.142.2** (güncel stabil PyPI sürümü) |
+| Starlette (transitif) | 0.46.2 | **1.7.0** (resolver seçimi) |
+| pytest (test aracı) | 8.3.5 | **9.0.3** (audit bulgusunun yamalı sürümü) |
+
+`requirements.txt` içinde yalnız FastAPI ve pytest pinleri değişti. Starlette doğrudan
+pinlenmedi. Python 3.12.14 üzerinde temiz venv ve pip `--dry-run --ignore-installed`
+çözümlemesiyle uyumluluk kontrol edildi; Pydantic 2.11.4 ve diğer doğrudan pinler korundu.
+FastAPI'nin [resmî tavsiyesi](https://fastapi.tiangolo.com/deployment/versions/#about-starlette)
+Starlette sürümünü FastAPI'ye bırakmaktır. [Sürüm notları](https://fastapi.tiangolo.com/release-notes/#01330)
+1.x desteğini 0.133.0'dan itibaren belirtir. Güncel metadata:
+[FastAPI 0.142.2](https://pypi.org/project/fastapi/0.142.2/) ve
+[Starlette 1.7.0](https://pypi.org/project/starlette/1.7.0/).
+
+Giderilen Starlette duyuruları:
+
+- **GHSA-82w8-qh3p-5jfq / CVE-2026-54283**: urlencoded form DoS;
+  patched **>=1.3.1**, doğrulanan 1.7.0 bu eşiği karşılıyor.
+  [Resmî advisory](https://github.com/Kludex/starlette/security/advisories/GHSA-82w8-qh3p-5jfq).
+- Önceki rapordaki
+  [Windows StaticFiles UNC/NTLM](https://github.com/Kludex/starlette/security/advisories/GHSA-wqp7-x3pw-xc5r),
+  [FileResponse Range DoS](https://github.com/Kludex/starlette/security/advisories/GHSA-7f5h-v6xp-fcq8) ve
+  [multipart parsing DoS](https://github.com/encode/starlette/security/advisories/GHSA-2c2j-9gv5-cj73)
+  için de doğrulanan sürüm yamalı aralıktadır.
+- İlk tam audit, pytest için aynı advisory'yi iki kayıt olarak raporladı:
+  [GHSA-6w46-j5rx-g56g / CVE-2025-71176](https://github.com/advisories/GHSA-6w46-j5rx-g56g).
+  Unix geçici klasör işlemleriyle ilgili bu MEDIUM risk için belirtilen patched
+  9.0.3'e geçildi. Bu test aracı güncellemesi uygulama kodunu değiştirmedi.
+
+Son kontroller:
+
+- `npm audit` ve `npm audit --omit=dev`: **0 vulnerability**.
+- İzole `work/audit-venv` içindeki pip-audit 2.10.1 ile
+  `python -m pip_audit -r backend/requirements.txt`: **32 paket, 0 bulgu, 0 atlanan**.
+  Araç global sisteme veya uygulama venv'ine kurulmadı; `--fix` kullanılmadı.
+- `python -m pip check`: **No broken requirements found**.
+- Python HTTPS istemcisi `files.pythonhosted.org` bağlantısında reset aldığı için
+  resmî PyPI wheel'leri Node HTTPS istemcisiyle indirildi; her dosyanın SHA-256'sı
+  PyPI metadata'sına karşı doğrulandı. Resolver ve temiz kurulum bu yerel havuzla
+  `--no-index --find-links work/hardening-wheels` üzerinden yapıldı. TLS doğrulaması
+  kapatılmadı. Audit resolver'ına da aynı havuz verildi; vulnerability sorguları
+  PyPI üzerinden yapıldı. Geçici ortamlar/raporlar `work/` altında ignore edilir.
+
+**Mevcut venv uyarısı:** FastAPI 0.142.2 metadata'sı `starlette>=0.46.0` ister.
+Dolayısıyla yalnız FastAPI'yi yükseltmek, zaten kurulu eski Starlette'i koruyabilir.
+Temiz venv tercih edin veya aşağıdaki komutu çalıştırıp sürümü doğrulayın:
+
+```bash
+python -m pip install --upgrade --upgrade-strategy eager -r backend/requirements.txt
+python -c "import fastapi, starlette; from packaging.version import Version; print(fastapi.__version__, starlette.__version__); assert Version(starlette.__version__) >= Version('1.3.1')"
+```
+
+Bu sonuç test edilen resolution içindir; requirements tam bir transitive lock değildir.
+Her deployment'ta sürüm/audit kontrolü tekrarlanmalı. Eski paylaşılan venv bu turda
+üzerine yazılmadı; regresyonlar yeni `work/hardening-venv` ortamında çalıştırıldı.
 
 ## Production blockers
 
 1. Authentication, authorization ve tenant/kayıt sahipliği kontrolü.
 2. Kimlik bazlı kota, ingress rate limit/body/header/time limit, eşzamanlı analiz
    sınırı ve provider bütçe/uyarıları. Retry/HTTP timeout toplam işi sınırlamaz.
-3. Python bağımlılıklarının tam taraması, uyumlu güvenlik güncellemeleri ve regresyon testleri.
+3. Dağıtımda doğrulanan dependency zincirinin kullanılması ve sürekli audit/regresyon kontrolleri. Bu turdaki Starlette bulgusu RESOLVED; eski venv ile yayın yapılmamalı.
 4. TLS, açık Host/proxy/origin politikası, ağ erişimi, DB least-privilege hesapları,
    backup/retention, secrets yönetimi ve gözlemlenebilirlik. Örnek DB parolası yalnız local içindir.
 5. Gerçek kullanıcı verisi kullanılacaksa veri silme/saklama ve üçüncü taraf LLM
@@ -162,10 +206,26 @@ python -m alembic check
 ```
 
 **163 pytest testi** geçti (önceki 135 + 28 güvenlik regresyonu).
-Bir mevcut Starlette/AnyIO deprecation uyarısı var. Compileall ve pip check geçti.
+Yeni zincirde Starlette TestClient için httpx kullanımının deprecated olduğuna dair bir uyarı var; testler geçiyor. Runtime HTTP istemcisi veya test kodu bu turda değiştirilmedi. Compileall ve pip check geçti.
 Alembic check, migrate edilmiş izole SQLite demo DB'sinde “No new upgrade operations
 detected” döndü. Bu turda PostgreSQL suite ve canlı Gemini/OpenAI çağrısı tekrarlanmadı.
 
 `git diff --check` başarılı. `git check-ignore` ile `.env`, `.env.production`,
 frontend environment dosyaları ve ignored çalışma çıktıları kontrol edildi;
 example dosyaları ignore edilmez. Secret taraması eşleşme değerlerini loglamaz.
+
+
+## Dependency hardening regresyon kaydı
+
+Yeni ortamda `python -m pytest -q -p no:cacheprovider
+--basetemp=../work/hardening-final-pytest`: **163 passed**. Compileall, pip check
+ve yeni migrate edilmiş izole SQLite DB üzerinde Alembic check başarılı.
+Frontend lint, 7 test ve production build başarılı. Yeni FastAPI'nin ürettiği
+OpenAPI JSON nesnesi `frontend/openapi.json` ile **birebir aynı**.
+Uygulama/AI/matching/migration/frontend kodunda compatibility düzeltmesi gerekmedi.
+
+Gerçek Uvicorn HTTP smoke, yeni venv + izole DB + `rule_based` ile
+`127.0.0.1:8001` üzerinde yapıldı: health 200, candidate/project/need create 201;
+Python/FastAPI/Docker kriterleri, izinli CORS, reddedilen origin ve 1 MiB üstü
+istekte 413 standart envelope/CORS doğrulandı. Canlı Gemini çağrısı yapılmadı.
+`git diff --check` başarılı. Authentication ve rate-limit HIGH bulguları **açık**.
