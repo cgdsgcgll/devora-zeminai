@@ -24,6 +24,7 @@ export function safeSource(value: string): string | undefined {
     const url = new URL(value);
     return url.protocol === "https:" &&
       url.hostname === "github.com" &&
+      !url.port &&
       !url.username &&
       !url.password
       ? url.href

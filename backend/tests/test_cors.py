@@ -1,4 +1,7 @@
 import pytest
+from pydantic import ValidationError
+
+from app.core.config import Settings
 
 
 @pytest.mark.parametrize('origin', ['http://localhost:3000', 'http://127.0.0.1:3000'])
@@ -21,3 +24,17 @@ def test_error_response_has_cors_header(client):
     assert response.status_code == 422
     assert response.headers['access-control-allow-origin'] == 'http://localhost:3000'
     assert response.json()['error']['code'] == 'VALIDATION_ERROR'
+
+
+@pytest.mark.parametrize('origin', ['*', 'https://*.example.com', 'null',
+    'https://user@example.com', 'https://example.com/path', 'https://example.com:99999'])
+def test_cors_configuration_rejects_non_origin_values(origin):
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, cors_origins=[origin])
+
+
+def test_explicit_deployment_origin_and_no_credentials(client):
+    assert Settings(_env_file=None, cors_origins=['https://demo.example.com']).cors_origins == ['https://demo.example.com']
+    response = client.options('/needs', headers={'Origin': 'http://localhost:3000',
+        'Access-Control-Request-Method': 'POST'})
+    assert 'access-control-allow-credentials' not in response.headers

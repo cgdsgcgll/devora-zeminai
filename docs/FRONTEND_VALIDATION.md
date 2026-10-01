@@ -38,3 +38,34 @@ Rule-based parser cümlecik ayırmada sınırlıdır; demo metninde required ve 
 
 Bu bir üretim sertifikasyonu değildir. Canlı Gemini frontend E2E, authentication, deployment ve kesilen uzun işlemlerin otomatik kurtarılması doğrulanmış kapsamın dışındadır. İzole SQLite smoke veritabanı ve ekran görüntüleri `work/` altında ignore edilir.
 Backend durdurularak tarayıcıda `NETWORK_ERROR` mesajı, korunmuş form girdisi ve tekrar deneme olanağı doğrulandı. Ardından yerel backend yeniden başlatıldı. Mobilde Yeni demo aksiyonu erişilebilir kalır.
+
+
+## 1 Ekim 2026 — mikro etkileşim ve güvenlik turu
+
+Production build ve `npm run start -- --hostname 127.0.0.1` ile kontrol edildi:
+
+- 1440×1000 desktop: nav underline normalde scaleX(0), hover'da scaleX(1)
+  ve soldan açılma; ayrılınca sağa kapanma computed style ile doğrulandı.
+  Aktif sayfa çizgisi korunuyor. CTA hareketi -1px, ok hareketi +3px.
+- Formda klavye ile Tab geçişinde görünür solid focus ring; textarea yalnız
+  dikey resize. Tamamlanmış adımlar sakin yeşil, aktif adım daha koyu.
+- Giriş geçişi 260 ms; bitiminde opacity 1. Statik evidence kartları hareket etmiyor.
+  Demo restore sırasında gerçek indeterminate loading ve disabled butonlar görüldü.
+  Sahte yüzde/aşama veya score counter yok.
+- Mevcut gerçek API kayıtları restore edildi; yeni backend middleware ile
+  “Eşleşmeyi Yenile” isteği başarılı, Kanıt Uyumu 80, gerekli kapsam %100,
+  tercih edilen kapsam %0. Yeni canlı AI çağrısı yapılmadı.
+- 390×844 mobil: ihtiyaç formu ve eşleşme ekranı okunabilir; document scrollWidth
+  ve clientWidth 375px (scrollbar hariç), yatay taşma yok. Navigasyon, reset ve
+  CTA görünür; ana aksiyonlar hover'a bağımlı değil. Fiziksel touch cihaz testi yapılmadı.
+- Production DOM'da Next.js development indicator portalı yok.
+- Reduced motion CSS kuralları incelendi: giriş/spinner animation ve transition
+  kapalı, CTA/ok/dekoratif dönüşüm kapalı; aktif/focus underline görünürlüğü
+  korunuyor. Tarayıcı aracında media emulation desteği yok; gerçek sistem
+  reduced-motion açıkken görsel QA bu turda yapılamadı (mevcut tercih false).
+- Güvenlik başlıklarının dört değeri çalışan production HTTP yanıtında kontrol edildi.
+
+Son kalite sonuçları: frontend lint/build başarılı, **7 frontend testi** ve
+**163 backend testi** geçti. `npm audit` (JSON çıktı) ve `npm audit --omit=dev`
+sıfır bulgu; Python audit aracı mevcut değil. Diğer güvenlik kapsamı ve açık
+production engelleri [SECURITY_REVIEW.md](SECURITY_REVIEW.md) dosyasında.

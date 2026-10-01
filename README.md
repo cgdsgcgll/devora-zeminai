@@ -213,7 +213,15 @@ npm run dev
 
 [Web uygulamasını](http://localhost:3000) açın. `/aday`, `/ihtiyac` ve `/eslesme` sayfaları gerçek API’yi kullanır.
 Frontend key içermez; Gemini/OpenAI anahtarları backend’de kalır. Kalite kontrolü için `npm run lint`,
-`npm test` ve `npm run build`; production build’i yerelde çalıştırmak için `npm start` kullanılır.
+`npm test` ve `npm run build` kullanılır. Jüri demosunu geliştirme göstergesi olmadan,
+yalnız yerel arayüzde çalıştırmak için:
+
+```bash
+npm run build
+npm run start -- --hostname 127.0.0.1
+```
+
+Production build modu, uygulamanın production güvenliğine hazır olduğu anlamına gelmez.
 
 ### Environment ayarları
 
@@ -237,7 +245,7 @@ Gemini anahtarı [Google AI Studio](https://aistudio.google.com/apikey) üzerind
 
 ## Testler ve Doğrulama
 
-**135 backend testi geçti** (CORS testleri dahil). Frontend lint, TypeScript production build ve 6 mantık testiyle kontrol edilir. CORS eklenmeden önceki 131 test PostgreSQL 18.6 üzerinde de doğrulanmıştır.
+**163 backend testi geçti** (CORS ve güvenlik regresyonları dahil). Frontend lint, TypeScript production build ve 7 mantık testiyle kontrol edilir. CORS eklenmeden önceki 131 test PostgreSQL 18.6 üzerinde de doğrulanmıştır.
 
 Kapsam: matching sınır durumları, API oluşturma/okuma akışları, GitHub HTTP mock’ları, evidence semantiği, provider timeout/429/5xx hataları, Gemini istek sözleşmesi, structured output doğrulaması, metadata ve migration upgrade/downgrade ile eski kayıtların korunması. Testler gerçek API anahtarı veya internet gerektirmez. Mevcut Starlette/AnyIO deprecation uyarısı testleri başarısız kılmaz.
 
@@ -255,6 +263,14 @@ python -m alembic check
 İsteğe bağlı canlı test: `python scripts/smoke_llm.py`. Seçilen provider’ın key/model ayarı yoksa `SKIPPED` döner; varsa iki gerçek API çağrısı yapar ve ücret doğurabilir. Docker Compose başlatma bu doğrulama ortamında çalıştırılmadı; DB kontrollerinde yerel PostgreSQL kullanıldı.
 
 ## Güvenlik ve Güvenilirlik İlkeleri
+
+**MVP kontrollü yerel demo içindir.** Public deployment öncesinde authentication,
+kayıt sahipliği kontrolleri, abuse/kota koruması ve Python dependency güvenlik
+güncellemeleri gerekir. CORS authentication değildir. Kapsam, bulgular ve
+sınırlar [güvenlik değerlendirmesinde](docs/SECURITY_REVIEW.md) açıklanır.
+
+İstek gövdeleri JSON parse öncesinde 1 MiB ile sınırlıdır; aşımda
+`413 / PAYLOAD_TOO_LARGE` standart hata cevabı döner.
 
 - Repository metni sistem talimatı değil, güvenilmeyen veri olarak gönderilir; dosyalardaki talimatları izlememesi modele açıkça söylenir. Bu, prompt injection’a karşı mutlak garanti değildir.
 - Structured output strict Pydantic ile doğrulanır. Uydurulan path, gönderilmeyen alıntı ve kaynakta desteklenmeyen beceri reddedilir; kaynak URL’leri backend tarafından belirlenir.

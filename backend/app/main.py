@@ -10,9 +10,11 @@ from starlette.exceptions import HTTPException
 from app.api.routes import router
 from app.core.errors import AppError
 from app.core.config import settings
+from app.core.request_limits import RequestSizeLimitMiddleware
 
 logger = logging.getLogger(__name__)
 app = FastAPI(title='ZeminAI', version='0.1.0')
+app.add_middleware(RequestSizeLimitMiddleware)
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins,
                    allow_methods=['GET', 'POST'], allow_headers=['Content-Type'])
 app.include_router(router)

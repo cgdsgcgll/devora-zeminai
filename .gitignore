@@ -1,6 +1,6 @@
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 *.tsbuildinfo
 frontend/next-env.d.ts
 .venv/

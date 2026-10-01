@@ -61,3 +61,19 @@ test("GitHub URL validation prevents unsafe origins and credentials", () => {
   );
   assert.equal(safeSource("javascript:alert(1)"), undefined);
 });
+
+test("evidence links reject unsafe schemes, ports and disguised hosts", () => {
+  for (const url of [
+    "data:text/html,<script>alert(1)</script>",
+    "vbscript:msgbox(1)",
+    "http://github.com/a/b",
+    "https://github.com:8443/a/b",
+    "https://github.com.evil.test/a/b",
+    "https://github.com@evil.test/a/b",
+    "https://token@github.com/a/b",
+    "https://127.0.0.1/a/b",
+  ])
+    assert.equal(safeSource(url), undefined);
+  const source = "https://github.com/owner/repo/blob/abc123/app.py";
+  assert.equal(safeSource(source), source);
+});

@@ -53,7 +53,7 @@ Pydantic’in varsayılan UUID alanları OpenAPI’de optional görünür. Persi
 
 ## Oturum ve güven sınırları
 
-Yalnız candidate/project/need/match/run/evidence ID’leri localStorage’da saklanır; açıklamalar, kaynak dosyaları ve API key’ler saklanmaz. Refresh tamamlanan kayıtları backend’den tekrar okur. “Yeni demo” yalnız tarayıcı seçimini temizler, backend verisini silmez. Bu bir giriş veya yetkilendirme mekanizması değildir.
+Yalnız candidate/project/need/match/run/evidence ID’leri localStorage’da saklanır; açıklamalar, kaynak dosyaları ve API key’ler saklanmaz. Refresh tamamlanan kayıtları backend’den tekrar okur. “Demoyu sıfırla” yalnız tarayıcı seçimini temizler, backend verisini silmez. Bu bir giriş veya yetkilendirme mekanizması değildir.
 
 Uzun analiz sırasında sayfayı yenilemeyin: backend bir job/progress API sağlamaz. Yanıt gelmeden bağlantı kesilirse oluşmuş analizi otomatik bulma veya tekrar isteği tekilleştirme garantisi yoktur. Kalıcı backend veritabanı değişirse eski ID’ler yüklenemeyebilir; arayüz yeniden yükleme/yeni demo seçenekleri sunar.
 
@@ -65,11 +65,24 @@ Kaynak linkleri yalnız HTTPS GitHub URL’leri için açılır ve `noopener nor
 npm run lint
 npm test
 npm run build
-npm start
+npm run start -- --hostname 127.0.0.1
 ```
 
 `npm test` Node’un yerleşik test runner’ıyla API hata ayrıştırma, label semantiği, form validation ve güvenli kaynak linklerini sınar. Ağ veya canlı AI gerekmez. `npm run format` kaynak dosyalarını Prettier ile biçimlendirir.
 
-Backend CORS testleri dahil 135 pytest testi geçmektedir. Canlı Gemini backend smoke testi daha önce ekip tarafından doğrulandı; bu frontend ortamında key/model bulunmadığı için canlı Gemini E2E ayrıca blokludur. Tarayıcı kontrollerinin ayrıntıları [doğrulama kaydında](../docs/FRONTEND_VALIDATION.md) bulunur.
+Backend CORS ve güvenlik testleri dahil 163 pytest testi geçmektedir. Canlı Gemini backend smoke testi daha önce ekip tarafından doğrulandı; bu frontend ortamında key/model bulunmadığı için canlı Gemini E2E ayrıca blokludur. Tarayıcı kontrollerinin ayrıntıları [doğrulama kaydında](../docs/FRONTEND_VALIDATION.md) bulunur.
 
 Authentication, çok kullanıcılı oturum yönetimi, deployment ve background jobs bu MVP kapsamında değildir.
+
+## Demo sunumu ve güvenlik
+
+Jüri demosunda `npm run build` ardından `npm run start -- --hostname 127.0.0.1`
+kullanın. Production modunda Next.js development göstergesi yoktur. Arayüz
+150–260 ms native CSS geçişleri kullanır; `prefers-reduced-motion: reduce`
+giriş/spinner animasyonlarını ve buton hareketlerini kapatır, odak ve aktif
+sayfa işaretlerini korur. Mobil aksiyonlar hover gerektirmez.
+
+Yanıtlarda nosniff, referrer/permissions policy ve iframe koruması vardır.
+Bu başlıklar backend yetkilendirmesi sağlamaz. API yalnız kontrollü yerel demo
+verisiyle kullanılmalıdır; [güvenlik raporundaki](../docs/SECURITY_REVIEW.md)
+auth, quota ve dependency engelleri public deployment öncesi çözülmelidir.
