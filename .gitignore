@@ -1,4 +1,8 @@
 .env
+.env.local
+.env.*.local
+*.tsbuildinfo
+frontend/next-env.d.ts
 .venv/
 __pycache__/
 .pytest_cache/

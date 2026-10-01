@@ -3,14 +3,18 @@ import logging
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.exceptions import HTTPException
 
 from app.api.routes import router
 from app.core.errors import AppError
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 app = FastAPI(title='ZeminAI', version='0.1.0')
+app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins,
+                   allow_methods=['GET', 'POST'], allow_headers=['Content-Type'])
 app.include_router(router)
 
 

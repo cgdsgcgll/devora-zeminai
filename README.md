@@ -2,7 +2,7 @@
 
 **Doğrulanabilir Yetenek ve Akıllı Eşleşme Platformu**
 
-ZeminAI, adayların public GitHub projelerinden gözlemlenebilir teknik kanıtlar çıkarır ve kurum ihtiyaçlarını yapılandırılmış kriterlere dönüştürür. CV ve öz-beyanın yanında incelenebilir kaynaklar sunar; eşleşme sonucunu hangi kriterin hangi proje kanıtıyla karşılandığını göstererek açıklar. Çalışan MVP, FastAPI tabanlı bir backend’dir; demo Swagger üzerinden kullanılabilir.
+ZeminAI, adayların public GitHub projelerinden gözlemlenebilir teknik kanıtlar çıkarır ve kurum ihtiyaçlarını yapılandırılmış kriterlere dönüştürür. CV ve öz-beyanın yanında incelenebilir kaynaklar sunar; eşleşme sonucunu hangi kriterin hangi proje kanıtıyla karşılandığını göstererek açıklar. Çalışan MVP, Next.js arayüzü ve FastAPI backend’i üzerinden aday → proje analizi → kurum ihtiyacı → eşleşme akışını sunar.
 
 ## Problem
 
@@ -49,7 +49,7 @@ Tek backend içinde modüler bir yapı kullanılır; ayrı mikroservisler yoktur
 
 ```mermaid
 flowchart TD
-    U[Swagger / API istemcisi] --> API[FastAPI endpointleri]
+    U[Next.js / Swagger / API istemcisi] --> API[FastAPI endpointleri]
     API --> W[Workflow katmanı]
     W --> G[GitHub fetch]
     G --> S[RepositorySnapshot]
@@ -135,6 +135,7 @@ Kod varsayılanı `rule_based`, `.env.example` demo seçimi `gemini`dir. Modelle
 
 | Katman | Teknoloji |
 |---|---|
+| Frontend | Next.js 16.3.8, React 19.3, TypeScript, App Router |
 | Backend | Python 3.12+, FastAPI, Uvicorn |
 | Validation | Pydantic 2, pydantic-settings |
 | ORM / migration | SQLAlchemy 2, Alembic |
@@ -143,7 +144,7 @@ Kod varsayılanı `rule_based`, `.env.example` demo seçimi `gemini`dir. Modelle
 | Test | pytest, HTTP mock transport |
 | Yerel veritabanı | Docker Compose, PostgreSQL 16 |
 
-Sürümler [requirements.txt](backend/requirements.txt) içinde sabittir. `frontend/` yalnız plan/placeholder içerir; Next.js + TypeScript uygulaması henüz geliştirilmemiştir.
+Sürümler [requirements.txt](backend/requirements.txt) içinde sabittir. Frontend kurulumu ve sözleşme üretimi [frontend/README.md](frontend/README.md) içinde açıklanır.
 
 ## API
 
@@ -196,6 +197,24 @@ python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
 Swagger’ı açıp MVP akışını izleyin. Sunucuyu durdurduktan sonra aynı ortamda `python -m pytest -q` çalıştırabilirsiniz. Yerel PostgreSQL kullanıyorsanız Compose adımını atlayıp `DATABASE_URL` değerini kendi geliştirme veritabanınıza göre düzenleyin. Uygulama başlangıcı tablo oluşturmaz; migration adımı gereklidir.
 
+### Web arayüzünü başlatma
+
+Backend açıkken ayrı terminalde `frontend/` dizinine geçin. Node.js 22.13+ kullanın ve
+`.env.example` dosyasını `.env.local` olarak kopyalayın. Frontend ayarı:
+
+```env
+NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
+```
+
+```bash
+npm install
+npm run dev
+```
+
+[Web uygulamasını](http://localhost:3000) açın. `/aday`, `/ihtiyac` ve `/eslesme` sayfaları gerçek API’yi kullanır.
+Frontend key içermez; Gemini/OpenAI anahtarları backend’de kalır. Kalite kontrolü için `npm run lint`,
+`npm test` ve `npm run build`; production build’i yerelde çalıştırmak için `npm start` kullanılır.
+
 ### Environment ayarları
 
 `.env` repo kökünden otomatik okunur; process environment değişkenleri önceliklidir. Aşağıdaki değerler [.env.example](.env.example) ile uyumludur.
@@ -203,6 +222,7 @@ Swagger’ı açıp MVP akışını izleyin. Sunucuyu durdurduktan sonra aynı o
 | Değişken | Örnek / kullanım |
 |---|---|
 | `DATABASE_URL` | `postgresql+psycopg://postgres:postgres@localhost:5432/zeminai`; yalnız yerel Compose örneği |
+| `CORS_ORIGINS` | `["http://localhost:3000","http://127.0.0.1:3000"]`; izin verilen frontend origin’leri |
 | `GITHUB_TOKEN` | Boş; public repository erişimi için isteğe bağlı |
 | `LLM_PROVIDER` | `gemini` |
 | `GEMINI_API_KEY` | Boş; Gemini için yerel olarak doldurun |
@@ -217,7 +237,7 @@ Gemini anahtarı [Google AI Studio](https://aistudio.google.com/apikey) üzerind
 
 ## Testler ve Doğrulama
 
-**131 tests passed.** Bu dokümantasyon incelemesinde SQLite suite’i yeniden çalıştırıldı. Aynı 131 test PostgreSQL 18.6 üzerinde önceki backend doğrulamasında da geçti.
+**135 backend testi geçti** (CORS testleri dahil). Frontend lint, TypeScript production build ve 6 mantık testiyle kontrol edilir. CORS eklenmeden önceki 131 test PostgreSQL 18.6 üzerinde de doğrulanmıştır.
 
 Kapsam: matching sınır durumları, API oluşturma/okuma akışları, GitHub HTTP mock’ları, evidence semantiği, provider timeout/429/5xx hataları, Gemini istek sözleşmesi, structured output doğrulaması, metadata ve migration upgrade/downgrade ile eski kayıtların korunması. Testler gerçek API anahtarı veya internet gerektirmez. Mevcut Starlette/AnyIO deprecation uyarısı testleri başarısız kılmaz.
 
@@ -247,13 +267,14 @@ python -m alembic check
 
 ### Uygulananlar
 
+- Responsive Next.js web akışı, gerçek API entegrasyonu, loading/error/empty durumları ve ID tabanlı demo devamlılığı.
+
 - Aday, proje, ihtiyaç ve eşleşme oluşturma/okuma; Swagger sözleşmesi.
 - Public GitHub snapshot, kaynaklı evidence, üç analiz modu ve kalıcı analiz kayıtları.
 - Deterministik scoring, kriter/kanıt ilişkileri, PostgreSQL modeli ve Alembic migration’ları.
 
 ### Sonraki Adımlar
 
-- Frontend MVP ve kullanıcı akışları.
 - Authentication/authorization ve tenant izolasyonu.
 - Background jobs, analiz yeniden başlatma ve sürekli profil güncellemeleri.
 - Contributor attribution ve tam GitHub hesap aktarımı.
@@ -271,7 +292,7 @@ backend/
   migrations/              Alembic migration’ları
   tests/                   Otomatik testler
   scripts/                 Canlı smoke testi
-frontend/                  Plan/placeholder
+frontend/                  Next.js App Router, API client ve arayüz testleri
 docs/                      Vizyon ve geliştirme kayıtları
 docker-compose.yml         Yerel PostgreSQL
 .env.example               Secretsız demo ayarları

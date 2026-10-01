@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     )
     database_url: str = 'postgresql+psycopg://postgres:postgres@localhost:5432/zeminai'
     github_token: str = ''
+    cors_origins: list[str] = ['http://localhost:3000', 'http://127.0.0.1:3000']
     llm_api_key: str = ''
     llm_provider: str = 'rule_based'
     llm_model: str = ''
