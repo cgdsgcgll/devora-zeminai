@@ -1,5 +1,5 @@
 export const statusLabels = {
-  observed: "Gözlemlenen kanıt",
+  observed: "Gözlemlenen kullanım",
   declared_only: "Yalnızca beyan",
   not_found: "Kanıt bulunamadı",
 };
@@ -17,6 +17,20 @@ export const typeLabels = {
   user_claim: "Kullanıcı beyanı",
 };
 export const scoreLabel = "Kanıt Uyumu";
+export const technicalScoreExplanation =
+  "Yalnızca gözlemlenen teknik kanıtlar teknik kriter kapsamına dahil edilir. README beyanları teknik eşleşme skoruna dahil edilmez.";
+export function evidenceExplanation(status: keyof typeof statusLabels): string {
+  return status === "declared_only"
+    ? "Bu kayıt yalnızca beyan niteliğindedir. Teknik eşleşme skoruna dahil edilmez."
+    : status === "observed"
+      ? "Erişilebilen proje verisinde teknik kullanım gözlemlendi. Bu, bireysel uzmanlık veya yazarlık doğrulaması değildir."
+      : "Erişilebilen proje verisinde yeterli teknik kullanım kanıtı bulunamadı.";
+}
+export function criterionExplanation(priority: string): string {
+  return priority === "required"
+    ? "İhtiyaç metninde gerekli olarak belirtilen kriter."
+    : "İhtiyaç metninde tercih edilen kriter.";
+}
 export const scoreExplanation =
   "Bu skor, mevcut kurum ihtiyacı ile erişilebilen proje kanıtlarının uyumunu gösterir.";
 export function safeSource(value: string): string | undefined {

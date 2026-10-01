@@ -12,7 +12,7 @@ export const familyLabels = {
   ...categoryLabels,
 } as const;
 export const verificationLabels = {
-  declared_only: "Beyan",
+  declared_only: "Yalnızca beyan",
   linked: "Kaynak bağlantısı mevcut",
   verified: "Doğrulanmış",
 } as const;
@@ -55,7 +55,7 @@ export const outputLabels = {
 } as const;
 export const provenanceLabels: Record<string, string> = {
   ...verificationLabels,
-  observed: "Gözlemlenen repo kanıtı",
+  observed: "Gözlemlenen kullanım",
   not_found: "Kanıt bulunamadı",
 };
 export const sourceLabels: Record<string, string> = {

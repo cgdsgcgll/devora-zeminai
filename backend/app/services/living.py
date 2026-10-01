@@ -63,7 +63,7 @@ def gap_items(result):
         items.append(s.GapItem(criterion_id=c.criterion_id, label=c.skill_label, priority=c.priority,
             state='strength' if c.matched else 'required_gap' if c.priority == 'required' else 'preferred_gap',
             explanation='Bu ihtiyaç kriterini destekleyen kayıt bulundu.' if c.matched else
-                f'Mevcut profil verilerinde {c.skill_label} kriterine ilişkin yeterli kanıt bulunamadı. Bu, becerinin olmadığı anlamına gelmez.',
+                c.explanation + ' Bu, becerinin olmadığı anlamına gelmez.',
             next_step=None if c.matched else
                 f'Varsa {c.skill_label} kriterini destekleyen gerçek bir projeyi ekleyip analiz edebilirsiniz.' if technical else
                 f'Varsa ilgili {FAMILIES.get(c.kind, "deneyim")} kaydınızı ve kaynak bağlantısını profilinize ekleyebilirsiniz.'))

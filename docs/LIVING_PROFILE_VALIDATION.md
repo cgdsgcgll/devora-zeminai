@@ -75,3 +75,36 @@ Yeni regresyonlar: global ilk/ikinci/boş sayfa ve has_more; eşit skorda requir
 Bu düzeltmenin backend kalite kapısı: tam SQLite suite **225 passed**; PostgreSQL'de `tests/test_living.py` **20 passed**. Compileall, pip check ve gerçek PostgreSQL üzerinde Alembic check başarılı. Önceki 220 PostgreSQL tam suite sonucu önceki fazın kaydıdır; bu düzeltmede tam PostgreSQL suite tekrar çalıştırılmadı.
 
 Frontend kalite kapısı: `npm run lint`, `npm test` (**13 passed**) ve `npm run build` başarılı. İlk lint CLI denemeleri çıktı üretmeden bekledi; aynı yapılandırmalı programatik ESLint temizdi. Standart `npm run lint`, yalnız o süreçte `NODE_DISABLE_COMPILE_CACHE=1` ile tekrar çalıştırılıp exit 0 verdi; proje lint kuralları veya bağımlılıkları değiştirilmedi. `git diff --check` başarılı. Yeni feature, migration veya frontend davranış değişikliği yok; mevcut commitler korundu, push yapılmadı.
+
+## Beyan / gözlemlenen kullanım açıklığı — 2026-10-01
+
+Kullanıcının bildirdiği başarılı canlı Gemini senaryosunda OSPF ve Cisco Packet Tracer README kayıtları `declared_only / weak`, teknik kriterler ise sırasıyla required ve preferred idi. Teknik kriterlerin yalnız observed kanıtla karşılanması nedeniyle 0/100 doğruydu. Bu görevde canlı API çağrısı tekrarlanmadı.
+
+Arayüz başlığı artık “Beceri sinyalleri ve kanıtlar”. Durumlar “Yalnızca beyan”, “Gözlemlenen kullanım”, “Kaynak bağlantısı mevcut” ve “Doğrulanmış” olarak ayrılır. Teknik beyan kartlarında skor dışı olma açıklaması tooltip dışında görünür. Profil beyanları için bu teknik dışlama genellenmez: ilgili hackathon kriterini profil kaydı karşılayabilir.
+
+Yeni hesaplanan eşleşmelerde aynı canonical skill için yalnız beyan varsa “İlgili beyan bulundu ancak eşleşme için yeterli teknik kullanım kanıtı bulunamadı” açıklaması gösterilir. Hiç ilgili kayıt yoksa mevcut no-evidence açıklaması korunur. Kanıt boşlukları aynı açıklamayı kullanır. Skor, coverage, evidence IDs ve eşleşme koşulları değişmedi. Eski kaydedilmiş eşleşmeler yeniden yazılmaz; yeni açıklama için eşleşme yenilenmelidir.
+
+Modelin İngilizce reason metnini çevirmek yerine evidence status ve criterion priority alanlarından Türkçe sunum şablonları üretilir. Kaynak alıntısı olduğu gibi gösterilir, kayıtlı model metni değiştirilmez. Yeni LLM çağrısı eklenmedi.
+
+### Çok kaynaklı senaryo
+
+Canlı gözleme dayanan, regresyon testiyle doğrulanan genişletilmiş senaryo:
+
+| Kaynak / kriter | Durum | Sonuç |
+| --- | --- | --- |
+| README OSPF / OSPF required | declared_only | Karşılanmaz |
+| README Cisco Packet Tracer / Packet Tracer preferred | declared_only | Karşılanmaz |
+| Profil hackathon kaydı / Hackathon preferred | İlgili profil deneyimi | Karşılanır |
+
+Required kapsamı 0/1, preferred kapsamı 1/2: `100 × (0.80 × 0 + 0.20 × 0.5) = 10`. Hackathon kaydı yoksa skor 0'dır. README mention, observed evidence değildir; farklı kanıt aileleri birbirinin yerine geçmez. Eklenen teknik beyanlar skoru artırmaz.
+
+### Kalite kapısı
+
+- Backend: **249 passed**; yeni dört regresyon beyan/no-evidence ayrımı, observed önceliği, alakasız beyan ve çok kaynaklı 80/20 sonucunu kapsar.
+- PostgreSQL: `test_evidence_presentation.py`, `test_profile_matching.py`, `test_living.py`: **36 passed**.
+- Compileall, pip check, PostgreSQL alembic check: başarılı. Mevcut TestClient/httpx deprecation uyarısı sürüyor.
+- Frontend lint, **16 test**, production build: başarılı. Gerçek kart render testi İngilizce reason yerine Türkçe açıklamayı, görünür skor dışlama metnini ve özgün kaynak alıntısının korunmasını doğrular.
+- `npm audit`: **0 vulnerabilities**.
+- `git diff --check`: başarılı.
+
+Auth ve rate-limit production blocker durumları değişmedi. Push yapılmadı.

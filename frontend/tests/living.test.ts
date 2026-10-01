@@ -41,5 +41,5 @@ test("portfolio outputs and repository observations retain distinct provenance l
   assert.equal(outputLabels.article, "Teknik makale");
   assert.notEqual(provenanceLabels.observed, provenanceLabels.verified);
   assert.notEqual(provenanceLabels.linked, provenanceLabels.verified);
-  assert.ok(provenanceLabels.observed.includes("repo"));
+  assert.equal(provenanceLabels.observed, "Gözlemlenen kullanım");
 });

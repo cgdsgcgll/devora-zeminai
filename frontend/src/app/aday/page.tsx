@@ -206,7 +206,7 @@ export default function CandidatePage() {
           <div className="section-heading horizontal">
             <div>
               <p className="eyebrow">ANALİZ SONUCU</p>
-              <h2>Tespit edilen beceriler</h2>
+              <h2>Beceri sinyalleri ve kanıtlar</h2>
               <p className="muted">
                 {evidence.length} kanıt kaydı · {run.provider || "Analiz"}{" "}
                 {run.model && ` / ${run.model}`}
