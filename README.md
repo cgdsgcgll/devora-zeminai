@@ -4,7 +4,7 @@ Zemin360 kapsamında doğrulanabilir proje kanıtları ve açıklanabilir ihtiya
 Başlangıç deposu yalnızca README içeriyordu (`main`, `2909e32acd8217e5c5a149f17ad572f66df741ea`).
 Orijinal ürün vizyonu değiştirilmeden [docs/VISION.md](docs/VISION.md) içinde korunmuştur.
 İkinci turda önceki backend bu çalışma klasörüne aktarılmıştır; klasör başlangıçta yalnızca boş `.git` içeriyordu.
-Mevcut sürüm: scoring v0.2 + seçilebilir rule_based/OpenAI analiz. Ayrıntılar: [LLM raporu](docs/LLM_IMPLEMENTATION_REPORT.md).
+Mevcut sürüm: scoring v0.2 + seçilebilir rule_based/OpenAI/Gemini analiz. Ayrıntılar: [LLM raporu](docs/LLM_IMPLEMENTATION_REPORT.md).
 
 ## Mevcut teknoloji ve yapı
 
@@ -20,7 +20,7 @@ backend/app/models/              İlişkisel SQLAlchemy modelleri
 backend/app/schemas/             Pydantic ortak veri sözleşmesi
 backend/app/services/github/     Sınırlı public GitHub okuyucusu
 backend/app/services/analysis/   Sağlayıcı arayüzleri ve sınırlı kural tabanlı analiz
-backend/app/services/llm/        Provider protokolü ve OpenAI Responses REST adapter
+backend/app/services/llm/        Provider protokolü, OpenAI ve Gemini REST adapter
 backend/app/services/matching/   Saf/deterministik skor fonksiyonu
 backend/app/services/workflows.py Kayıt ve analiz akışları
 backend/migrations/              Sürümlü Alembic şeması
@@ -72,12 +72,14 @@ Docker komutunu atlayın. Uygulama başlangıcı tablo oluşturmaz; migration ko
 | DATABASE_URL | `postgresql+psycopg://postgres:postgres@localhost:5432/zeminai` yerel Compose örneği |
 | GITHUB_TOKEN | İsteğe bağlı GitHub token; token ile erişilse bile private repo reddedilir |
 | LLM_API_KEY | OpenAI modunda gerekli; rule_based modunda kullanılmaz |
-| LLM_PROVIDER | `rule_based` (varsayılan) veya `openai`; bilinmeyen değer analizde kontrollü hata verir |
+| LLM_PROVIDER | `rule_based` (varsayılan), `openai` veya `gemini`; bilinmeyen değer analizde kontrollü hata verir |
 | LLM_MODEL | OpenAI modunda gerekli; model kodda sabitlenmez |
+| GEMINI_API_KEY | Gemini modunda gerekli; yalnızca sunucuda tutulur |
+| GEMINI_MODEL | Gemini modunda gerekli; model kodda sabitlenmez |
 | LLM_TIMEOUT_SECONDS | HTTP timeout: 30 saniye; her deneme için geçerli |
 | LLM_MAX_RETRIES | Geçici HTTP/network hatalarında ek deneme sayısı; 0–2, varsayılan 2 |
 | LLM_MAX_INPUT_BYTES | Serialize edilmiş kullanıcı bağlamı UTF-8 sınırı: 24000 bayt |
-| LLM_MAX_OUTPUT_TOKENS | OpenAI çıktı token sınırı: 4000 |
+| LLM_MAX_OUTPUT_TOKENS | OpenAI/Gemini çıktı token sınırı: 4000 |
 
 Repo kökündeki `.env` otomatik okunur. Ortam değişkenleri önceliklidir. `.env` Git dışında tutulur.
 Compose parolası yalnızca yerel geliştirme örneğidir ve port sadece loopback üzerinde açılır.
@@ -167,6 +169,12 @@ Tekrarlanan beceri kriterleri reddedilir. Açık liste boşsa doğal dil analizi
 - Doğal dil analizinde `tercih/optional/preferred` bulunan cümlecikler preferred, diğer eşleşmeler required olur.
   Basit olumsuz ifadeler atlanır; karmaşık dil/olumsuzluk/öncelik çözümü yoktur. Açık criteria kullanımı önerilir.
 
+### Supported analysis modes
+
+- `rule_based`
+- `openai`
+- `gemini`
+
 ### OpenAI analizi
 
 Yerel geliştirme (anahtar gerektirmez):
@@ -194,6 +202,40 @@ Sözleşme [resmi Structured Outputs belgesine](https://developers.openai.com/ap
 `openai` seçiliyken key/model eksikse uygulama açılır, analiz çağrısı `LLM_NOT_CONFIGURED` döner;
 sessiz rule-based fallback **yoktur**. Açık `criteria` ile oluşturulan ihtiyaçlar LLM çağırmaz.
 Hatalı provider, key ve model ayarları analiz run kaydında failed olarak izlenebilir.
+
+### Gemini analizi
+
+Repo kökündeki ignore edilen `.env` dosyasında:
+
+```env
+LLM_PROVIDER=gemini
+GEMINI_API_KEY=
+GEMINI_MODEL=
+LLM_TIMEOUT_SECONDS=30
+LLM_MAX_RETRIES=2
+LLM_MAX_INPUT_BYTES=24000
+LLM_MAX_OUTPUT_TOKENS=4000
+```
+
+[Google AI Studio](https://aistudio.google.com/apikey) üzerinden API key oluşturup
+`GEMINI_API_KEY` değerini yerel olarak doldurun ([resmi anahtar kılavuzu](https://ai.google.dev/gemini-api/docs/api-key)).
+`GEMINI_MODEL` için hesabınızda erişilebilir structured output destekli model kimliğini yazın;
+kodun varsayılan modeli yoktur. Key/model eksikse `LLM_NOT_CONFIGURED` döner; fallback yapılmaz.
+
+Resmi Python SDK `google-genai` Pydantic destekler; bu projede mevcut `httpx` transport/retry yapısını
+korumak için tek bir [generateContent REST adaptörü](https://ai.google.dev/api/generate-content) kullanılır.
+Yeni bağımlılık eklenmedi. Key URL parametresi yerine `x-goog-api-key` header'ında gönderilir.
+`generationConfig.responseFormat.text` içinde `mimeType=application/json` ve ortak Pydantic modellerinin
+JSON Schema çıktısı gönderilir. [Structured output](https://ai.google.dev/gemini-api/docs/generate-content/structured-output)
+yanıtı JSON olarak okunur, ardından mevcut strict Pydantic ve kaynak doğrulamasından geçer;
+markdown/regex ile JSON onarımı yapılmaz. Tamamlanmamış veya hatalı çıktı reddedilir.
+
+1 Ekim 2026 kontrolünde resmi [fiyatlandırma tablosu](https://ai.google.dev/gemini-api/docs/pricing)
+Gemini 2.5 Flash ve Flash-Lite standard metin giriş/çıkışında Free Tier gösteriyor.
+Bu bir model varsayılanı veya ücretsiz erişim garantisi değildir: hesap/proje erişimi, modeller ve limitler
+Google tarafından değiştirilebilir. Demo öncesi AI Studio'daki erişim ve kotayı kontrol edin.
+
+### Ortak LLM analiz akışı
 
 Project akışı: GitHub snapshot → sınırlı LLM context → strict yapılandırılmış çıktı → Pydantic doğrulaması →
 kaynak/path/alinti kontrolü → domain evidence → DB. Snapshot analiz hatasında da korunur.
@@ -229,7 +271,7 @@ Gerekli migration: `python -m alembic upgrade head` (`6b02_llm_metadata`). Skor 
 python scripts/smoke_llm.py
 ```
 
-Key/model/OpenAI modu yoksa `SKIPPED` döner. Mevcutsa iki canlı çağrı yapar; ücret doğurabilir.
+Seçilen OpenAI/Gemini provider için key/model yoksa `SKIPPED` döner. Mevcutsa iki canlı çağrı yapar; ücret doğurabilir.
 Unit testler gerçek API anahtarı veya internet gerektirmez. Bu teslimde canlı LLM doğrulaması yapılmadı.
 
 ### GitHub sınırları
@@ -319,7 +361,7 @@ python -m pytest -q
 - PostgreSQL modeli, Alembic migration, yerel PostgreSQL Compose servisi.
 - Bounded public GitHub fetch; commit referanslı snapshot ve kanıt saklama.
 - Sınırlı kural tabanlı proje/ihtiyaç analizi; provider-independent LLM arayüzü.
-- OpenAI Responses adapter ve project/need LLM analyzer'ları; mock HTTP ile doğrulandı, canlı API henüz doğrulanmadı.
+- OpenAI Responses ve Gemini generateContent adapter; ortak project/need LLM analyzer'ları; mock HTTP ile doğrulandı, canlı API henüz doğrulanmadı.
 - Pydantic strict çıktı ve kaynak/alıntı doğrulaması; normalizasyon, timeout/retry ve kontrollü hatalar.
 - Deterministik, açıklanabilir ve kalıcı matching; criterion/evidence ilişkileri.
 - Standart hatalar, analysis run kayıtları ve DB health check.

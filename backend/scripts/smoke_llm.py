@@ -1,4 +1,4 @@
-"""Optional paid live smoke test: run from backend with python scripts/smoke_llm.py."""
+"""Optional live smoke test (provider charges may apply): run from backend with python scripts/smoke_llm.py."""
 import sys
 from pathlib import Path
 from uuid import uuid4
@@ -12,8 +12,12 @@ from app.services.analysis.factory import need_analyzer, skill_analyzer
 
 
 def main() -> int:
-    if settings.llm_provider != 'openai' or not settings.llm_api_key or not settings.llm_model:
-        print('SKIPPED: Set LLM_PROVIDER=openai, LLM_MODEL and LLM_API_KEY for the optional live test.')
+    configured = {
+        'openai': bool(settings.llm_api_key.strip() and settings.llm_model.strip()),
+        'gemini': bool(settings.gemini_api_key.strip() and settings.gemini_model.strip()),
+    }
+    if not configured.get(settings.llm_provider, False):
+        print('SKIPPED: Select openai with LLM_API_KEY/LLM_MODEL or gemini with GEMINI_API_KEY/GEMINI_MODEL.')
         return 0
     snapshot = SnapshotData(repository_url='https://github.com/example/smoke', default_branch='main', commit_sha='a'*40,
         readme='FastAPI sample', languages={'Python': 60}, files=[SnapshotFile(path='app.py', sha='b'*40,

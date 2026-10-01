@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     llm_api_key: str = ''
     llm_provider: str = 'rule_based'
     llm_model: str = ''
+    gemini_api_key: str = ''
+    gemini_model: str = ''
     llm_timeout_seconds: float = Field(default=30, gt=0, le=300)
     llm_max_retries: int = Field(default=2, ge=0, le=2)
     llm_max_input_bytes: int = Field(default=24000, ge=8000, le=100000)
