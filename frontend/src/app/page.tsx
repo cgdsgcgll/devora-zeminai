@@ -4,25 +4,28 @@ export default function Home() {
     <>
       <section className="hero">
         <div>
-          <p className="eyebrow">KANIT → BECERİ → KRİTER → EŞLEŞME</p>
+          <p className="eyebrow">ZEMİNAI / YAŞAYAN YETENEK PROFİLİ</p>
           <h1>
-            Yetenek beyanının
+            Yaptıklarınız
             <br />
-            ötesine bakın.
+            görünür olsun.
           </h1>
           <p className="hero-subtitle">
-            Doğrulanabilir Yetenek ve
-            <br />
-            Akıllı Eşleşme Platformu
+            Her deneyimin bir yeri. Her eşleşmenin bir dayanağı.
           </p>
           <p className="lead">
             Ne ürettiğinizi, ne öğrendiğinizi ve nerelerde katkı verdiğinizi
             zaman içinde görünür kılın. Kurum ihtiyaçlarıyla uyumu, her kriterin
             dayanağını görerek değerlendirin.
           </p>
-          <Link className="button" href="/aday">
-            Demoyu başlat <span aria-hidden="true">↗</span>
-          </Link>
+          <div className="hero-actions">
+            <Link className="button" href="/aday">
+              Profilini oluştur <span aria-hidden="true">→</span>
+            </Link>
+            <Link className="button secondary" href="/ihtiyac">
+              Kurum ihtiyacını tanımla
+            </Link>
+          </div>
           <p className="small">
             GitHub teknik kanıtları · Eğitim · Sertifika · Hackathon · Topluluk
           </p>
@@ -32,8 +35,8 @@ export default function Home() {
           aria-label="Kaynak kanıtından açıklanabilir eşleşmeye giden kavramsal akış"
         >
           <div className="diagram-top">
-            <span className="eyebrow">DEĞERLENDİRMENİN TEMELİ</span>
-            <span aria-hidden="true">↗</span>
+            <span className="eyebrow">BİLGİDEN DAYANAĞA</span>
+            <span className="badge">Nasıl çalışır?</span>
           </div>
           <div className="diagram-row">
             <span className="diagram-number">01</span>

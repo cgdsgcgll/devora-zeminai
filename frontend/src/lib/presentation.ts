@@ -17,6 +17,26 @@ export const typeLabels = {
   user_claim: "Kullanıcı beyanı",
 };
 export const scoreLabel = "Kanıt Uyumu";
+export function actionSuccess(label: string): string {
+  const messages: Record<string, string> = {
+    "Aday oluşturuluyor…":
+      "Aday kaydedildi. Şimdi proje veya deneyim ekleyebilirsiniz.",
+    "Proje oluşturuluyor…":
+      "Proje kaydedildi. Kanıtları incelemek için projeyi analiz edin.",
+    "Proje analiz ediliyor…":
+      "Proje analizi tamamlandı. Beceri sinyalleri ve kanıtlar hazır.",
+    "İhtiyaç kriterleri hazırlanıyor…":
+      "İhtiyaç yapılandırıldı. Eşleşmeden önce kriterleri inceleyebilirsiniz.",
+    "Kanıta dayalı eşleşme hesaplanıyor…":
+      "Eşleşme hesaplandı. Kriterleri ve dayanaklarını aşağıda inceleyebilirsiniz.",
+    "Profil kaydı kaydediliyor…":
+      "Deneyim kaydedildi. Güncel sonuç için eşleşmeyi yeniden hesaplayın.",
+    "Profil kaydı siliniyor…":
+      "Deneyim silindi. Önceki eşleşme kayıtları korundu.",
+    "Takım kapsamı hesaplanıyor…": "Takımın kriter kapsamı hesaplandı.",
+  };
+  return messages[label] || "İşlem tamamlandı. Güncel sonuçlar hazır.";
+}
 export const technicalScoreExplanation =
   "Yalnızca gözlemlenen teknik kanıtlar teknik kriter kapsamına dahil edilir. README beyanları teknik eşleşme skoruna dahil edilmez.";
 export function evidenceExplanation(status: keyof typeof statusLabels): string {

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { api, userError, type Model } from "@/lib/api/client";
 import { useSession } from "@/components/session";
 import { PageHeader, Notes } from "@/components/ui";
+import { LoadingState } from "@/components/feedback";
 import { sourceLabels, provenanceLabels } from "@/lib/profile";
 
 function Sources({ items }: { items: Model<"EvidenceReference">[] }) {
@@ -61,7 +62,7 @@ function DiscoveryView({
       <div className="view-switch">
         <button
           className="button secondary"
-          disabled={busy}
+          disabled={busy || (!data && !error)}
           onClick={() => {
             setRetry((v) => v + 1);
             setTeam(undefined);
@@ -91,7 +92,7 @@ function DiscoveryView({
         </p>
       )}
       {!data && !error && (
-        <p role="status">Adayların kanıt kapsamı yükleniyor…</p>
+        <LoadingState label="Adayların kanıt kapsamı yükleniyor…" />
       )}
       {data && (
         <>

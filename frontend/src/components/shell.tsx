@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "./session";
+import { SuccessNotice } from "./feedback";
 
 const links = [
   ["/", "Ana sayfa"],
@@ -78,7 +79,15 @@ export function AppHeader() {
   );
 }
 export function SessionStatus() {
-  const { ready, busy, error, restore, storageWarning } = useSession();
+  const {
+    ready,
+    busy,
+    error,
+    restore,
+    storageWarning,
+    success,
+    dismissSuccess,
+  } = useSession();
   const errorRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (error) errorRef.current?.focus();
@@ -86,7 +95,11 @@ export function SessionStatus() {
   return (
     <>
       {(!ready || busy) && (
-        <div className="loading" role="status">
+        <div
+          className="loading operation-status"
+          role="status"
+          aria-live="polite"
+        >
           <span className="spinner" aria-hidden="true" />
           <div>
             <strong>{busy || "Demo yükleniyor…"}</strong>
@@ -97,6 +110,11 @@ export function SessionStatus() {
               </p>
             )}
           </div>
+        </div>
+      )}
+      {success && !busy && !error && (
+        <div className="feedback-dock">
+          <SuccessNotice message={success} onDismiss={dismissSuccess} />
         </div>
       )}
       {error && (

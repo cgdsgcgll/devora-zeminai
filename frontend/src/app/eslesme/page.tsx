@@ -12,7 +12,7 @@ export default function MatchPage() {
         Bir puanla yetinmeyin. Hangi beklentinin hangi kaynakla karşılandığını
         inceleyin.
       </PageHeader>
-      {!candidate ? (
+      {!s.ready ? null : !candidate ? (
         <Empty
           title="Önce aday profilini hazırlayın"
           href="/aday"
@@ -57,7 +57,11 @@ export default function MatchPage() {
               )
             }
           >
-            {match ? "Eşleşmeyi Yenile" : "Eşleşmeyi Hesapla"}{" "}
+            {s.busy
+              ? "Eşleşme hesaplanıyor…"
+              : match
+                ? "Eşleşmeyi yenile"
+                : "Eşleşmeyi hesapla"}{" "}
             <span aria-hidden="true">↗</span>
           </button>
         </section>

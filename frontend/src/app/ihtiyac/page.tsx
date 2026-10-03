@@ -95,7 +95,8 @@ export default function NeedPage() {
               rows={3}
             />
             <button className="button" disabled={!s.ready || !!s.busy}>
-              İhtiyacı Yapılandır <span aria-hidden="true">↗</span>
+              {s.busy ? "İhtiyaç yapılandırılıyor…" : "İhtiyacı yapılandır"}{" "}
+              <span aria-hidden="true">↗</span>
             </button>
           </form>
         </section>

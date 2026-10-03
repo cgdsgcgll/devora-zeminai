@@ -19,6 +19,7 @@ import {
   type Evidence,
   type Model,
 } from "@/lib/api/client";
+import { actionSuccess } from "@/lib/presentation";
 
 type IDs = {
   candidate?: string;
@@ -43,6 +44,8 @@ type Session = {
   ready: boolean;
   busy: string;
   error: string;
+  success: string;
+  dismissSuccess: () => void;
   storageWarning: boolean;
   act: (label: string, task: () => Promise<void>) => Promise<void>;
   saveCandidate: (v: Candidate) => void;
@@ -60,6 +63,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [storageWarning, setStorageWarning] = useState(false);
   const ids = useRef<IDs>({});
   const locked = useRef(false);
@@ -125,8 +129,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     locked.current = true;
     setBusy(label);
     setError("");
+    setSuccess("");
     try {
       await task();
+      setSuccess(actionSuccess(label));
     } catch (e) {
       setError(`${userError(e)}${e instanceof ApiError ? ` (${e.code})` : ""}`);
     } finally {
@@ -141,6 +147,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         ready,
         busy,
         error,
+        success,
+        dismissSuccess: () => setSuccess(""),
         storageWarning,
         act,
         restore,
@@ -183,6 +191,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           persist({});
           setData(empty);
           setError("");
+          setSuccess(
+            "Demo seçimi temizlendi. Yeni bir akış başlatabilirsiniz. Kaydedilmiş veriler silinmedi.",
+          );
         },
       }}
     >

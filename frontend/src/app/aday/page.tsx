@@ -45,11 +45,6 @@ export default function CandidatePage() {
   }
   return (
     <>
-      <p>
-        <Link href="/profil">
-          Profil özeti, zaman çizelgesi ve kanıt pasaportu →
-        </Link>
-      </p>
       <PageHeader
         step="01 / ADAY & PROFİL"
         title="Üretiminizi ve gelişiminizi görünür kılın."
@@ -57,6 +52,19 @@ export default function CandidatePage() {
         Projelerinizi, öğrendiklerinizi ve katkılarınızı dayanaklarıyla bir
         araya getirin.
       </PageHeader>
+      {candidate && (
+        <nav className="action-bar" aria-label="Profil işlemleri">
+          <a className="button" href="#experiences">
+            + Deneyim ekle
+          </a>
+          <Link className="button secondary" href="/profil">
+            Yaşayan profili görüntüle →
+          </Link>
+          <span className="small">
+            Hackathon, eğitim, sertifika ve daha fazlası
+          </span>
+        </nav>
+      )}
       <div className="workspace">
         <div className="stack">
           {validation && (
@@ -90,7 +98,9 @@ export default function CandidatePage() {
                   aria-describedby={validation ? "form-error" : undefined}
                 />
                 <button className="button" disabled={disabled}>
-                  Adayı Oluştur
+                  {s.busy === "Aday oluşturuluyor…"
+                    ? "Oluşturuluyor…"
+                    : "Adayı oluştur"}
                 </button>
               </form>
             )}
@@ -116,7 +126,11 @@ export default function CandidatePage() {
                     })
                   }
                 >
-                  {run ? "Projeyi Yeniden Analiz Et" : "Projeyi Analiz Et"}{" "}
+                  {s.busy === "Proje analiz ediliyor…"
+                    ? "Analiz ediliyor…"
+                    : run
+                      ? "Projeyi yeniden analiz et"
+                      : "Projeyi analiz et"}{" "}
                   <span aria-hidden="true">↗</span>
                 </button>
               </>
@@ -171,7 +185,9 @@ export default function CandidatePage() {
                   Yalnızca herkese açık GitHub depoları analiz edilebilir.
                 </p>
                 <button className="button" disabled={disabled}>
-                  Projeyi Kaydet
+                  {s.busy === "Proje oluşturuluyor…"
+                    ? "Kaydediliyor…"
+                    : "Projeyi kaydet"}
                 </button>
               </form>
             )}
@@ -196,10 +212,7 @@ export default function CandidatePage() {
         </aside>
       </div>
       {candidate && (
-        <details className="result-section">
-          <summary>Gelişim & Deneyim kayıtlarını düzenle</summary>
-          <ProfilePanel key={candidate.id} candidateId={candidate.id} />
-        </details>
+        <ProfilePanel key={candidate.id} candidateId={candidate.id} />
       )}
       {run && (
         <section className="result-section">

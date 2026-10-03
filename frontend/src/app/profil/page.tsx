@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { api, userError, type Model } from "@/lib/api/client";
 import { useSession } from "@/components/session";
 import { PageHeader, Notes } from "@/components/ui";
+import { LoadingState } from "@/components/feedback";
 import {
   provenanceLabels,
   participationLabels,
@@ -62,7 +63,11 @@ function ProfileView({ candidateId }: { candidateId: string }) {
         Kayıt sayıları kalite veya yetenek puanı değildir. Bağlantı, beyan ve
         gözlem ayrı gösterilir.
       </p>
-      <button className="text-button" onClick={() => setRetry((v) => v + 1)}>
+      <button
+        className="text-button"
+        disabled={!data && !error}
+        onClick={() => setRetry((v) => v + 1)}
+      >
         Kayıtları yenile
       </button>
       {section === "Zaman Çizelgesi" && (
@@ -88,7 +93,7 @@ function ProfileView({ candidateId }: { candidateId: string }) {
           {error}
         </p>
       )}
-      {!data && !error && <p role="status">Profil yükleniyor…</p>}
+      {!data && !error && <LoadingState label="Profil yükleniyor…" />}
       {data && (
         <section aria-label={section} className="result-section">
           {section === "Özet" && (
@@ -103,8 +108,8 @@ function ProfileView({ candidateId }: { candidateId: string }) {
                 ))}
               </div>
               <p>
-                <Link href="/aday">
-                  Projeleri ve Gelişim & Deneyim kayıtlarını düzenle →
+                <Link className="button secondary" href="/aday#experiences">
+                  + Deneyim ekle veya düzenle
                 </Link>
               </p>
             </>

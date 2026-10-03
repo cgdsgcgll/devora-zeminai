@@ -14,6 +14,7 @@ import {
 } from "@/lib/profile";
 import { useSession } from "./session";
 import { ProfileCard } from "./profile-card";
+import { LoadingState, SuccessNotice } from "./feedback";
 
 type Category = ProfileEvidence["category"];
 function Field({
@@ -131,6 +132,7 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
       metadata_json: metadata as Model<"ProfileMetadata">,
     };
     setError("");
+    setNotice("");
     void session.act("Profil kaydı kaydediliyor…", async () => {
       const { category: _category, ...patch } = data;
       void _category;
@@ -152,6 +154,7 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
   return (
     <section
       className="result-section profile-section"
+      id="experiences"
       aria-labelledby="profile-section-title"
     >
       <div className="section-heading">
@@ -164,9 +167,7 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
         </p>
       </div>
       {notice && (
-        <p className="callout" role="status">
-          {notice}
-        </p>
+        <SuccessNotice message={notice} onDismiss={() => setNotice("")} />
       )}
       {error && (
         <div className="error" role="alert">
@@ -184,25 +185,39 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
         </div>
       )}
       <div className="profile-layout">
-        <section className="panel profile-form">
+        <section className="panel profile-form" id="experience-form">
           <h3>{editing ? "Kaydı düzenle" : "Yeni deneyim ekle"}</h3>
-          <label htmlFor="profile-category">Kategori</label>
-          <select
-            id="profile-category"
-            value={category}
+          <p className="muted">
+            Önce kayıt türünü seçin. Yıldızlı alanlar zorunlu; diğer ayrıntıları
+            isterseniz ekleyebilirsiniz.
+          </p>
+          <fieldset
+            className="category-picker"
             disabled={disabled || !!editing}
-            onChange={(e) => {
-              setCategory(e.target.value as Category);
-              setFormVersion((v) => v + 1);
-              setError("");
-            }}
           >
+            <legend>Ne eklemek istersiniz?</legend>
             {Object.entries(categoryLabels).map(([key, label]) => (
-              <option key={key} value={key}>
+              <button
+                type="button"
+                key={key}
+                aria-pressed={category === key}
+                onClick={() => {
+                  setCategory(key as Category);
+                  setFormVersion((v) => v + 1);
+                  setError("");
+                  setNotice("");
+                }}
+              >
                 {label}
-              </option>
+              </button>
             ))}
-          </select>
+          </fieldset>
+          {editing && (
+            <p className="callout">
+              Mevcut kaydı düzenliyorsunuz. Kategori değişmez; yeni bir tür
+              eklemek için önce vazgeçin.
+            </p>
+          )}
           <form
             key={`${formVersion}-${editing?.id || "new"}-${category}`}
             onSubmit={submit}
@@ -313,7 +328,7 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
                   />
                   <Field
                     name="credential_id"
-                    label="Credential ID (isteğe bağlı)"
+                    label="Belge numarası (isteğe bağlı)"
                     value={meta?.credential_id}
                   />
                 </>
@@ -408,7 +423,7 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
               />
               <Field
                 name="source_url"
-                label="Kaynak URL (isteğe bağlı, HTTPS)"
+                label="Kaynak bağlantısı (isteğe bağlı, HTTPS)"
                 type="url"
                 max={2000}
                 value={editing?.source_url}
@@ -424,7 +439,11 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
               </p>
               <div className="profile-actions">
                 <button className="button">
-                  {editing ? "Değişiklikleri Kaydet" : "Deneyimi Kaydet"}
+                  {session.busy === "Profil kaydı kaydediliyor…"
+                    ? "Kaydediliyor…"
+                    : editing
+                      ? "Değişiklikleri kaydet"
+                      : "Deneyimi kaydet"}
                 </button>
                 {editing && (
                   <button
@@ -447,7 +466,7 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
             Profil kayıtları <span className="count">{items.length}</span>
           </h3>
           {loading ? (
-            <p role="status">Profil kayıtları yükleniyor…</p>
+            <LoadingState label="Profil kayıtları yükleniyor…" />
           ) : (
             !items.length && (
               <p className="muted">
@@ -468,6 +487,10 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
                     setCategory(item.category);
                     setConfirmDelete("");
                     setError("");
+                    setNotice("");
+                    document
+                      .getElementById("experience-form")
+                      ?.scrollIntoView({ block: "start" });
                   }}
                 >
                   Düzenle<span className="sr-only">: {item.title}</span>
@@ -507,7 +530,9 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
                         )
                       }
                     >
-                      Silmeyi Onayla
+                      {session.busy === "Profil kaydı siliniyor…"
+                        ? "Siliniyor…"
+                        : "Silmeyi onayla"}
                     </button>
                     <button
                       className="button secondary"
