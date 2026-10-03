@@ -1260,6 +1260,15 @@ pre {
 .profile-result {
   margin-top: var(--s8);
 }
+.profile-results-motion {
+  --duration-normal: 240ms;
+}
+.timeline-filters .button {
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
 .profile-segments {
   background: var(--surface-subtle);
   padding: var(--s1);

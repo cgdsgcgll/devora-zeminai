@@ -23,6 +23,11 @@ const sections = [
 
 function ProfileView({ candidateId }: { candidateId: string }) {
   const { ref: motionRef, transition } = useContentMotion();
+  const {
+    ref: resultRef,
+    transition: transitionResult,
+    cancel: cancelResult,
+  } = useContentMotion();
   const [section, setSection] = useState("Zaman Çizelgesi");
   const [focusedSection, setFocusedSection] = useState("Zaman Çizelgesi");
   const [months, setMonths] = useState(0);
@@ -43,16 +48,29 @@ function ProfileView({ candidateId }: { candidateId: string }) {
         months ? since.toISOString().slice(0, 10) : "",
       )
       .then((data) => {
-        if (active) setResponse({ key, data });
+        if (active)
+          void transitionResult(() => {
+            if (active) setResponse({ key, data });
+          });
       })
       .catch((error) => {
-        if (active) setResponse({ key, error: userError(error) });
+        if (active)
+          void transitionResult(() => {
+            if (active)
+              setResponse((previous) => ({
+                key,
+                data: previous?.data,
+                error: userError(error),
+              }));
+          });
       });
     return () => {
       active = false;
+      cancelResult();
     };
-  }, [candidateId, months, key]);
-  const data = response?.key === key ? response.data : undefined;
+  }, [candidateId, months, key, transitionResult, cancelResult]);
+  const data = response?.data;
+  const pending = response?.key !== key;
   const error = response?.key === key ? response.error : undefined;
   return (
     <>
@@ -133,7 +151,7 @@ function ProfileView({ candidateId }: { candidateId: string }) {
         </div>
         <button
           className="text-button"
-          disabled={!data && !error}
+          disabled={pending}
           onClick={() => setRetry((v) => v + 1)}
         >
           Kayıtları yenile
@@ -148,7 +166,11 @@ function ProfileView({ candidateId }: { candidateId: string }) {
             tabIndex={0}
           >
             {section === "Zaman Çizelgesi" && (
-              <div className="view-switch" aria-label="Zaman aralığı">
+              <div
+                className="view-switch timeline-filters"
+                role="group"
+                aria-label="Zaman aralığı"
+              >
                 {[
                   [0, "Tümü"],
                   [6, "Son 6 ay"],
@@ -165,141 +187,157 @@ function ProfileView({ candidateId }: { candidateId: string }) {
                 ))}
               </div>
             )}
-            {error && (
-              <p className="error" role="alert">
-                {error}
-              </p>
-            )}
-            {!data && !error && (
-              <LoadingState label="Profil yükleniyor…" skeleton />
-            )}
-            {data && (
-              <div className="profile-result">
-                {section === "Özet" && (
-                  <>
-                    <h2 className="sr-only">Profil özeti</h2>
-                    <p className="small">
-                      Kayıt kapsamınız; bir yetenek puanı değil.
-                    </p>
-                    <div className="fact-grid">
-                      {data.summary.map((f) => (
-                        <article className="panel" key={f.label}>
-                          <strong className="fact-count">{f.count}</strong>
-                          <p>{f.label}</p>
-                        </article>
-                      ))}
-                    </div>
-                  </>
+            <div
+              ref={resultRef}
+              className="motion-viewport profile-results-motion"
+              aria-busy={pending}
+            >
+              <div className="motion-content">
+                {error && (
+                  <p className="error" role="alert">
+                    {error}
+                  </p>
                 )}
-                {section === "Yetenek Haritası" && (
-                  <>
-                    <h2>Yetenek Haritası</h2>
-                    <div className="fact-grid">
-                      {Object.entries(data.talent_map).map(([label, facts]) => (
-                        <article className="panel" key={label}>
-                          <h3>{label}</h3>
-                          {facts.map((f) => (
-                            <p key={f.label}>
-                              <strong>{f.count}</strong> {f.label}
-                            </p>
-                          ))}
-                        </article>
-                      ))}
-                    </div>
-                  </>
+                {!data && !error && (
+                  <LoadingState label="Profil yükleniyor…" skeleton />
                 )}
-                {section === "Zaman Çizelgesi" && (
-                  <>
-                    <h2>Gelişim Zaman Çizelgesi</h2>
-
-                    {!data.timeline.length && (
-                      <Empty
-                        title="Zaman çizelgeniz burada başlar"
-                        href="/aday#experiences"
-                        action="Deneyim ekle"
-                      >
-                        Bir deneyim ekleyin; öğrenme ve katkılarınızı zaman
-                        içinde görün.
-                      </Empty>
-                    )}
-                    <ol className="talent-timeline">
-                      {data.timeline.map((item, i) => {
-                        const source = safeProfileSource(item.source_url);
-                        const month = item.date.slice(0, 7);
-                        return (
-                          <li key={item.id}>
-                            {(i === 0 ||
-                              data.timeline[i - 1].date.slice(0, 7) !==
-                                month) && <h3>{month}</h3>}
-                            <article className="evidence-card">
-                              <p className="eyebrow">
-                                {sourceLabels[item.category] || item.category} ·{" "}
-                                <time dateTime={item.date}>{item.date}</time>
-                              </p>
-                              <h3>{item.title}</h3>
-                              <p>{provenanceLabels[item.status]}</p>
-                              {item.date_basis === "recorded_at" && (
-                                <p className="small">
-                                  Sisteme eklenme tarihi; deneyimin gerçekleşme
-                                  tarihi belirtilmedi.
-                                </p>
-                              )}
-                              {item.organization && <p>{item.organization}</p>}
-                              {item.role && (
-                                <p>
-                                  Rol:{" "}
-                                  {participationLabels[
-                                    item.role as keyof typeof participationLabels
-                                  ] || item.role}
-                                </p>
-                              )}
-                              {source && (
-                                <a
-                                  href={source}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                >
-                                  Kaynak bağlantısı ↗
-                                  <span className="sr-only">
-                                    {" "}
-                                    (yeni sekmede)
-                                  </span>
-                                </a>
-                              )}
+                {data && (
+                  <div className="profile-result">
+                    {section === "Özet" && (
+                      <>
+                        <h2 className="sr-only">Profil özeti</h2>
+                        <p className="small">
+                          Kayıt kapsamınız; bir yetenek puanı değil.
+                        </p>
+                        <div className="fact-grid">
+                          {data.summary.map((f) => (
+                            <article className="panel" key={f.label}>
+                              <strong className="fact-count">{f.count}</strong>
+                              <p>{f.label}</p>
                             </article>
-                          </li>
-                        );
-                      })}
-                    </ol>
-                  </>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                    {section === "Yetenek Haritası" && (
+                      <>
+                        <h2>Yetenek Haritası</h2>
+                        <div className="fact-grid">
+                          {Object.entries(data.talent_map).map(
+                            ([label, facts]) => (
+                              <article className="panel" key={label}>
+                                <h3>{label}</h3>
+                                {facts.map((f) => (
+                                  <p key={f.label}>
+                                    <strong>{f.count}</strong> {f.label}
+                                  </p>
+                                ))}
+                              </article>
+                            ),
+                          )}
+                        </div>
+                      </>
+                    )}
+                    {section === "Zaman Çizelgesi" && (
+                      <>
+                        <h2>Gelişim Zaman Çizelgesi</h2>
+
+                        {!data.timeline.length && (
+                          <Empty
+                            title="Zaman çizelgeniz burada başlar"
+                            href="/aday#experiences"
+                            action="Deneyim ekle"
+                          >
+                            Bir deneyim ekleyin; öğrenme ve katkılarınızı zaman
+                            içinde görün.
+                          </Empty>
+                        )}
+                        <ol className="talent-timeline">
+                          {data.timeline.map((item, i) => {
+                            const source = safeProfileSource(item.source_url);
+                            const month = item.date.slice(0, 7);
+                            return (
+                              <li key={item.id}>
+                                {(i === 0 ||
+                                  data.timeline[i - 1].date.slice(0, 7) !==
+                                    month) && <h3>{month}</h3>}
+                                <article className="evidence-card">
+                                  <p className="eyebrow">
+                                    {sourceLabels[item.category] ||
+                                      item.category}{" "}
+                                    ·{" "}
+                                    <time dateTime={item.date}>
+                                      {item.date}
+                                    </time>
+                                  </p>
+                                  <h3>{item.title}</h3>
+                                  <p>{provenanceLabels[item.status]}</p>
+                                  {item.date_basis === "recorded_at" && (
+                                    <p className="small">
+                                      Sisteme eklenme tarihi; deneyimin
+                                      gerçekleşme tarihi belirtilmedi.
+                                    </p>
+                                  )}
+                                  {item.organization && (
+                                    <p>{item.organization}</p>
+                                  )}
+                                  {item.role && (
+                                    <p>
+                                      Rol:{" "}
+                                      {participationLabels[
+                                        item.role as keyof typeof participationLabels
+                                      ] || item.role}
+                                    </p>
+                                  )}
+                                  {source && (
+                                    <a
+                                      href={source}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      Kaynak bağlantısı ↗
+                                      <span className="sr-only">
+                                        {" "}
+                                        (yeni sekmede)
+                                      </span>
+                                    </a>
+                                  )}
+                                </article>
+                              </li>
+                            );
+                          })}
+                        </ol>
+                      </>
+                    )}
+                    {section === "Kanıt Pasaportu" && (
+                      <>
+                        <h2>Kanıt Pasaportu</h2>
+                        <p>
+                          Beyan: kullanıcı kaydı. Bağlantı: kaynak adresi var,
+                          içeriği doğrulanmadı. Gözlem: repo verisindeki teknik
+                          dayanak. Doğrulanmış: bağımsız provider doğrulaması;
+                          bu demoda uygulanmadı.
+                        </p>
+                        <div className="fact-grid">
+                          {data.passport.map((f) => (
+                            <article
+                              className="panel"
+                              key={`${f.family}:${f.status}`}
+                            >
+                              <h3>{sourceLabels[f.family] || f.family}</h3>
+                              <p>{provenanceLabels[f.status]}</p>
+                              <strong>{f.count} kayıt</strong>
+                            </article>
+                          ))}
+                        </div>
+                        {!data.passport.length && <p>Henüz kanıt kaydı yok.</p>}
+                      </>
+                    )}
+                    <Notes title="Verinin sınırları" items={data.limitations} />
+                  </div>
                 )}
-                {section === "Kanıt Pasaportu" && (
-                  <>
-                    <h2>Kanıt Pasaportu</h2>
-                    <p>
-                      Beyan: kullanıcı kaydı. Bağlantı: kaynak adresi var,
-                      içeriği doğrulanmadı. Gözlem: repo verisindeki teknik
-                      dayanak. Doğrulanmış: bağımsız provider doğrulaması; bu
-                      demoda uygulanmadı.
-                    </p>
-                    <div className="fact-grid">
-                      {data.passport.map((f) => (
-                        <article
-                          className="panel"
-                          key={`${f.family}:${f.status}`}
-                        >
-                          <h3>{sourceLabels[f.family] || f.family}</h3>
-                          <p>{provenanceLabels[f.status]}</p>
-                          <strong>{f.count} kayıt</strong>
-                        </article>
-                      ))}
-                    </div>
-                    {!data.passport.length && <p>Henüz kanıt kaydı yok.</p>}
-                  </>
-                )}
-                <Notes title="Verinin sınırları" items={data.limitations} />
               </div>
-            )}
+            </div>
           </section>
         </div>
       </div>

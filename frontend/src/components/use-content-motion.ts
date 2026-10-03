@@ -46,5 +46,6 @@ export function useContentMotion() {
     flushSync(change);
     return Promise.resolve();
   }, []);
-  return { ref, transition };
+  const cancel = useCallback(() => controller.current?.cancel(), []);
+  return { ref, transition, cancel };
 }
