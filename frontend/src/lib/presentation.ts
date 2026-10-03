@@ -17,6 +17,15 @@ export const typeLabels = {
   user_claim: "Kullanıcı beyanı",
 };
 export const scoreLabel = "Kanıt Uyumu";
+export function presentationNote(value: string): string {
+  const known: Record<string, string> = {
+    "Repository-level evidence; individual authorship not verified. Repo bağlantısı adayın kodu yazdığını doğrulamaz.":
+      "Kanıtlar proje düzeyindedir. Proje bağlantısı, kodun aday tarafından yazıldığını doğrulamaz.",
+    "Contributor doğrulaması yok; repository kodunun aday tarafından yazıldığı varsayılmaz.":
+      "Katkı sahipliği doğrulanmadı; proje kodunun aday tarafından yazıldığı varsayılmaz.",
+  };
+  return known[value] || value;
+}
 export function actionSuccess(label: string): string {
   const messages: Record<string, string> = {
     "Aday oluşturuluyor…":

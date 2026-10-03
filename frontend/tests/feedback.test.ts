@@ -6,7 +6,20 @@ import { pathToFileURL } from "node:url";
 import ts from "typescript";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { actionSuccess } from "../src/lib/presentation.ts";
+import { actionSuccess, presentationNote } from "../src/lib/presentation.ts";
+
+test("known interface notes are Turkish while arbitrary source text is untouched", () => {
+  assert.match(
+    presentationNote(
+      "Repository-level evidence; individual authorship not verified. Repo bağlantısı adayın kodu yazdığını doğrulamaz.",
+    ),
+    /Kanıtlar proje düzeyindedir/,
+  );
+  assert.equal(
+    presentationNote("Original user or model excerpt."),
+    "Original user or model excerpt.",
+  );
+});
 
 test("operation feedback explains the next step without claiming verification", () => {
   assert.match(actionSuccess("Proje oluşturuluyor…"), /projeyi analiz edin/);
@@ -51,6 +64,14 @@ test("feedback components announce status, escape text and provide a dismiss tar
   assert.match(loading, /aria-live="polite"/);
   assert.match(loading, /aria-hidden="true"/);
   assert.doesNotMatch(loading, /tamamlandı/);
+  const skeleton = renderToStaticMarkup(
+    createElement(LoadingState, {
+      label: "Profil yükleniyor…",
+      skeleton: true,
+    }),
+  );
+  assert.match(skeleton, /class="skeleton-grid" aria-hidden="true"/);
+  assert.doesNotMatch(skeleton, /%|progressbar|tamamlandı/);
   const success = renderToStaticMarkup(
     createElement(SuccessNotice, {
       message: "<script>unsafe</script>",

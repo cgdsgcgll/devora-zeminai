@@ -35,3 +35,49 @@ Backend dosyalarında değişiklik yok. Matching formülü, evidence durumları,
 ## İnceleme durumu
 
 READY_FOR_REVIEW — ilk tasarım turu. Bu durum nihai tasarım kabulü değildir; kullanıcı tamam diyene kadar görsel geri bildirimlerle polish devam eder. Push yapılmaz.
+
+## İkinci tur — bütünsel ürün deneyimi
+
+Tarih: 2026-10-03. Aynı `feat/ui-polish-apple` dalı; ilk tur `8a6e17c` korundu.
+
+### Gerçek görsel denetim
+
+Değişiklikten önce ve sonra `/`, `/aday`, `/profil`, `/ihtiyac`, `/eslesme`, `/kesif` ekranları gerçek tarayıcıda desktop (1280 px) ve mobil (390 px) incelendi. İlk turdaki sorunlar:
+
+- Sayfalar arası CSS tekrarları ve üst üste eklenen kurallar.
+- Mobilde iki satır navigasyon + her ekranda tekrar eden adımlar; asıl içeriğin aşağı itilmesi.
+- Yaşayan profilde uzun başlık, yinelenen özetler ve geç görünen kayıtlar.
+- Kategori chip'leri ve bir seferde açılan uzun deneyim formu.
+- Keşifte uzun yöntem açıklamaları, buna karşın kapalı kriter sonuçları.
+- Eşleşmede baskın koyu skor kutusu, aşağıda kalan gerekli/tercih edilen kapsam.
+
+### Tasarım sistemi ve akış
+
+`globals.css` temeller, navigasyon, kontroller, yüzeyler, feedback, ana sayfa, profil ve kapsam bölümleriyle yeniden toplandı. Sayfa genişliği, section ritmi, kart padding/radius, input/button yüksekliği ve gölgeler ortak token'lardan gelir. Sayfa bazlı override yığını kaldırıldı. Metinlere transform uygulayan giriş animasyonları yok; yalnız spinner/skeleton ve kısa control transition'ları var. Reduced-motion hepsini durdurur.
+
+Navigasyon beş görev odaklı bağlantıdan oluşur; logo ana sayfaya döner. Mobilde açık isimli Menü düğmesi, aria-expanded/controls ve Escape ile odağın geri dönüşü vardır. Adım göstergesi yalnız profil oluşturma / ihtiyaç / uyum akışında görünür.
+
+Ana sayfa ürün tanımını açıkça söyler, aday ve kurum girişlerini ayırır. Sağda iç içe kartlar yerine tek kaynak hikâyesi vardır. Beyan/bağlantı/gözlem ayrımı korunur; sahte aday veya skor gösterilmez.
+
+Deneyim türleri açıklamalı büyük kartlardır. Başlık, kurum ve kaynak görünür; rol/tarih/kategori ayrıntıları açık etiketli isteğe bağlı bölümde. Düzenlemede ayrıntılar açık gelir. Profil kaydı sonrası güncel profile geçiş sunulur. Boş kayıt alanı görünür Hackathon ekle CTA'sına sahiptir. Silme aksiyonları ayrı ve sakin destructive stildedir. Alan validation'ı formda, servis hatası ayrı alert'te sunulur.
+
+Yaşayan profilin başlığı ve açıklaması kısaldı; profil sahibi ve Deneyim ekle aksiyonu üstte. İhtiyaç formunda rol/çıktı isteğe bağlı bölümde; örnek metin açıklaması geliştirici dilinden arındırıldı.
+
+Eşleşmede düşük puanı kişisel değerlendirme gibi sunmayan “Bu ihtiyaca ilişkin kanıt kapsamı” başlığı ve nötr yüzey; required/preferred kapsam için gerçek oranları gösteren erişilebilir progress elemanları var. Bunlar işlem ilerlemesi değildir. Unmatched açıklamaları backend'den aynen korunur.
+
+Keşifte karşılanan/karşılanmayan kriter özetleri kartta görünür. Yöntem/sıralama ayrıntıları açılabilir, erişilebilir alandadır. Veri modeli yalnız matched bilgisi verdiği yerde “yeterli dayanak yok” denir; beyan bulunmadığı iddia edilmez. Score/sort/pagination değişmez.
+
+Skeleton'lar gerçek ilk yükleme süresince gösterilir; şekiller aria-hidden, tek anlaşılır status metni vardır. Yapay timeout, sahte aşama veya yüzde eklenmez. Uzun analiz ve ihtiyaç hazırlama için gerçek isteğin kapsamını açıklayan sabit yardımcı metin kullanılır. Bilinen sabit İngilizce yazarlık uyarısı Türkçe sunulur; keyfi model metni veya kaynak alıntısı çevrilmez.
+
+### Son kalite kapısı
+
+- `npm run lint`: başarılı.
+- `npm test`: **19 passed**; skeleton erişilebilirliği ve bilinen uyarının Türkçe sunumu/kaynak metninin değişmemesi dahil.
+- `npm run build`: başarılı, tüm sayfalar üretildi.
+- `git diff --check`: başarılı.
+- Mobil altı route'ta scrollWidth <= innerWidth. Menü aç/kapa ve Escape odak dönüşü gerçek tarayıcıda doğrulandı.
+- İzole QA API'de hackathon proje adı ve finalist sonucu girildi; ayrıntılar kapatılıp kaydedildi, veriler korundu. Düzenleme de başarılı. `https://localhost` kaynak girişinde alan hatası çıktı; ilgisiz yeniden yükleme aksiyonu gösterilmedi.
+- İlk turdan kalan gerçek ihtiyaç/analiz/eşleşme kayıtlarıyla coverage ve discovery ekranları incelendi. Yeni hackathon kaydı sonrası canlı read model 100/100; eski kayıtlı match 80/100 olarak kaldı, tarihsel sonuç yeniden yazılmadı.
+- Backend, API, matching, Gemini, doğrulama ve güvenlik ayarlarında değişiklik yok. Bu turda canlı Gemini veya backend tam suite çalıştırılmadı.
+
+**READY_FOR_VISUAL_REVIEW**. Bu bir final tasarım onayı değildir; kullanıcı gerçek tarayıcıda inceleyecek. Push yapılmadı.

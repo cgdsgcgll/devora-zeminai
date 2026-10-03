@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api, userError, type Model } from "@/lib/api/client";
 import { useSession } from "@/components/session";
-import { PageHeader, Notes } from "@/components/ui";
+import { PageHeader, Notes, Empty } from "@/components/ui";
 import { LoadingState } from "@/components/feedback";
 import { sourceLabels, provenanceLabels } from "@/lib/profile";
 
@@ -92,12 +92,24 @@ function DiscoveryView({
         </p>
       )}
       {!data && !error && (
-        <LoadingState label="Adayların kanıt kapsamı yükleniyor…" />
+        <LoadingState label="Adayların kanıt kapsamı yükleniyor…" skeleton />
       )}
       {data && (
         <>
-          <p className="small">{data.ordering}</p>
-          {!data.candidates.length && <p>Bu sayfada aday bulunmuyor.</p>}
+          <details className="disclosure">
+            <summary>Sıralama nasıl yapılır?</summary>
+            <p className="small">{data.ordering}</p>
+          </details>
+          {!data.candidates.length && (
+            <Empty
+              title="Henüz gösterilecek aday yok"
+              href="/aday"
+              action="Aday profili oluştur"
+            >
+              Proje veya deneyim kayıtları ekleyerek bu ihtiyaca ilişkin kanıt
+              kapsamını inceleyebilirsiniz.
+            </Empty>
+          )}
           <div className="discovery-grid">
             {data.candidates.map((candidate) => (
               <article className="panel" key={candidate.candidate_id}>
@@ -132,6 +144,22 @@ function DiscoveryView({
                   edilen kapsam: %
                   {Math.round(candidate.preferred_coverage * 100)}
                 </p>
+                <div className="criterion-preview" aria-label="Kriter özeti">
+                  <p>
+                    <strong>Dayanak bulunan</strong>
+                    {candidate.criteria
+                      .filter((c) => c.matched)
+                      .map((c) => c.label)
+                      .join(" · ") || "Henüz karşılanan kriter yok"}
+                  </p>
+                  <p>
+                    <strong>Henüz karşılanmayan</strong>
+                    {candidate.criteria
+                      .filter((c) => !c.matched)
+                      .map((c) => c.label)
+                      .join(" · ") || "Tüm kriterler karşılandı"}
+                  </p>
+                </div>
                 <details>
                   <summary>Kriterler ve kaynak aileleri</summary>
                   {candidate.criteria.map((c) => (
@@ -140,7 +168,7 @@ function DiscoveryView({
                       <p>
                         {c.matched
                           ? "Dayanak bulundu"
-                          : "Mevcut kayıtlarda kanıt bulunamadı"}{" "}
+                          : "Bu kriteri karşılayan yeterli dayanak yok"}{" "}
                         ·{" "}
                         {c.priority === "required"
                           ? "Gerekli"
@@ -261,18 +289,22 @@ export default function DiscoveryPage() {
     <>
       <PageHeader
         step="KURUM / ADAY KEŞFİ"
-        title="İhtiyacınızla ilişkili dayanakları inceleyin."
+        title="İhtiyacınıza ilişkin kanıtları keşfedin."
       >
-        Bir adayın yalnız profil başlıklarını değil, ihtiyacınızla ilişkili
-        kanıtlarını inceleyin. Kanıt Uyumu genel yetenek veya işe alınma
-        olasılığı değildir.
+        Adayları bu ihtiyaca ilişkin kriter kapsamıyla inceleyin. Genel yetenek
+        sıralaması değildir.
       </PageHeader>
       {!ready ? (
         <p role="status">İhtiyaç yükleniyor…</p>
-      ) : !data.need ? (
-        <p>
-          <Link href="/ihtiyac">Önce bir kurum ihtiyacı oluşturun.</Link>
-        </p>
+      ) : !data.need?.criteria.length ? (
+        <Empty
+          title="Keşif, net bir ihtiyaçla başlar"
+          href="/ihtiyac"
+          action="İhtiyaç tanımla"
+        >
+          Gerekli ve tercih ettiğiniz kriterleri belirtin; ilgili aday
+          dayanaklarını burada inceleyin.
+        </Empty>
       ) : (
         <>
           <p className="callout">
@@ -288,12 +320,14 @@ export default function DiscoveryPage() {
             />{" "}
             Kanıt odaklı görünüm
           </label>
-          <p>
-            İlk değerlendirmeyi profil statüsü yerine üretim ve dayanaklar
-            üzerinden yapın. Bu görünümde isimler ve kimlik içerebilen kaynak
-            metinleri gizlenir; tam anonimlik ya da tarafsızlık garantisi
-            verilmez.
-          </p>
+          <details className="disclosure">
+            <summary>Kanıt odaklı görünüm neyi değiştirir?</summary>
+            <p>
+              İsimler ve kimlik içerebilen kaynak metinleri gizlenir. Tam
+              anonimlik ya da tarafsızlık garantisi verilmez; kriter kapsamı
+              aynı kalır.
+            </p>
+          </details>
           <DiscoveryView
             key={`${data.need.id}:${anonymous}`}
             needId={data.need.id}

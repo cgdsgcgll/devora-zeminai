@@ -48,12 +48,12 @@ export default function NeedPage() {
                 setOutput("Belgelenmiş bir REST API");
               }}
             >
-              Demo verisini doldur
+              Örnekle başla
             </button>
           </div>
           <p className="field-help">
-            Demo düğmesi yalnız sentetik form girdisi doldurur; analiz gerçek
-            backend’de yapılır.
+            Örnek metni düzenleyebilirsiniz. Kriterler, gönderdiğiniz
+            açıklamadan hazırlanır.
           </p>
           <form onSubmit={submit} noValidate>
             {error && (
@@ -66,7 +66,7 @@ export default function NeedPage() {
             </label>
             <textarea
               id="need-description"
-              rows={6}
+              rows={5}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               maxLength={20000}
@@ -75,25 +75,31 @@ export default function NeedPage() {
               aria-invalid={!!error}
               placeholder="Hangi teknolojiler gerekli? Hangileri tercih sebebi?"
             />
-            <label htmlFor="role">
-              Hedef rol <span className="optional">İsteğe bağlı</span>
-            </label>
-            <input
-              id="role"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              maxLength={200}
-            />
-            <label htmlFor="output">
-              Beklenen çıktı <span className="optional">İsteğe bağlı</span>
-            </label>
-            <textarea
-              id="output"
-              value={output}
-              onChange={(e) => setOutput(e.target.value)}
-              maxLength={2000}
-              rows={3}
-            />
+            <details className="form-details">
+              <summary>
+                Rol ve beklenen çıktı{" "}
+                <span className="optional">İsteğe bağlı</span>
+              </summary>
+              <label htmlFor="role">
+                Hedef rol <span className="optional">İsteğe bağlı</span>
+              </label>
+              <input
+                id="role"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                maxLength={200}
+              />
+              <label htmlFor="output">
+                Beklenen çıktı <span className="optional">İsteğe bağlı</span>
+              </label>
+              <textarea
+                id="output"
+                value={output}
+                onChange={(e) => setOutput(e.target.value)}
+                maxLength={2000}
+                rows={3}
+              />
+            </details>
             <button className="button" disabled={!s.ready || !!s.busy}>
               {s.busy ? "İhtiyaç yapılandırılıyor…" : "İhtiyacı yapılandır"}{" "}
               <span aria-hidden="true">↗</span>

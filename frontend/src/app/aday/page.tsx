@@ -45,10 +45,7 @@ export default function CandidatePage() {
   }
   return (
     <>
-      <PageHeader
-        step="01 / ADAY & PROFİL"
-        title="Üretiminizi ve gelişiminizi görünür kılın."
-      >
+      <PageHeader step="01 / ADAY & PROFİL" title="Profilinizi oluşturun.">
         Projelerinizi, öğrendiklerinizi ve katkılarınızı dayanaklarıyla bir
         araya getirin.
       </PageHeader>

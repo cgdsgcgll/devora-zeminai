@@ -9,6 +9,7 @@ import {
   typeLabels,
   evidenceExplanation,
   criterionExplanation,
+  presentationNote,
 } from "@/lib/presentation";
 
 export function PageHeader({
@@ -37,7 +38,7 @@ export function Notes({ title, items }: { title: string; items?: string[] }) {
       <h3>{title}</h3>
       <ul>
         {[...new Set(items)].map((t, i) => (
-          <li key={i}>{t}</li>
+          <li key={i}>{presentationNote(t)}</li>
         ))}
       </ul>
     </section>

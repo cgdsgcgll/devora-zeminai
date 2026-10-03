@@ -11,19 +11,20 @@ export default function Home() {
             görünür olsun.
           </h1>
           <p className="hero-subtitle">
-            Her deneyimin bir yeri. Her eşleşmenin bir dayanağı.
+            Projelerinizi ve deneyimlerinizi kaynaklarıyla bir araya getiren
+            yaşayan yetenek profili.
           </p>
           <p className="lead">
             Ne ürettiğinizi, ne öğrendiğinizi ve nerelerde katkı verdiğinizi
-            zaman içinde görünür kılın. Kurum ihtiyaçlarıyla uyumu, her kriterin
-            dayanağını görerek değerlendirin.
+            görünür kılın. Kurumlar, ihtiyaçlarıyla ilişkili dayanakları
+            inceleyebilsin.
           </p>
           <div className="hero-actions">
             <Link className="button" href="/aday">
-              Profilini oluştur <span aria-hidden="true">→</span>
+              Profilimi oluştur <span aria-hidden="true">→</span>
             </Link>
             <Link className="button secondary" href="/ihtiyac">
-              Kurum ihtiyacını tanımla
+              Kurum için ihtiyaç tanımla
             </Link>
           </div>
           <p className="small">
@@ -35,28 +36,27 @@ export default function Home() {
           aria-label="Kaynak kanıtından açıklanabilir eşleşmeye giden kavramsal akış"
         >
           <div className="diagram-top">
-            <span className="eyebrow">BİLGİDEN DAYANAĞA</span>
-            <span className="badge">Nasıl çalışır?</span>
+            <span className="eyebrow">HER BİLGİNİN BİR DAYANAĞI</span>
           </div>
           <div className="diagram-row">
             <span className="diagram-number">01</span>
             <div>
-              <strong>Kaynak</strong>
-              <p>Proje · öğrenme · deneyim · katkı</p>
+              <strong>Deneyiminizi ekleyin</strong>
+              <p>Ürettiğiniz proje, öğrendiğiniz konu, verdiğiniz katkı.</p>
             </div>
           </div>
           <div className="diagram-row">
             <span className="diagram-number">02</span>
             <div>
-              <strong>Kanıt</strong>
-              <p>Ne gözlemlendi? Nereden biliyoruz?</p>
+              <strong>Kaynağıyla görünür olsun</strong>
+              <p>Beyan, bağlantı ve gözlemlenen kullanım ayrı gösterilir.</p>
             </div>
           </div>
           <div className="diagram-row accent">
             <span className="diagram-number">03</span>
             <div>
-              <strong>Açıklanabilir uyum</strong>
-              <p>Kriterler ve onları destekleyen kaynaklar</p>
+              <strong>İhtiyaçla ilişkisini görün</strong>
+              <p>Bir puanın yanında, hangi kriteri neyin desteklediği.</p>
             </div>
           </div>
           <p className="diagram-note">

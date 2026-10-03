@@ -6,32 +6,54 @@ import { useSession } from "./session";
 import { SuccessNotice } from "./feedback";
 
 const links = [
-  ["/", "Ana sayfa"],
-  ["/aday", "Aday & Profil"],
-  ["/ihtiyac", "Kurum İhtiyacı"],
-  ["/eslesme", "Eşleşme"],
-  ["/profil", "Yaşayan Profil"],
-  ["/kesif", "Aday Keşfi"],
+  ["/aday", "Profil oluştur"],
+  ["/profil", "Profilim"],
+  ["/ihtiyac", "İhtiyaç tanımla"],
+  ["/eslesme", "Uyumu incele"],
+  ["/kesif", "Aday keşfet"],
 ];
 export function AppHeader() {
   const path = usePathname();
   const { busy, ready, reset } = useSession();
   const [confirmReset, setConfirmReset] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <header className="app-header">
       <div className="header-inner">
-        <Link href="/" className="brand">
+        <Link href="/" className="brand" aria-label="ZeminAI ana sayfa">
           <span className="brand-mark" aria-hidden="true">
             z
           </span>
           Zemin<span>AI</span>
         </Link>
-        <nav aria-label="Ana navigasyon">
+        <button
+          className="menu-toggle text-button"
+          aria-expanded={menuOpen}
+          aria-controls="main-navigation"
+          onClick={() => setMenuOpen(!menuOpen)}
+        >
+          {menuOpen ? "Menüyü kapat" : "Menü"}{" "}
+          <span aria-hidden="true">☰</span>
+        </button>
+        <nav
+          id="main-navigation"
+          className={menuOpen ? "nav-open" : ""}
+          aria-label="Ana navigasyon"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              setMenuOpen(false);
+              document
+                .querySelector<HTMLButtonElement>(".menu-toggle")
+                ?.focus();
+            }
+          }}
+        >
           {links.map(([href, label]) => (
             <Link
               key={href}
               href={href}
               aria-current={path === href ? "page" : undefined}
+              onClick={() => setMenuOpen(false)}
             >
               {label}
             </Link>
@@ -52,7 +74,7 @@ export function AppHeader() {
           aria-label="Demo sıfırlama onayı"
         >
           <p>
-            Bu tarayıcıdaki demo seçimi temizlensin mi? Backend kayıtları
+            Bu tarayıcıdaki demo seçimi temizlensin mi? Kaydedilmiş veriler
             silinmez.
           </p>
           <div className="profile-actions">
@@ -105,8 +127,15 @@ export function SessionStatus() {
             <strong>{busy || "Demo yükleniyor…"}</strong>
             {busy.includes("analiz") && (
               <p>
-                Proje analizi sürüyor. Bu işlem birkaç dakika sürebilir. Sayfayı
-                yenilemeden bekleyin.
+                Erişilebilen proje kaynakları inceleniyor. Sonuçlar, kaynaklarla
+                desteklenip desteklenmediği kontrol edilerek hazırlanır. Bu
+                işlem birkaç dakika sürebilir; sayfayı açık tutabilirsiniz.
+              </p>
+            )}
+            {busy.includes("kriter") && (
+              <p>
+                Gerekli ve tercih edilen kriterler, yalnızca verdiğiniz ihtiyaç
+                metnine dayanarak hazırlanıyor.
               </p>
             )}
           </div>
@@ -140,10 +169,14 @@ export function SessionStatus() {
 export function Steps() {
   const path = usePathname();
   const { data } = useSession();
-  if (path === "/") return null;
+  if (!["/aday", "/ihtiyac", "/eslesme"].includes(path)) return null;
   return (
     <ol className="steps" aria-label="Demo adımları">
-      {links.slice(1, 4).map(([href, label], i) => (
+      {[
+        ["/aday", "Profil"],
+        ["/ihtiyac", "İhtiyaç"],
+        ["/eslesme", "Uyum"],
+      ].map(([href, label], i) => (
         <li key={href}>
           <Link
             href={href}

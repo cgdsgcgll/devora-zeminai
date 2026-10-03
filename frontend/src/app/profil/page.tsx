@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api, userError, type Model } from "@/lib/api/client";
 import { useSession } from "@/components/session";
-import { PageHeader, Notes } from "@/components/ui";
+import { PageHeader, Notes, Empty } from "@/components/ui";
 import { LoadingState } from "@/components/feedback";
 import {
   provenanceLabels,
@@ -59,10 +59,6 @@ function ProfileView({ candidateId }: { candidateId: string }) {
           ),
         )}
       </nav>
-      <p className="small">
-        Kayıt sayıları kalite veya yetenek puanı değildir. Bağlantı, beyan ve
-        gözlem ayrı gösterilir.
-      </p>
       <button
         className="text-button"
         disabled={!data && !error}
@@ -93,12 +89,15 @@ function ProfileView({ candidateId }: { candidateId: string }) {
           {error}
         </p>
       )}
-      {!data && !error && <LoadingState label="Profil yükleniyor…" />}
+      {!data && !error && <LoadingState label="Profil yükleniyor…" skeleton />}
       {data && (
         <section aria-label={section} className="result-section">
           {section === "Özet" && (
             <>
-              <h2>Profil Özeti</h2>
+              <h2 className="sr-only">Profil özeti</h2>
+              <p className="small">
+                Kayıt kapsamınız; bir yetenek puanı değil.
+              </p>
               <div className="fact-grid">
                 {data.summary.map((f) => (
                   <article className="panel" key={f.label}>
@@ -107,11 +106,6 @@ function ProfileView({ candidateId }: { candidateId: string }) {
                   </article>
                 ))}
               </div>
-              <p>
-                <Link className="button secondary" href="/aday#experiences">
-                  + Deneyim ekle veya düzenle
-                </Link>
-              </p>
             </>
           )}
           {section === "Yetenek Haritası" && (
@@ -135,7 +129,16 @@ function ProfileView({ candidateId }: { candidateId: string }) {
             <>
               <h2>Gelişim Zaman Çizelgesi</h2>
 
-              {!data.timeline.length && <p>Bu aralıkta kayıt bulunmuyor.</p>}
+              {!data.timeline.length && (
+                <Empty
+                  title="Zaman çizelgeniz burada başlar"
+                  href="/aday#experiences"
+                  action="Deneyim ekle"
+                >
+                  Bir deneyim ekleyin; öğrenme ve katkılarınızı zaman içinde
+                  görün.
+                </Empty>
+              )}
               <ol className="talent-timeline">
                 {data.timeline.map((item, i) => {
                   const source = safeProfileSource(item.source_url);
@@ -217,28 +220,36 @@ export default function LivingProfilePage() {
   const { data, ready } = useSession();
   return (
     <>
-      <PageHeader
-        step="YAŞAYAN YETENEK PROFİLİ"
-        title="Üretim, öğrenme ve katkı; zaman içinde."
-      >
-        Ne ürettiğinizi, ne öğrendiğinizi ve nerelerde katkı verdiğinizi gerçek
-        kayıtlarınız üzerinden inceleyin.
+      <PageHeader step="YAŞAYAN YETENEK PROFİLİ" title="Yaşayan profiliniz.">
+        Üretim, öğrenme ve katkılarınız; tek bir yerde, kaynaklarıyla birlikte.
       </PageHeader>
       {!ready ? (
         <p role="status">Seçim yükleniyor…</p>
       ) : data.candidate ? (
         <>
-          <h2>{data.candidate.name}</h2>
+          <div className="profile-identity">
+            <div>
+              <p className="eyebrow">PROFİL SAHİBİ</p>
+              <h2>{data.candidate.name}</h2>
+            </div>
+            <Link className="button" href="/aday#experiences">
+              + Deneyim ekle
+            </Link>
+          </div>
           <ProfileView
             key={data.candidate.id}
             candidateId={data.candidate.id}
           />
         </>
       ) : (
-        <p>
-          <Link href="/aday">Önce bir aday oluşturun</Link> veya{" "}
-          <Link href="/kesif">keşiften bir profil seçin.</Link>
-        </p>
+        <Empty
+          title="Profiliniz için bir başlangıç"
+          href="/aday"
+          action="Profil oluştur"
+        >
+          Projelerinizi ve deneyimlerinizi ekleyin; zaman çizelgeniz ve
+          kaynaklarınız burada bir araya gelsin.
+        </Empty>
       )}
     </>
   );
