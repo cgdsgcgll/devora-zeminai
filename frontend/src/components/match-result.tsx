@@ -10,6 +10,7 @@ import { EvidenceCard, Notes } from "./ui";
 import { EvidenceGaps } from "./evidence-gaps";
 import { ProfileCard } from "./profile-card";
 import { familyLabels } from "@/lib/profile";
+import { LoadingState } from "./feedback";
 export function MatchResult({ result }: { result: Match }) {
   const [evidence, setEvidence] = useState<Evidence[]>([]);
   const [error, setError] = useState("");
@@ -44,6 +45,7 @@ export function MatchResult({ result }: { result: Match }) {
       <div className="score-layout">
         <div className="score-card">
           <p className="eyebrow">{scoreLabel}</p>
+          <h2 className="score-context">Bu ihtiyaç için kanıt uyumu</h2>
           <p className="score">
             {Number(result.score.toFixed(2))}
             <span>/ 100</span>
@@ -54,24 +56,34 @@ export function MatchResult({ result }: { result: Match }) {
               : scoreExplanation}
           </p>
           <span className="score-footnote">
-            İşe alınma olasılığı veya genel yetenek puanı değildir.
+            Bu bir genel yetenek puanı değildir. İşe alınma olasılığını
+            göstermez.
           </span>
           <p className="small">{technicalScoreExplanation}</p>
         </div>
         <div className="score-detail">
           <p className="eyebrow">SKORUN DAYANAĞI</p>
-          <h2>
-            Her kriterin <br />
-            bir karşılığı var.
-          </h2>
+          <h2>Kriterlerin ne kadarı karşılandı?</h2>
           <div className="coverage">
             <span>Gerekli kriter kapsamı</span>
             <strong>%{Math.round(result.required_coverage * 100)}</strong>
           </div>
+          <progress
+            className="coverage-meter"
+            max={1}
+            value={result.required_coverage}
+            aria-label="Gerekli kriter kapsamı"
+          />
           <div className="coverage">
             <span>Tercih edilen kriter kapsamı</span>
             <strong>%{Math.round(result.preferred_coverage * 100)}</strong>
           </div>
+          <progress
+            className="coverage-meter preferred"
+            max={1}
+            value={result.preferred_coverage}
+            aria-label="Tercih edilen kriter kapsamı"
+          />
           <p className="small">
             Kriter bulunmayan grubun kapsamı 0 olarak gösterilir ve skora katkı
             yapmaz.
@@ -90,7 +102,7 @@ export function MatchResult({ result }: { result: Match }) {
       <div className="criteria-grid match-criteria">
         <section>
           <h2>
-            Karşılanan kriterler{" "}
+            Kanıt bulunan kriterler{" "}
             <span className="count">{result.matched_criteria.length}</span>
           </h2>
           {!result.matched_criteria.length && (
@@ -123,7 +135,7 @@ export function MatchResult({ result }: { result: Match }) {
         </section>
         <section>
           <h2>
-            Henüz karşılanmayan kriterler{" "}
+            Henüz yeterli kanıt bulunmayan kriterler{" "}
             <span className="count">{result.unmatched_criteria.length}</span>
           </h2>
           {!result.unmatched_criteria.length && (
@@ -161,7 +173,9 @@ export function MatchResult({ result }: { result: Match }) {
           <p className="eyebrow">KAYNAĞINA İNİN</p>
           <h2>Eşleşmeyi destekleyen kanıtlar</h2>
         </div>
-        {loading && <p role="status">Kanıt kayıtları yükleniyor…</p>}
+        {loading && (
+          <LoadingState label="Kanıt kayıtları yükleniyor…" skeleton />
+        )}
         {error && (
           <div className="error" role="alert">
             <p>{error}</p>

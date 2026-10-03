@@ -5,6 +5,7 @@ import { api } from "@/lib/api/client";
 import { validateNeed } from "@/lib/presentation";
 import { useSession } from "@/components/session";
 import { PageHeader, CriterionCard, Notes, Empty } from "@/components/ui";
+import { ProcessingState, ButtonProgress } from "@/components/feedback";
 export default function NeedPage() {
   const s = useSession();
   const [description, setDescription] = useState("");
@@ -27,15 +28,18 @@ export default function NeedPage() {
     );
   }
   return (
-    <>
-      <PageHeader step="02 / KURUM İHTİYACI" title="Ne üretmek istiyorsunuz?">
+    <div className="need-page">
+      <PageHeader
+        step="KURUM İHTİYACI"
+        title="Nasıl bir ekip arkadaşı arıyorsunuz?"
+      >
         İhtiyacı kendi cümlelerinizle anlatın. Gerekli beceriler ve
         tercihlerinizi açıkça ayırın.
       </PageHeader>
-      <div className="workspace">
+      <div className="need-workspace">
         <section className="panel">
           <div className="section-title">
-            <h2>İhtiyacı tanımlayın</h2>
+            <h2>İhtiyacınız</h2>
             <button
               type="button"
               className="text-button"
@@ -48,12 +52,12 @@ export default function NeedPage() {
                 setOutput("Belgelenmiş bir REST API");
               }}
             >
-              Demo verisini doldur
+              Örnekle başla
             </button>
           </div>
           <p className="field-help">
-            Demo düğmesi yalnız sentetik form girdisi doldurur; analiz gerçek
-            backend’de yapılır.
+            Örnek metni düzenleyebilirsiniz. Kriterler, gönderdiğiniz
+            açıklamadan hazırlanır.
           </p>
           <form onSubmit={submit} noValidate>
             {error && (
@@ -66,7 +70,7 @@ export default function NeedPage() {
             </label>
             <textarea
               id="need-description"
-              rows={6}
+              rows={7}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               maxLength={20000}
@@ -75,53 +79,44 @@ export default function NeedPage() {
               aria-invalid={!!error}
               placeholder="Hangi teknolojiler gerekli? Hangileri tercih sebebi?"
             />
-            <label htmlFor="role">
-              Hedef rol <span className="optional">İsteğe bağlı</span>
-            </label>
-            <input
-              id="role"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              maxLength={200}
-            />
-            <label htmlFor="output">
-              Beklenen çıktı <span className="optional">İsteğe bağlı</span>
-            </label>
-            <textarea
-              id="output"
-              value={output}
-              onChange={(e) => setOutput(e.target.value)}
-              maxLength={2000}
-              rows={3}
-            />
+            <details className="form-details">
+              <summary>
+                Rol ve beklenen çıktı{" "}
+                <span className="optional">İsteğe bağlı</span>
+              </summary>
+              <label htmlFor="role">
+                Hedef rol <span className="optional">İsteğe bağlı</span>
+              </label>
+              <input
+                id="role"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                maxLength={200}
+              />
+              <label htmlFor="output">
+                Beklenen çıktı <span className="optional">İsteğe bağlı</span>
+              </label>
+              <textarea
+                id="output"
+                value={output}
+                onChange={(e) => setOutput(e.target.value)}
+                maxLength={2000}
+                rows={3}
+              />
+            </details>
             <button className="button" disabled={!s.ready || !!s.busy}>
-              İhtiyacı Yapılandır <span aria-hidden="true">↗</span>
+              <ButtonProgress active={!!s.busy} />
+              {s.busy
+                ? "İhtiyaç yapılandırılıyor…"
+                : "İhtiyacı yapılandır"}{" "}
+              <span aria-hidden="true">↗</span>
             </button>
           </form>
         </section>
-        <aside className="side-note">
-          <p className="eyebrow">NET KRİTERLER, AÇIK SONUÇ</p>
-          <h2>
-            Gerekli olanı <br />
-            tercihten ayırın.
-          </h2>
-          <p>
-            <strong>Gerekli</strong>
-            <br />
-            İhtiyacın zorunlu beceri veya deneyim kriterleri.
-          </p>
-          <p>
-            <strong>Tercih edilen</strong>
-            <br />
-            Tercih edilen beceri veya deneyim kriterleri.
-          </p>
-          <div className="divider" />
-          <p>
-            Metinde belirtilmeyen bir teknoloji, sırf sektörde yaygın olduğu
-            için kriter olmamalı.
-          </p>
-        </aside>
       </div>
+      {s.busy === "İhtiyaç kriterleri hazırlanıyor…" && (
+        <ProcessingState kind="need" />
+      )}
       {s.data.need && (
         <section className="result-section">
           <div className="section-heading horizontal">
@@ -165,6 +160,6 @@ export default function NeedPage() {
           <Notes title="Belirsizlikler" items={s.data.need.uncertainties} />
         </section>
       )}
-    </>
+    </div>
   );
 }

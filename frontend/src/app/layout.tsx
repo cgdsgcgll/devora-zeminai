@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { SessionProvider } from "@/components/session";
-import { AppHeader, SessionStatus, Steps } from "@/components/shell";
+import { AppHeader, SessionStatus } from "@/components/shell";
 import "./globals.css";
 export const metadata: Metadata = {
   title: "ZeminAI",
@@ -18,7 +18,6 @@ export default function RootLayout({
         <SessionProvider>
           <AppHeader />
           <main id="main" className="container">
-            <Steps />
             <SessionStatus />
             {children}
           </main>

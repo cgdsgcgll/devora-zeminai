@@ -4,7 +4,8 @@ import Link from "next/link";
 import { api } from "@/lib/api/client";
 import { validateGithub, validateName } from "@/lib/presentation";
 import { useSession } from "@/components/session";
-import { EvidenceCard, Info, Notes, PageHeader, Empty } from "@/components/ui";
+import { EvidenceCard, Notes, PageHeader, Empty } from "@/components/ui";
+import { ProcessingState, ButtonProgress } from "@/components/feedback";
 import { ProfilePanel } from "@/components/profile-panel";
 
 export default function CandidatePage() {
@@ -44,219 +45,286 @@ export default function CandidatePage() {
     );
   }
   return (
-    <>
-      <p>
-        <Link href="/profil">
-          Profil özeti, zaman çizelgesi ve kanıt pasaportu →
-        </Link>
-      </p>
+    <div className="candidate-flow">
       <PageHeader
-        step="01 / ADAY & PROFİL"
-        title="Üretiminizi ve gelişiminizi görünür kılın."
+        step="SİZİN HİKÂYENİZ"
+        title={
+          candidate
+            ? "Profilinize yeni bir dayanak."
+            : "Bir başlangıç. Sizinle."
+        }
       >
         Projelerinizi, öğrendiklerinizi ve katkılarınızı dayanaklarıyla bir
         araya getirin.
       </PageHeader>
-      <div className="workspace">
-        <div className="stack">
-          {validation && (
-            <p id="form-error" className="error" role="alert">
-              {validation}
-            </p>
-          )}
-          <section className="panel">
-            <div className="section-title">
-              <span className="mini-number">01</span>
-              <h2>Aday bilgisi</h2>
-              {candidate && <span className="badge observed">Kaydedildi</span>}
-            </div>
-            {candidate ? (
-              <p className="saved-name">{candidate.name}</p>
-            ) : (
-              <form onSubmit={candidateSubmit} noValidate>
-                <label htmlFor="candidate-name">
-                  Aday adı <span className="required">*</span>
-                </label>
-                <input
-                  id="candidate-name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  maxLength={200}
-                  required
-                  autoComplete="name"
-                  aria-invalid={
-                    !!validation && !!validateName(name, "Aday adı")
-                  }
-                  aria-describedby={validation ? "form-error" : undefined}
-                />
-                <button className="button" disabled={disabled}>
-                  Adayı Oluştur
-                </button>
-              </form>
-            )}
-          </section>
-          <section className="panel">
-            <div className="section-title">
-              <span className="mini-number">02</span>
-              <h2>Proje bilgisi</h2>
-              {project && <span className="badge observed">Kaydedildi</span>}
-            </div>
-            {project ? (
-              <>
-                <h3>{project.name}</h3>
-                <p>{project.description}</p>
-                <p className="meta break">{project.source_url}</p>
-                <button
-                  className="button"
-                  disabled={disabled}
-                  onClick={() =>
-                    void s.act("Proje analiz ediliyor…", async () => {
-                      const result = await api.analyze(project.id);
-                      s.saveAnalysis(result.run, result.evidence);
-                    })
-                  }
-                >
-                  {run ? "Projeyi Yeniden Analiz Et" : "Projeyi Analiz Et"}{" "}
-                  <span aria-hidden="true">↗</span>
-                </button>
-              </>
-            ) : !candidate ? (
-              <p className="muted">
-                Proje eklemek için önce aday bilgisini kaydedin.
-              </p>
-            ) : (
-              <form onSubmit={projectSubmit} noValidate>
-                <label htmlFor="project-name">
-                  Proje adı <span className="required">*</span>
-                </label>
-                <input
-                  id="project-name"
-                  value={projectName}
-                  aria-invalid={
-                    !!validation && !!validateName(projectName, "Proje adı")
-                  }
-                  aria-describedby={validation ? "form-error" : undefined}
-                  onChange={(e) => setProjectName(e.target.value)}
-                  maxLength={200}
-                  required
-                />
-                <label htmlFor="project-description">
-                  Kısa açıklama <span className="optional">İsteğe bağlı</span>
-                </label>
-                <textarea
-                  id="project-description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  maxLength={20000}
-                  rows={3}
-                />
-                <label htmlFor="github-url">
-                  Herkese açık GitHub deposunun adresi{" "}
-                  <span className="required">*</span>
-                </label>
-                <input
-                  id="github-url"
-                  type="url"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder="https://github.com/sahip/depo"
-                  maxLength={500}
-                  required
-                  aria-invalid={!!validation && !!validateGithub(url)}
-                  aria-describedby={
-                    validation ? "github-help form-error" : "github-help"
-                  }
-                />
-                <p id="github-help" className="field-help">
-                  Yalnızca herkese açık GitHub depoları analiz edilebilir.
-                </p>
-                <button className="button" disabled={disabled}>
-                  Projeyi Kaydet
-                </button>
-              </form>
-            )}
-          </section>
-        </div>
-        <aside className="side-note">
-          <p className="eyebrow">NEYE BAKIYORUZ?</p>
-          <h2>
-            Beyan değil, <br />
-            dayanak.
-          </h2>
-          <p>
-            Kaynak dosyalar, bağımlılıklar ve deponun dil bilgisi birlikte
-            değerlendirilir.
-          </p>
-          <div className="divider" />
-          <p>
-            README’de geçen bir teknoloji, tek başına gözlemlenen kullanım
-            sayılmaz.
-          </p>
-          <Info>Kanıt gücü, adayın beceri seviyesi değildir.</Info>
-        </aside>
-      </div>
+      <nav className="journey-nav" aria-label="Profilinizi zenginleştirin">
+        <p className="small">
+          İstediğiniz bölümden devam edin. Tüm alanları tamamlamanız gerekmez.
+        </p>
+        <ol>
+          {[
+            ["basics", "Temel profil"],
+            ["projects", "Projeleriniz"],
+            ["technical", "Teknik kanıtlar"],
+            ["experiences", "Deneyimler"],
+          ].map(([id, label], index) => (
+            <li key={id}>
+              <a href={`#${id}`}>
+                <span>0{index + 1}</span>
+                {label}
+              </a>
+            </li>
+          ))}
+        </ol>
+      </nav>
       {candidate && (
-        <details className="result-section">
-          <summary>Gelişim & Deneyim kayıtlarını düzenle</summary>
-          <ProfilePanel key={candidate.id} candidateId={candidate.id} />
-        </details>
+        <nav className="action-bar" aria-label="Profil işlemleri">
+          <a className="button" href="#experiences">
+            + Deneyim ekle
+          </a>
+          <Link className="button secondary" href="/profil">
+            Yaşayan profili görüntüle →
+          </Link>
+          <span className="small">
+            Hackathon, eğitim, sertifika ve daha fazlası
+          </span>
+        </nav>
       )}
-      {run && (
-        <section className="result-section">
-          <div className="section-heading horizontal">
-            <div>
-              <p className="eyebrow">ANALİZ SONUCU</p>
-              <h2>Beceri sinyalleri ve kanıtlar</h2>
+
+      {validation && (
+        <p id="form-error" className="error" role="alert">
+          {validation}
+        </p>
+      )}
+      <section
+        className="candidate-section"
+        id="basics"
+        aria-labelledby="basics-title"
+      >
+        <div className="section-heading">
+          <p className="eyebrow">01 — TEMEL PROFİL</p>
+          <h2 id="basics-title">Sizinle başlar.</h2>
+          <p className="muted">
+            Projelerinizin ve deneyimlerinizin bir araya geleceği profil.
+          </p>
+        </div>
+        {candidate ? (
+          <p className="saved-name">{candidate.name}</p>
+        ) : (
+          <form onSubmit={candidateSubmit} noValidate>
+            <label htmlFor="candidate-name">
+              Aday adı <span className="required">*</span>
+            </label>
+            <input
+              id="candidate-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={200}
+              required
+              autoComplete="name"
+              aria-invalid={!!validation && !!validateName(name, "Aday adı")}
+              aria-describedby={validation ? "form-error" : undefined}
+            />
+            <button className="button" disabled={disabled}>
+              <ButtonProgress active={!!s.busy} />
+              {s.busy === "Aday oluşturuluyor…"
+                ? "Oluşturuluyor…"
+                : "Profilimi oluştur"}
+            </button>
+          </form>
+        )}
+      </section>
+      <section
+        className="candidate-section"
+        id="projects"
+        aria-labelledby="projects-title"
+      >
+        <div className="section-heading">
+          <p className="eyebrow">02 — PROJELERİNİZ</p>
+          <h2 id="projects-title">Ürettiklerinize yer açın.</h2>
+          <p className="muted">
+            Herkese açık bir GitHub projesini ekleyin; teknik dayanaklarını
+            inceleyin.
+          </p>
+        </div>
+        {project ? (
+          <>
+            <h3>{project.name}</h3>
+            <p>{project.description}</p>
+            <p className="meta break">{project.source_url}</p>
+            <button
+              className="button"
+              disabled={disabled}
+              onClick={() =>
+                void s.act("Proje analiz ediliyor…", async () => {
+                  const result = await api.analyze(project.id);
+                  s.saveAnalysis(result.run, result.evidence);
+                })
+              }
+            >
+              <ButtonProgress active={s.busy === "Proje analiz ediliyor…"} />
+              {s.busy === "Proje analiz ediliyor…"
+                ? "Analiz ediliyor…"
+                : run
+                  ? "Projeyi yeniden analiz et"
+                  : "Projeyi analiz et"}{" "}
+              <span aria-hidden="true">↗</span>
+            </button>
+          </>
+        ) : !candidate ? (
+          <p className="muted">
+            Proje eklemek için önce aday bilgisini kaydedin.
+          </p>
+        ) : (
+          <form onSubmit={projectSubmit} noValidate>
+            <label htmlFor="project-name">
+              Proje adı <span className="required">*</span>
+            </label>
+            <input
+              id="project-name"
+              value={projectName}
+              aria-invalid={
+                !!validation && !!validateName(projectName, "Proje adı")
+              }
+              aria-describedby={validation ? "form-error" : undefined}
+              onChange={(e) => setProjectName(e.target.value)}
+              maxLength={200}
+              required
+            />
+            <label htmlFor="project-description">
+              Kısa açıklama <span className="optional">İsteğe bağlı</span>
+            </label>
+            <textarea
+              id="project-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              maxLength={20000}
+              rows={3}
+            />
+            <label htmlFor="github-url">
+              Herkese açık GitHub deposunun adresi{" "}
+              <span className="required">*</span>
+            </label>
+            <input
+              id="github-url"
+              type="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://github.com/sahip/depo"
+              maxLength={500}
+              required
+              aria-invalid={!!validation && !!validateGithub(url)}
+              aria-describedby={
+                validation ? "github-help form-error" : "github-help"
+              }
+            />
+            <p id="github-help" className="field-help">
+              Yalnızca herkese açık GitHub depoları analiz edilebilir.
+            </p>
+            <button className="button" disabled={disabled}>
+              <ButtonProgress active={!!s.busy} />
+              {s.busy === "Proje oluşturuluyor…"
+                ? "Kaydediliyor…"
+                : "Projeyi kaydet"}
+            </button>
+          </form>
+        )}
+      </section>
+      <section
+        className="candidate-section"
+        id="technical"
+        aria-labelledby="technical-title"
+      >
+        <div className="section-heading">
+          <p className="eyebrow">03 — TEKNİK KANITLAR</p>
+          <h2 id="technical-title">Kullanımın dayanağını görün.</h2>
+          <p className="muted">
+            Proje analizindeki gözlemler ve beyanlar, kaynaklarıyla birlikte.
+          </p>
+        </div>
+        {s.busy === "Proje analiz ediliyor…" && (
+          <ProcessingState kind="project" />
+        )}
+        <p className="method-note">
+          README’de bir teknolojinin geçmesi, gözlemlenen kullanım değildir.
+          Kaynak dosyalar, bağımlılıklar ve deponun dil bilgisi birlikte
+          incelenir. Kanıt gücü, beceri seviyesi değildir.
+        </p>
+        {run ? (
+          <>
+            <div className="section-heading horizontal">
               <p className="muted">
-                {evidence.length} kanıt kaydı · {run.provider || "Analiz"}{" "}
+                {evidence.length} kanıt kaydı · {run.provider || "Analiz"}
                 {run.model && ` / ${run.model}`}
               </p>
+              <Link className="button secondary" href="/ihtiyac">
+                Kurum ihtiyacına geç <span aria-hidden="true">→</span>
+              </Link>
             </div>
-            <Link className="button secondary" href="/ihtiyac">
-              Kurum ihtiyacına geç <span aria-hidden="true">→</span>
-            </Link>
+            {evidence.length ? (
+              <>
+                <div className="evidence-filter">
+                  <label htmlFor="skill-filter">Beceriye göre incele</label>
+                  <select
+                    id="skill-filter"
+                    value={skillFilter}
+                    onChange={(e) => setSkillFilter(e.target.value)}
+                  >
+                    <option value="">Tüm kanıtlar ({evidence.length})</option>
+                    {[
+                      ...new Map(
+                        evidence.map((e) => [e.skill_key, e.skill_label]),
+                      ).entries(),
+                    ].map(([key, label]) => (
+                      <option key={key} value={key}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="evidence-grid">
+                  {evidence
+                    .filter(
+                      (item) => !skillFilter || item.skill_key === skillFilter,
+                    )
+                    .map((item) => (
+                      <EvidenceCard key={item.id} item={item} />
+                    ))}
+                </div>
+              </>
+            ) : (
+              <Empty title="Bu projede kanıt bulunamadı">
+                Bu sonuç, adayın beceriye sahip olmadığı anlamına gelmez.
+                İncelenen depo içeriği sınırlıdır.
+              </Empty>
+            )}
+            <Notes title="Analiz sınırlamaları" items={run.limitations} />
+            <Notes title="Belirsizlikler" items={run.uncertainties} />
+          </>
+        ) : (
+          <p className="muted">
+            Projenizi analiz ettiğinizde kaynaklarla desteklenen kayıtlar burada
+            görünecek. Deneyim eklemek için analiz yapmanız gerekmez.
+          </p>
+        )}
+      </section>
+      {candidate ? (
+        <ProfilePanel key={candidate.id} candidateId={candidate.id} />
+      ) : (
+        <section className="candidate-section" id="experiences">
+          <div className="section-heading">
+            <p className="eyebrow">04 — GELİŞİM VE DENEYİMLER</p>
+            <h2>Gelişim ve Deneyim</h2>
+            <p className="muted">
+              Eğitim, sertifika, hackathon ve katkılarınız. Kaydetmek için önce
+              temel profilinizi oluşturun.
+            </p>
           </div>
-          {evidence.length ? (
-            <>
-              <div className="evidence-filter">
-                <label htmlFor="skill-filter">Beceriye göre incele</label>
-                <select
-                  id="skill-filter"
-                  value={skillFilter}
-                  onChange={(e) => setSkillFilter(e.target.value)}
-                >
-                  <option value="">Tüm kanıtlar ({evidence.length})</option>
-                  {[
-                    ...new Map(
-                      evidence.map((e) => [e.skill_key, e.skill_label]),
-                    ).entries(),
-                  ].map(([key, label]) => (
-                    <option key={key} value={key}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="evidence-grid">
-                {evidence
-                  .filter(
-                    (item) => !skillFilter || item.skill_key === skillFilter,
-                  )
-                  .map((item) => (
-                    <EvidenceCard key={item.id} item={item} />
-                  ))}
-              </div>
-            </>
-          ) : (
-            <Empty title="Bu projede kanıt bulunamadı">
-              Bu sonuç, adayın beceriye sahip olmadığı anlamına gelmez.
-              İncelenen depo içeriği sınırlıdır.
-            </Empty>
-          )}
-          <Notes title="Analiz sınırlamaları" items={run.limitations} />
-          <Notes title="Belirsizlikler" items={run.uncertainties} />
+          <a className="button secondary" href="#basics">
+            Temel profile dön
+          </a>
         </section>
       )}
-    </>
+    </div>
   );
 }

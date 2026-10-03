@@ -3,16 +3,20 @@ import { api } from "@/lib/api/client";
 import { useSession } from "@/components/session";
 import { Empty, PageHeader } from "@/components/ui";
 import { MatchResult } from "@/components/match-result";
+import { ProcessingState, ButtonProgress } from "@/components/feedback";
 export default function MatchPage() {
   const s = useSession();
   const { candidate, need, match } = s.data;
   return (
-    <>
-      <PageHeader step="03 / EŞLEŞME" title="Uyumu, dayanaklarıyla görün.">
+    <div className="match-page">
+      <PageHeader
+        step="AÇIKLANABİLİR EŞLEŞME"
+        title="Uyumu, dayanaklarıyla görün."
+      >
         Bir puanla yetinmeyin. Hangi beklentinin hangi kaynakla karşılandığını
         inceleyin.
       </PageHeader>
-      {!candidate ? (
+      {!s.ready ? null : !candidate ? (
         <Empty
           title="Önce aday profilini hazırlayın"
           href="/aday"
@@ -57,12 +61,18 @@ export default function MatchPage() {
               )
             }
           >
-            {match ? "Eşleşmeyi Yenile" : "Eşleşmeyi Hesapla"}{" "}
+            <ButtonProgress active={!!s.busy} />
+            {s.busy
+              ? "Eşleşme hesaplanıyor…"
+              : match
+                ? "Eşleşmeyi yenile"
+                : "Eşleşmeyi hesapla"}{" "}
             <span aria-hidden="true">↗</span>
           </button>
         </section>
       )}
+      {s.busy.includes("eşleşme") && <ProcessingState kind="match" />}
       {match && <MatchResult key={match.id} result={match} />}
-    </>
+    </div>
   );
 }
