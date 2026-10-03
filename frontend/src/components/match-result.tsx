@@ -20,7 +20,7 @@ export function MatchResult({ result }: { result: Match }) {
     let active = true;
     Promise.all(
       [...new Set(result.matched_criteria.flatMap((c) => c.evidence_ids))].map(
-        api.evidence,
+        (id) => api.matchEvidence(result.id, id),
       ),
     )
       .then((items) => {

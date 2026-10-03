@@ -184,28 +184,15 @@ function DiscoveryView({
                       className="button secondary"
                       disabled={busy}
                       onClick={() =>
-                        void session.act("Profil açılıyor…", async () => {
-                          session.saveCandidate(
-                            await api.candidate(candidate.candidate_id),
-                          );
-                          router.push("/profil");
-                        })
-                      }
-                    >
-                      Profili incele
-                    </button>
-                    <button
-                      className="button secondary"
-                      disabled={busy}
-                      onClick={() =>
                         void session.act("Eşleşme hesaplanıyor…", async () => {
                           const match = await api.createMatch({
                             candidate_id: candidate.candidate_id,
                             need_id: needId,
                           });
-                          session.saveCandidate(
-                            await api.candidate(candidate.candidate_id),
-                          );
+                          session.saveCandidate({
+                            id: candidate.candidate_id,
+                            name: candidate.label,
+                          });
                           session.saveMatch(match);
                           router.push("/eslesme");
                         })

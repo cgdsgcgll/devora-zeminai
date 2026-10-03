@@ -15,11 +15,11 @@ export default function Home() {
           dayanaklarıyla anlaşılsın.
         </p>
         <div className="hero-actions">
-          <Link className="button" href="/aday">
-            Profilimi oluştur
+          <Link className="button" href="/kayit?role=candidate">
+            Aday olarak başla
           </Link>
-          <Link className="button secondary" href="/ihtiyac">
-            Kurum ihtiyacı oluştur
+          <Link className="button secondary" href="/kayit?role=institution">
+            Kurum olarak başla
           </Link>
         </div>
       </section>
@@ -106,7 +106,7 @@ export default function Home() {
             Projeler, eğitim, hackathonlar ve topluluk katkıları. Zaman içinde
             gelişen tek bir profil.
           </p>
-          <Link href="/aday">
+          <Link href="/kayit?role=candidate">
             Profilimi oluşturmaya başla <span aria-hidden="true">→</span>
           </Link>
         </article>
@@ -117,7 +117,7 @@ export default function Home() {
             Genel yargılar yerine, belirli bir ihtiyaç için hangi dayanakların
             bulunduğunu inceleyin.
           </p>
-          <Link href="/ihtiyac">
+          <Link href="/kayit?role=institution">
             İhtiyacımı tanımla <span aria-hidden="true">→</span>
           </Link>
         </article>

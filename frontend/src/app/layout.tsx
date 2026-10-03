@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { SessionProvider } from "@/components/session";
 import { AppHeader, SessionStatus } from "@/components/shell";
 import "./globals.css";
+import { AuthGuard } from "@/components/auth-guard";
 export const metadata: Metadata = {
   title: "ZeminAI",
   description: "Doğrulanabilir Yetenek ve Akıllı Eşleşme Platformu",
@@ -19,7 +20,7 @@ export default function RootLayout({
           <AppHeader />
           <main id="main" className="container">
             <SessionStatus />
-            {children}
+            <AuthGuard>{children}</AuthGuard>
           </main>
           <footer className="footer">
             <span>

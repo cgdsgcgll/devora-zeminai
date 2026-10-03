@@ -53,6 +53,14 @@ export function userError(error: unknown): string {
     ? error.message
     : "Beklenmeyen bir sorun oluştu. İşlemi tekrar deneyebilirsiniz.";
 }
+export type Account = Model<"Account">;
+let onUnauthorized: (() => void) | undefined;
+export function subscribeUnauthorized(listener: () => void) {
+  onUnauthorized = listener;
+  return () => {
+    if (onUnauthorized === listener) onUnauthorized = undefined;
+  };
+}
 async function request<T>(
   path: string,
   body?: unknown,
@@ -60,18 +68,14 @@ async function request<T>(
 ): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(
-      `${(process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000").replace(/\/$/, "")}${path}`,
-      {
-        method: method || (body === undefined ? "GET" : "POST"),
-        headers:
-          body === undefined
-            ? undefined
-            : { "Content-Type": "application/json" },
-        body: body === undefined ? undefined : JSON.stringify(body),
-        cache: "no-store",
-      },
-    );
+    response = await fetch(`/api${path}`, {
+      method: method || (body === undefined ? "GET" : "POST"),
+      headers:
+        body === undefined ? undefined : { "Content-Type": "application/json" },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      cache: "no-store",
+      credentials: "include",
+    });
   } catch {
     throw new ApiError(
       "NETWORK_ERROR",
@@ -81,7 +85,15 @@ async function request<T>(
   }
   if (response.ok && response.status === 204) return undefined as T;
   const data: unknown = await response.json().catch(() => null);
-  if (!response.ok) throw parseApiError(data, response.status);
+  if (!response.ok) {
+    if (
+      response.status === 401 &&
+      path !== "/auth/login" &&
+      path !== "/auth/register"
+    )
+      onUnauthorized?.();
+    throw parseApiError(data, response.status);
+  }
   if (!data)
     throw new ApiError(
       "INVALID_RESPONSE",
@@ -89,7 +101,13 @@ async function request<T>(
     );
   const hasId = (v: unknown) =>
     !!v && typeof v === "object" && "id" in v && typeof v.id === "string";
-  if (path.endsWith("/analyze")) {
+  if (path.startsWith("/auth/")) {
+    if (typeof data !== "object" || !("user" in data) || !hasId(data.user))
+      throw new ApiError("INVALID_RESPONSE", "Hesap bilgisi okunamadı.");
+  } else if (Array.isArray(data)) {
+    if (!data.every(hasId))
+      throw new ApiError("INVALID_RESPONSE", "Kayıtlar okunamadı.");
+  } else if (path.endsWith("/analyze")) {
     if (
       typeof data !== "object" ||
       !("evidence" in data) ||
@@ -130,6 +148,20 @@ async function request<T>(
   return data as T;
 }
 export const api = {
+  updateNeed: (id: string, data: Model<"NeedDetailsPatch">) =>
+    request<Need>(`/needs/${id}`, data, "PATCH"),
+  me: () => request<Model<"AuthState">>("/auth/me"),
+  login: (data: Model<"Login">) =>
+    request<Model<"AuthState">>("/auth/login", data),
+  register: (data: Model<"Register">) =>
+    request<Model<"AuthState">>("/auth/register", data),
+  logout: () => request<void>("/auth/logout", {}),
+  projects: (id: string) => request<Project[]>(`/candidates/${id}/projects`),
+  projectEvidence: (id: string) =>
+    request<Evidence[]>(`/projects/${id}/evidence`),
+  needs: () => request<Need[]>("/needs"),
+  matchEvidence: (match: string, id: string) =>
+    request<Evidence>(`/matches/${match}/evidence/${id}`),
   livingProfile: (id: string, since = "") =>
     request<Model<"LivingProfile">>(
       `/candidates/${id}/living-profile${since ? `?since=${encodeURIComponent(since)}` : ""}`,

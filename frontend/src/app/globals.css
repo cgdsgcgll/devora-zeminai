@@ -2082,3 +2082,53 @@ summary {
     scroll-behavior: auto !important;
   }
 }
+
+.auth-page {
+  max-width: 640px;
+  margin: var(--s12) auto;
+}
+.auth-page h1 {
+  font-size: clamp(32px, 5vw, 48px);
+}
+.auth-page form {
+  display: grid;
+  gap: var(--s6);
+  margin-top: var(--s8);
+}
+.auth-roles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s4);
+  margin-top: var(--s8);
+}
+.auth-roles button {
+  white-space: normal;
+  text-align: left;
+  padding: var(--s6);
+  display: grid;
+  gap: var(--s3);
+}
+.auth-roles [aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--surface);
+}
+.auth-switch {
+  margin-top: var(--s6);
+}
+.account-tools {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--s6);
+  text-align: right;
+  font-size: 13px;
+}
+.account-tools summary {
+  min-height: 44px;
+  padding: 12px 0;
+  cursor: pointer;
+}
+@media (max-width: 600px) {
+  .auth-roles {
+    grid-template-columns: 1fr;
+  }
+}
