@@ -11,6 +11,12 @@ class Settings(BaseSettings):
     )
     database_url: str = 'postgresql+psycopg://postgres:postgres@localhost:5432/zeminai'
     github_token: str = ''
+    session_cookie_name: str = Field(default='zeminai_session', pattern=r'^[A-Za-z0-9_-]+$')
+    session_cookie_secure: bool = True
+    session_ttl: int = Field(default=604800, ge=300, le=2592000)
+    auth_window_seconds: int = Field(default=900, ge=60, le=86400)
+    auth_ip_attempts: int = Field(default=60, ge=1, le=1000)
+    auth_email_attempts: int = Field(default=10, ge=1, le=100)
     cors_origins: list[str] = ['http://localhost:3000', 'http://127.0.0.1:3000']
     llm_api_key: str = ''
     llm_provider: str = 'rule_based'

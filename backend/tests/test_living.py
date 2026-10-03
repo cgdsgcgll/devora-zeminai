@@ -1,3 +1,4 @@
+from domain_client import own_fixture_candidates
 from uuid import uuid4
 
 import pytest
@@ -112,7 +113,7 @@ def test_discovery_pagination_stable_and_query_count_constant(client, db):
         one = len(counts)
         counts.clear()
         large = client.get(f'/needs/{nid}/discovery?limit=12').json()
-        assert len(counts) == one and one <= 8
+        assert len(counts) == one and one <= 10
     finally:
         event.remove(db.bind, 'before_cursor_execute', record)
     assert small['has_more'] and not large['has_more']
@@ -158,7 +159,7 @@ def test_discovery_equal_scores_use_coverage_then_stable_id(client, db):
     # Equal score 20: 1/4 required beats 0/4 required + 1/1 preferred.
     rows = [m.Candidate(id=UUID(int=n), name=name, created_at=datetime(2025,1,1,tzinfo=timezone.utc))
             for n, name in [(1,'Z'), (3,'A'), (2,'M')]]
-    db.add_all(rows); db.commit()
+    db.add_all(rows); db.commit(); own_fixture_candidates(db)
     add(client, str(rows[0].id), 'event')
     add(client, str(rows[1].id), 'hackathon')
     add(client, str(rows[2].id), 'hackathon')
@@ -179,11 +180,12 @@ def test_discovery_pool_limit_never_returns_truncated_ranking(client, db, monkey
     from app.services import living
     nid = client.post('/needs',json={'description':'Python gerekli'}).json()['id']
     db.add_all([m.Candidate(name=str(i)) for i in range(living.DISCOVERY_MAX_CANDIDATES)])
+    own_fixture_candidates(db)
     db.commit()
     at_limit = client.get(f'/needs/{nid}/discovery?limit=50')
     assert at_limit.status_code == 200
     assert len(at_limit.json()['candidates']) == 50 and at_limit.json()['has_more']
-    db.add(m.Candidate(name='One over the limit')); db.commit()
+    db.add(m.Candidate(name='One over the limit')); db.commit(); own_fixture_candidates(db)
     def forbidden(*args, **kwargs):
         raise AssertionError('Oversized pool must be rejected before loading evidence')
     monkeypatch.setattr(living, 'load_material', forbidden)
@@ -211,6 +213,6 @@ def test_global_discovery_query_count_does_not_grow_with_pool(client, db, pool_s
     try:
         response = client.get(f'/needs/{nid}/discovery?limit=1')
         assert response.status_code == 200
-        assert len(queries) == 8
+        assert len(queries) == 10  # Constant auth session/user overhead; still independent of pool size.
     finally:
         event.remove(db.bind, 'before_cursor_execute', record)

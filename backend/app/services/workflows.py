@@ -18,8 +18,8 @@ def get_or_404(db: Session, model: type, entity_id: UUID):
     return row
 
 
-def create_need(db: Session, data: s.NeedCreate, analyzer: NeedAnalyzer) -> m.OrganizationNeed:
-    need = m.OrganizationNeed(**data.model_dump(exclude={'criteria'}),
+def create_need(db: Session, data: s.NeedCreate, analyzer: NeedAnalyzer, owner_user_id=None) -> m.OrganizationNeed:
+    need = m.OrganizationNeed(owner_user_id=owner_user_id, **data.model_dump(exclude={'criteria'}),
                               analysis_version='explicit-criteria-v0.1', uncertainties=[])
     db.add(need)
     db.flush()
