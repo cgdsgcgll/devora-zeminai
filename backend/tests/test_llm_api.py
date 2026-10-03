@@ -36,10 +36,10 @@ def test_llm_full_api_flow_and_metadata(client, db, monkeypatch, mode):
     assert analyzed.status_code == 201, analyzed.text
     run = analyzed.json()['run']
     assert (run['provider'], run['model'], run['commit_sha']) == (mode, 'configured-model', 'a'*40)
-    assert run['analysis_version'] == 'project-analysis-v0.2'
+    assert run['analysis_version'] == 'project-analysis-v0.3'
     need = client.post('/needs', json={'description': 'FastAPI tercih edilir'})
     assert need.status_code == 201, need.text
-    assert need.json()['analysis_version'] == 'need-analysis-v0.3'
+    assert need.json()['analysis_version'] == 'need-analysis-v0.4'
     result = client.post('/matches', json={'candidate_id': cid, 'need_id': need.json()['id']})
     assert result.status_code == 201, result.text
     assert result.json()['score'] == 100

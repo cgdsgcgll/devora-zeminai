@@ -9,6 +9,8 @@ const links = [
   ["/aday", "Aday & Profil"],
   ["/ihtiyac", "Kurum İhtiyacı"],
   ["/eslesme", "Eşleşme"],
+  ["/profil", "Yaşayan Profil"],
+  ["/kesif", "Aday Keşfi"],
 ];
 export function AppHeader() {
   const path = usePathname();
@@ -123,7 +125,7 @@ export function Steps() {
   if (path === "/") return null;
   return (
     <ol className="steps" aria-label="Demo adımları">
-      {links.slice(1).map(([href, label], i) => (
+      {links.slice(1, 4).map(([href, label], i) => (
         <li key={href}>
           <Link
             href={href}

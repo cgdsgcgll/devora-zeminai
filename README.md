@@ -4,7 +4,7 @@
 
 ZeminAI, gençleri yalnızca okul, diploma veya CV anahtar kelimeleriyle değil; ürettikleri projeler, geliştirdikleri beceriler, aldıkları eğitimler, sertifikalar, hackathonlar ve topluluk katkıları üzerinden görünür kılan; kurum ihtiyaçlarıyla kanıta dayalı ve açıklanabilir şekilde eşleştiren bir yetenek platformudur.
 
-Çalışan MVP, GitHub teknik analizini isteğe bağlı eğitim, sertifika, hackathon, etkinlik ve topluluk kayıtlarıyla birleştirir. Kullanıcı bağlantıları bağımsız doğrulama değildir. Sürekli profil senkronizasyonu ve dış provider doğrulaması henüz yoktur. [Windows demo kurulumu](docs/LOCAL_DEMO.md) · [Profil kanıtları sözleşmesi](docs/PROFILE_EVIDENCE.md).
+Çalışan MVP, GitHub teknik analizini isteğe bağlı eğitim, sertifika, hackathon, etkinlik, topluluk ve portföy kayıtlarıyla birleştirir. Yaşayan profil; zaman çizelgesi, factual yetenek haritası ve kanıt pasaportunu gösterir. Kurum tarafında belirli ihtiyaca göre aday keşfi, kanıt odaklı görünüm ve 2–4 kişinin deterministik takım kapsamı çalışır. Kullanıcı bağlantıları bağımsız doğrulama değildir. Sürekli profil senkronizasyonu ve dış provider doğrulaması henüz yoktur. [Windows demo kurulumu](docs/LOCAL_DEMO.md) · [Profil kanıtları sözleşmesi](docs/PROFILE_EVIDENCE.md) · [Yaşayan profil ve keşif](docs/LIVING_PROFILE.md).
 
 ## Problem
 
@@ -46,6 +46,14 @@ Snapshot, incelenen dosyaları ve commit referansını saklar. Eşleşme sonucu 
 7. Skor, required/preferred kapsamı, matched/unmatched kriterler ve ilişkili kanıtları okuyun.
 
 İsteğe bağlı Gelişim ve Deneyim bölümünden profil kayıtlarını ekleyin. Match için en az bir başarılı proje analizi veya profil kaydı gerekir. Yalnız profil kaydı teknik kriterleri karşılamaz. GitHub-only akışı korunur; kanıt üretilmemesi geçerli bir analiz sonucudur.
+
+## Yaşayan profil ve kurum keşfi
+
+`/profil` üzerinden özet, Yetenek Haritası, kronolojik Gelişim Zaman Çizelgesi ve Kanıt Pasaportu arasında geçin. Counts kalite puanı değildir; tarihi olmayan olaylar sisteme eklenme tarihiyle açıkça etiketlenir. `/aday` içindeki açılır deneyim bölümünde portföy dahil kayıtlar düzenlenir.
+
+`/kesif` seçili ihtiyacın aynı 80/20 Kanıt Uyumu formülünü kullanır. En fazla 100 adaylık tam havuz önce Kanıt Uyumu ve kriter kapsamlarına göre deterministik sıralanır, ardından sayfalanır. Havuz sınırı aşılırsa kısmi sonuç yerine açık hata döner. Kanıt odaklı mod isim/okul/kaynak serbest metinlerini API yanıtından çıkarır; tam anonimlik ve erişim kontrolü sağlamaz. 2–4 aday seçerek criterion union kapsamını inceleyin. Takım başarısı tahmin edilmez.
+
+`/eslesme` kanıt boşluklarını dondurulmuş sonuçtan açıklar; “kanıt bulunamadı” hiçbir zaman “beceri yok” anlamına gelmez. Yeni görünümler AI veya GitHub çağrısı yapmaz. [Sözleşme, sınırlar ve gelecek kapsamı](docs/LIVING_PROFILE.md).
 
 ## Mimari
 
@@ -258,7 +266,7 @@ Gemini anahtarı [Google AI Studio](https://aistudio.google.com/apikey) üzerind
 
 ## Testler ve Doğrulama
 
-**204 backend testi SQLite ve temiz PostgreSQL üzerinde geçti.** Frontend lint, TypeScript production build ve 11 test başarılı. Gerçek kart bileşeninde HTML/script kaçışı, HTTPS URL kontrolü ve PATCH/DELETE sözleşmesi test edildi. PostgreSQL upgrade/check/downgrade/upgrade döngüsünde eski aday/proje/snapshot ve 27 teknik kanıt korundu.
+**225 backend testi SQLite üzerinde geçti; discovery regresyonları ayrıca 20 test ile PostgreSQL üzerinde doğrulandı. Önceki fazda tam PostgreSQL suite 220 testle geçmişti.** Frontend lint, TypeScript production build ve 13 test başarılı. Gerçek kart bileşeninde HTML/script kaçışı, HTTPS URL kontrolü ve PATCH/DELETE sözleşmesi test edildi. PostgreSQL upgrade/check/downgrade/upgrade döngüsünde eski aday/proje/snapshot ve 27 teknik kanıt korundu.
 
 Kapsam: matching sınır durumları, API oluşturma/okuma akışları, GitHub HTTP mock’ları, evidence semantiği, provider timeout/429/5xx hataları, Gemini istek sözleşmesi, structured output doğrulaması, metadata ve migration upgrade/downgrade ile eski kayıtların korunması. Testler gerçek API anahtarı veya internet gerektirmez. Starlette TestClient’ın httpx kullanımına ilişkin deprecation uyarısı testleri başarısız kılmaz.
 

@@ -7,6 +7,44 @@ from sqlalchemy import create_engine, inspect
 from app.core.config import settings
 
 
+def test_portfolio_migration_preserves_profile_and_guards_downgrade(tmp_path, monkeypatch):
+    import os
+    import pytest
+    from uuid import uuid4
+    from sqlalchemy import select
+    from app.models import domain as m
+    url = os.environ.get('TEST_PORTFOLIO_MIGRATION_URL') or 'sqlite:///' + (tmp_path / 'portfolio.db').as_posix()
+    engine = create_engine(url)
+    assert not inspect(engine).get_table_names(), 'Use an empty dedicated migration database.'
+    monkeypatch.setattr(settings, 'database_url', url)
+    config = Config(str(Path(__file__).resolve().parents[1] / 'alembic.ini'))
+    command.upgrade(config, '41c0cbaf4250')
+    cid, eid = uuid4(), uuid4()
+    values = dict(id=eid, candidate_id=cid, category='education', title='Existing education', organization='',
+        role='', description='', source_label='', verification_status='declared_only', metadata_json={})
+    with engine.begin() as connection:
+        connection.execute(m.Candidate.__table__.insert().values(id=cid, name='Existing candidate'))
+        connection.execute(m.ProfileEvidenceItem.__table__.insert().values(**values))
+    def saved():
+        with engine.connect() as connection:
+            return connection.execute(select(m.ProfileEvidenceItem.__table__)).mappings().all()
+    before = saved()
+    command.upgrade(config, 'head')
+    command.check(config)
+    assert saved() == before
+    command.downgrade(config, '41c0cbaf4250')
+    assert saved() == before
+    command.upgrade(config, 'head')
+    command.check(config)
+    assert saved() == before
+    with engine.begin() as connection:
+        connection.execute(m.ProfileEvidenceItem.__table__.insert().values(**{**values, 'id':uuid4(), 'category':'portfolio'}))
+    with pytest.raises(RuntimeError, match='preserve/export'):
+        command.downgrade(config, '41c0cbaf4250')
+    assert len(saved()) == 2
+    engine.dispose()
+
+
 def test_profile_migration_preserves_legacy_project_evidence(tmp_path, monkeypatch):
     import os
     from uuid import uuid4

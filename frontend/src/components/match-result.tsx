@@ -1,8 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api, userError, type Match, type Evidence } from "@/lib/api/client";
-import { scoreLabel, scoreExplanation } from "@/lib/presentation";
+import {
+  scoreLabel,
+  scoreExplanation,
+  technicalScoreExplanation,
+} from "@/lib/presentation";
 import { EvidenceCard, Notes } from "./ui";
+import { EvidenceGaps } from "./evidence-gaps";
 import { ProfileCard } from "./profile-card";
 import { familyLabels } from "@/lib/profile";
 export function MatchResult({ result }: { result: Match }) {
@@ -51,6 +56,7 @@ export function MatchResult({ result }: { result: Match }) {
           <span className="score-footnote">
             İşe alınma olasılığı veya genel yetenek puanı değildir.
           </span>
+          <p className="small">{technicalScoreExplanation}</p>
         </div>
         <div className="score-detail">
           <p className="eyebrow">SKORUN DAYANAĞI</p>
@@ -117,7 +123,7 @@ export function MatchResult({ result }: { result: Match }) {
         </section>
         <section>
           <h2>
-            Kanıt bulunamayan kriterler{" "}
+            Henüz karşılanmayan kriterler{" "}
             <span className="count">{result.unmatched_criteria.length}</span>
           </h2>
           {!result.unmatched_criteria.length && (
@@ -148,7 +154,7 @@ export function MatchResult({ result }: { result: Match }) {
         değiştirilmez.
       </p>
       <Notes title="Desteklenen kriterler" items={result.strengths} />
-      <Notes title="Kanıt kapsamındaki eksikler" items={result.gaps} />
+      <EvidenceGaps key={result.id} matchId={result.id} />
       <Notes title="Belirsizlikler" items={result.uncertainties} />
       <section className="result-section">
         <div className="section-heading">

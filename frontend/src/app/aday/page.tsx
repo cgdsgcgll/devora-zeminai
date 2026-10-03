@@ -45,6 +45,11 @@ export default function CandidatePage() {
   }
   return (
     <>
+      <p>
+        <Link href="/profil">
+          Profil özeti, zaman çizelgesi ve kanıt pasaportu →
+        </Link>
+      </p>
       <PageHeader
         step="01 / ADAY & PROFİL"
         title="Üretiminizi ve gelişiminizi görünür kılın."
@@ -191,14 +196,17 @@ export default function CandidatePage() {
         </aside>
       </div>
       {candidate && (
-        <ProfilePanel key={candidate.id} candidateId={candidate.id} />
+        <details className="result-section">
+          <summary>Gelişim & Deneyim kayıtlarını düzenle</summary>
+          <ProfilePanel key={candidate.id} candidateId={candidate.id} />
+        </details>
       )}
       {run && (
         <section className="result-section">
           <div className="section-heading horizontal">
             <div>
               <p className="eyebrow">ANALİZ SONUCU</p>
-              <h2>Tespit edilen beceriler</h2>
+              <h2>Beceri sinyalleri ve kanıtlar</h2>
               <p className="muted">
                 {evidence.length} kanıt kaydı · {run.provider || "Analiz"}{" "}
                 {run.model && ` / ${run.model}`}

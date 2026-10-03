@@ -1,16 +1,14 @@
 from uuid import UUID
 
-from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.core.errors import AppError
 from app.models import domain as m
 from app.schemas import domain as s
-from app.schemas.profile import ProfileEvidenceItem
 from app.services.analysis.interfaces import NeedAnalyzer, SkillAnalyzer, validate_model_output
 from app.services.github.provider import GitHubProvider
-from app.services.matching.scorer import calculate_match
+from app.services.matching.material import load_material, calculate_for_need
 
 
 def get_or_404(db: Session, model: type, entity_id: UUID):
@@ -127,29 +125,10 @@ def create_match(db: Session, data: s.MatchCreate) -> s.MatchResult:
     need = get_or_404(db, m.OrganizationNeed, data.need_id)
     if not need.criteria:
         raise AppError('MATCHING_FAILED', 'İhtiyaç kriterleri boş; açık criteria ile ihtiyaç oluşturun.', 422)
-    runs = []
-    uncertainties = list(need.uncertainties)
-    for project in candidate.projects:
-        # Latest successful run per project prevents duplicate/stale evidence after reanalysis.
-        latest = db.scalar(select(m.AnalysisRun).where(m.AnalysisRun.project_id == project.id,
-            m.AnalysisRun.status == 'completed').order_by(m.AnalysisRun.completed_at.desc(), m.AnalysisRun.id.desc()).limit(1))
-        if latest:
-            runs.append(latest)
-            uncertainties.extend(latest.uncertainties + latest.limitations)
-            newer = db.scalar(select(m.AnalysisRun).where(m.AnalysisRun.project_id == project.id,
-                m.AnalysisRun.started_at > latest.started_at, m.AnalysisRun.status != 'completed').limit(1))
-            if newer:
-                uncertainties.append(f'{project.name}: sonraki analiz tamamlanmadı; son başarılı snapshot kullanıldı.')
-        else:
-            uncertainties.append(f'{project.name}: tamamlanmış analiz yok; eşleşmeye dahil edilmedi.')
-    profiles = db.scalars(select(m.ProfileEvidenceItem).where(m.ProfileEvidenceItem.candidate_id == candidate.id)).all()
-    if not runs and not profiles:
+    material = load_material(db, [candidate.id])[candidate.id]
+    if not material.runs and not material.profiles:
         raise AppError('INSUFFICIENT_PROJECT_DATA', 'Önce en az bir proje için /projects/{id}/analyze çalıştırın.', 409)
-    evidence = db.scalars(select(m.SkillEvidence).where(m.SkillEvidence.analysis_run_id.in_([r.id for r in runs]))).all()
-    versions = ','.join(sorted({r.analysis_version for r in runs} | {need.analysis_version}))
-    result = calculate_match([s.NeedCriterion.model_validate(c) for c in need.criteria],
-                             [s.SkillEvidence.model_validate(e) for e in evidence], versions, uncertainties,
-                             [ProfileEvidenceItem.model_validate(p) for p in profiles])
+    result = calculate_for_need(need, material)
     row = m.MatchResult(**data.model_dump(), **result.model_dump(exclude={'matched_criteria', 'unmatched_criteria'}))
     db.add(row)
     db.flush()

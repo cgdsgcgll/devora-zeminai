@@ -8,6 +8,7 @@ import {
 } from "@/lib/api/client";
 import {
   categoryLabels,
+  outputLabels,
   participationLabels,
   safeProfileSource,
 } from "@/lib/profile";
@@ -102,15 +103,17 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
     }
     const metadata: Record<string, string | number> = {};
     const keys =
-      category === "education"
-        ? ["program", "education_type", "status", "student_year"]
-        : category === "certification"
-          ? ["credential_id", "issued_at", "expires_at"]
-          : category === "hackathon"
-            ? ["project_name", "result"]
-            : category === "community"
-              ? ["participation_type", "responsibility", "focus"]
-              : ["participation_type", "responsibility"];
+      category === "portfolio"
+        ? ["output_type"]
+        : category === "education"
+          ? ["program", "education_type", "status", "student_year"]
+          : category === "certification"
+            ? ["credential_id", "issued_at", "expires_at"]
+            : category === "hackathon"
+              ? ["project_name", "result"]
+              : category === "community"
+                ? ["participation_type", "responsibility", "focus"]
+                : ["participation_type", "responsibility"];
     for (const key of keys)
       if (value(key))
         metadata[key] =
@@ -214,7 +217,9 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
                       ? "Sertifika adı"
                       : category === "hackathon"
                         ? "Hackathon adı"
-                        : "Etkinlik / topluluk adı"
+                        : category === "portfolio"
+                          ? "Portföy başlığı"
+                          : "Etkinlik / topluluk adı"
                 }
                 value={editing?.title}
                 required
@@ -228,6 +233,29 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
                 }
                 value={editing?.organization}
               />
+              {category === "portfolio" && (
+                <div>
+                  <label htmlFor="profile-output_type">
+                    Üretim çıktısı türü
+                  </label>
+                  <select
+                    id="profile-output_type"
+                    name="output_type"
+                    defaultValue={meta?.output_type || ""}
+                  >
+                    <option value="">Belirtilmedi</option>
+                    {Object.entries(outputLabels).map(([key, label]) => (
+                      <option value={key} key={key}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="small">
+                    Bağlantı olarak saklanır; dış sayfa indirilmez ve
+                    gözlemlenmiş kanıt sayılmaz.
+                  </p>
+                </div>
+              )}
               {category === "education" && (
                 <>
                   <Field

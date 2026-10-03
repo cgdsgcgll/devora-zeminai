@@ -5,6 +5,7 @@ from app.schemas.profile import ProfileEvidenceItem
 from app.services.matching.profile_resolver import profile_matches, project_matches
 
 MISSING = 'Erişilebilen proje verisinde bu kriteri destekleyen kanıt bulunamadı.'
+DECLARED = 'İlgili beyan bulundu ancak eşleşme için yeterli teknik kullanım kanıtı bulunamadı. Yalnızca beyan niteliğindeki kayıtlar teknik eşleşme skoruna dahil edilmez.'
 
 
 def calculate_match(criteria: list[NeedCriterion], evidence: list[SkillEvidence],
@@ -23,6 +24,10 @@ def calculate_match(criteria: list[NeedCriterion], evidence: list[SkillEvidence]
             and e.evidence_status == EvidenceStatus.observed) or (
             criterion.kind == 'project_experience' and project_matches(criterion, e))}, key=str)
         explanation = 'Gözlemlenebilir proje kanıtı bulundu.' if ids else MISSING
+        if not ids and criterion.kind == 'technical_skill' and any(
+                e.skill_key == criterion.skill_key and e.evidence_status == EvidenceStatus.declared_only
+                for e in evidence):
+            explanation = DECLARED
         if criterion.kind not in {'technical_skill', 'project_experience'}:
             explanation = ('Aday profilinde bu kriteri destekleyen kayıt bulunamadı.' if not items else
                 'İlgili profil kaydı bulundu: ' + ', '.join(sorted({

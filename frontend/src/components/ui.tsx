@@ -7,6 +7,8 @@ import {
   statusLabels,
   strengthLabels,
   typeLabels,
+  evidenceExplanation,
+  criterionExplanation,
 } from "@/lib/presentation";
 
 export function PageHeader({
@@ -81,7 +83,7 @@ export function EvidenceCard({ item }: { item: Evidence }) {
         {strengthLabels[item.evidence_strength]}{" "}
         <span aria-hidden="true">·</span> {typeLabels[item.evidence_type]}
       </p>
-      <p>{item.reason}</p>
+      <p>{evidenceExplanation(item.evidence_status)}</p>
       <div className="source">
         {source ? (
           <a href={source} target="_blank" rel="noopener noreferrer">
@@ -109,7 +111,7 @@ export function CriterionCard({ item }: { item: Model<"NeedCriterion"> }) {
           {item.priority === "required" ? "Gerekli" : "Tercih edilen"}
         </span>
       </div>
-      {item.reason && <p>{item.reason}</p>}
+      <p>{criterionExplanation(item.priority)}</p>
       <p className="meta">
         Kaynak ailesi: {familyLabels[item.kind || "technical_skill"]}
       </p>

@@ -1,7 +1,7 @@
 import re
 import unicodedata
 
-ALIASES = {'python': 'python', 'fastapi': 'fastapi', 'postgres': 'postgresql',
+ALIASES = {'packettracer': 'packet-tracer', 'ciscopackettracer': 'packet-tracer', 'python': 'python', 'fastapi': 'fastapi', 'postgres': 'postgresql',
            'postgresql': 'postgresql', 'nextjs': 'nextjs', 'reactjs': 'react',
            'react': 'react', 'dockercompose': 'docker-compose', 'docker': 'docker',
            'cplusplus': 'cpp', 'c++': 'cpp', 'c#': 'csharp'}
@@ -23,5 +23,5 @@ def supported_skill(key: str, label: str, text: str) -> bool:
     candidates = [label, key.replace('-', ' ')]
     candidates.extend(alias for alias, canonical in ALIASES.items() if canonical == key)
     candidates.extend({'nextjs': ['Next.js'], 'react': ['React.js'], 'postgresql': ['Postgres'],
-                       'docker-compose': ['Docker Compose']}.get(key, []))
+                       'docker-compose': ['Docker Compose'], 'packet-tracer': ['Packet Tracer', 'Cisco Packet Tracer']}.get(key, []))
     return any(re.search(r'(?<!\w)' + re.escape(c) + r'(?!\w)', text, re.I) for c in candidates if c)
