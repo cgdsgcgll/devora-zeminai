@@ -51,7 +51,7 @@ Snapshot, incelenen dosyaları ve commit referansını saklar. Eşleşme sonucu 
 
 `/profil` üzerinden özet, Yetenek Haritası, kronolojik Gelişim Zaman Çizelgesi ve Kanıt Pasaportu arasında geçin. Counts kalite puanı değildir; tarihi olmayan olaylar sisteme eklenme tarihiyle açıkça etiketlenir. `/aday` içindeki açılır deneyim bölümünde portföy dahil kayıtlar düzenlenir.
 
-`/kesif` seçili ihtiyacın aynı 80/20 Kanıt Uyumu formülünü kullanır. En fazla 100 adaylık tam havuz önce Kanıt Uyumu ve kriter kapsamlarına göre deterministik sıralanır, ardından sayfalanır. Havuz sınırı aşılırsa kısmi sonuç yerine açık hata döner. Kanıt odaklı mod isim/okul/kaynak serbest metinlerini API yanıtından çıkarır; tam anonimlik ve erişim kontrolü sağlamaz. 2–4 aday seçerek criterion union kapsamını inceleyin. Takım başarısı tahmin edilmez.
+`/kesif` seçili ihtiyacın aynı 80/20 Kanıt Uyumu formülünü kullanır. En fazla 100 adaylık tam havuz önce Kanıt Uyumu ve kriter kapsamlarına göre deterministik sıralanır, ardından sayfalanır. Havuz sınırı aşılırsa kısmi sonuç yerine açık hata döner. Kanıt odaklı mod isim/okul/kaynak serbest metinlerini API yanıtından çıkarır; tam anonimlik sağlamaz; kurum rolü ve ihtiyaç sahipliği kontrolü altında sunulur. 2–4 aday seçerek criterion union kapsamını inceleyin. Takım başarısı tahmin edilmez.
 
 `/eslesme` kanıt boşluklarını dondurulmuş sonuçtan açıklar; “kanıt bulunamadı” hiçbir zaman “beceri yok” anlamına gelmez. Yeni görünümler AI veya GitHub çağrısı yapmaz. [Sözleşme, sınırlar ve gelecek kapsamı](docs/LIVING_PROFILE.md).
 
@@ -176,7 +176,7 @@ Sürümler [requirements.txt](backend/requirements.txt) içinde sabittir. Fronte
 | GET | `/matches/{match_id}` | Açıklanabilir sonucu oku |
 | GET | `/health` | Uygulama ve DB bağlantısını kontrol et |
 
-[Swagger](http://127.0.0.1:8000/docs) istek/yanıt örneklerini ve alanları gösterir; sözleşme `/openapi.json` üzerinden sunulur. Mevcut API oluşturma/okuma ve analiz işlemlerini kapsar; update/delete endpointleri yoktur.
+[Swagger](http://127.0.0.1:8000/docs) istek/yanıt örneklerini ve alanları gösterir; sözleşme `/openapi.json` üzerinden sunulur. Mevcut API oluşturma/okuma ve analiz işlemlerini kapsar; profil evidence PATCH/DELETE ve aday PATCH uçları da vardır; tüm özel uçlar rol/sahiplik kontrolü altındadır.
 
 Hatalar `error.code`, `message`, `retryable`, `details` alanlarıyla döner. LLM timeout, provider ve validation hataları sırasıyla `LLM_TIMEOUT`, `LLM_PROVIDER_ERROR`, `INVALID_MODEL_OUTPUT` olarak ayrılır.
 
@@ -224,7 +224,7 @@ Backend açıkken ayrı terminalde `frontend/` dizinine geçin. Node.js 22.13+ k
 `.env.example` dosyasını `.env.local` olarak kopyalayın. Frontend ayarı:
 
 ```env
-NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
+API_BACKEND_URL=http://127.0.0.1:8000
 ```
 
 ```bash
@@ -285,9 +285,7 @@ python -m alembic check
 
 ## Güvenlik ve Güvenilirlik İlkeleri
 
-**MVP kontrollü yerel demo içindir.** Public deployment öncesinde authentication,
-kayıt sahipliği kontrolleri, abuse/kota koruması ve deployment güvenlik
-kontrolleri gerekir. CORS authentication değildir. Kapsam, bulgular ve
+**MVP kontrollü yerel demo içindir.** Cookie oturumu, aday/kurum rolleri ve backend sahiplik kontrolleri uygulanır. Public deployment öncesinde AI abuse/kota koruması ve deployment güvenlik kontrolleri gerekir. [Auth modeli ve kalan işler](docs/AUTH.md). CORS authentication değildir. Kapsam, bulgular ve
 sınırlar [güvenlik değerlendirmesinde](docs/SECURITY_REVIEW.md) açıklanır.
 
 İstek gövdeleri JSON parse öncesinde 1 MiB ile sınırlıdır; aşımda
@@ -300,11 +298,15 @@ sınırlar [güvenlik değerlendirmesinde](docs/SECURITY_REVIEW.md) açıklanır
 - `.env` ignore edilir; örnek key alanları boştur. Provider ham hata gövdeleri ve hassas header’lar API hata cevabına konmaz.
 - Analiz hatalarında durum kaydedilir; alınmış snapshot korunur. DB bağlantı kesintisinde `running` kalan kayıtlar için otomatik toparlama henüz yoktur.
 
+## Hesapla başlangıç
+
+`/kayit` üzerinde Aday veya Kurum seçin. Aday hesabı kendi profilini otomatik oluşturur; proje ve deneyimler bu hesaba bağlıdır. Kurum hesabı kendi ihtiyaçlarını ve keşif/eşleşme akışını yönetir. `/giris` ve header çıkış menüsü gerçek DB oturumu kullanır. Yerel HTTP için `.env.example` içindeki `SESSION_COOKIE_SECURE=false`, HTTPS production için `true` kullanılmalıdır. Tarayıcı `/api` proxy’sini kullanır; token localStorage’da tutulmaz.
+
 ## Mevcut Durum
 
 ### Uygulananlar
 
-- Responsive Next.js web akışı, gerçek API entegrasyonu, loading/error/empty durumları ve ID tabanlı demo devamlılığı.
+- Responsive Next.js web akışı, gerçek API entegrasyonu, loading/error/empty durumları ve DB tabanlı cookie oturumu ve rol bazlı akış.
 
 - Aday, proje, ihtiyaç ve eşleşme oluşturma/okuma; Swagger sözleşmesi.
 - Public GitHub snapshot, kaynaklı evidence, üç analiz modu ve kalıcı analiz kayıtları.
@@ -314,7 +316,7 @@ sınırlar [güvenlik değerlendirmesinde](docs/SECURITY_REVIEW.md) açıklanır
 
 ### Sonraki Adımlar
 
-- Authentication/authorization ve tenant izolasyonu.
+- Email doğrulama, parola kurtarma ve production hesap yaşam döngüsü.
 - Background jobs, analiz yeniden başlatma ve sürekli profil güncellemeleri.
 - Contributor attribution ve tam GitHub hesap aktarımı.
 - Deployment, operasyon kontrolleri ve model kalite değerlendirmeleri.

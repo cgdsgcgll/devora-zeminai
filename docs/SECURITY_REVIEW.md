@@ -1,5 +1,15 @@
 # ZeminAI MVP güvenlik değerlendirmesi
 
+## 4 Ekim 2026 — Auth/ownership güncellemesi
+
+Önceki tarihli bölümler tarihsel kayıttır. Güncel model [AUTH.md](AUTH.md) içindedir. Authentication/ownership eksikliği **RESOLVED (uygulanan kapsam)**: DB tabanlı hash session, Argon2id, rol guard’ları, aday/need üzerinden ownership, match-scoped evidence ve legacy izolasyonu uygulanır. SQLite ve PostgreSQL 18 üzerinde 264’er test geçti; gerçek cookie ile IDOR/rol/expiry/revocation/CSRF testleri dahil. Bütün business OpenAPI operasyonları anonymous 401 testinden geçer.
+
+Login/register DB tabanlı atomik deneme bütçesiyle korunur; process-local limiter değildir. AI/GitHub quota/rate-limit bulgusu **HIGH / OPEN** kalır. Email verification/recovery, TLS/ingress, hesap lifecycle, monitoring ve bağımsız güvenlik incelemesi production follow-up’tır. Auth eklendi diye production güvenliği veya vulnerability-free iddiası yapılmaz.
+
+Frontend artık token/ID localStorage kullanmaz; aynı-origin `/api` proxy, credentials ve merkezi 401 temizliği vardır. State-changing uçlar kesin Origin/Referer allowlist ister. Cookie HttpOnly, SameSite=Lax; Secure varsayılan true, yalnız yerel HTTP örneğinde false.
+
+## Önceki inceleme kayıtları
+
 Tarih: 1 Ekim 2026. Branch: `feat/profile-evidence-sources`. Sonuç: **SAFE_FOR_CONTROLLED_DEMO**.
 Bu sonuç yalnız loopback arayüzlerine bağlı, güvenilir operatörün kullandığı, sentetik
 aday/ihtiyaç verileri içeren yerel jüri demosu içindir. İnternete açık yayın onayı,
@@ -86,7 +96,7 @@ Severity, herkese açık deployment etkisini dikkate alır; yerel demo kapsamı 
 
 | Severity | Finding | Status | Action |
 |---|---|---|---|
-| HIGH | Authentication ve kayıt sahipliği/tenant kontrolü yok; herkes kayıt oluşturabilir ve ID'sini bildiği kayıtları okuyabilir | Açık — production blocker | Kimlik doğrulama, sahiplik kontrolleri, izolasyon ve negatif yetki testleri |
+| HIGH | Authentication ve kayıt sahipliği/tenant kontrolü yok; herkes kayıt oluşturabilir ve ID'sini bildiği kayıtları okuyabilir | **RESOLVED — 4 Ekim auth fazı** | Gerçek cookie/ownership negatif testleri; AUTH.md kapsamı |
 | HIGH | Analiz/ihtiyaç çağrıları rate limit veya kotaya tabi değil; ücret, DB büyümesi ve worker tüketimi mümkün | Açık — production blocker | Gateway rate limit, kimliğe bağlı kota, concurrency ve maliyet bütçesi; in-memory limiter eklenmedi |
 | HIGH | Önceki Starlette 0.46.2 advisory riski | **RESOLVED** — doğrulanan zincir FastAPI 0.142.2 / Starlette 1.7.0 | Temiz kurulum, 163 regresyon testi, aynı OpenAPI ve pip-audit doğrulandı; eski ortamlar yeniden kurulmalı/güncellenmeli |
 | MEDIUM | JSON gövdesi parse öncesi sınırsızdı | Düzeltildi | 1 MiB toplam sınır; streamed/header bypass ve sınır testleri |

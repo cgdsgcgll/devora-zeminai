@@ -17,11 +17,11 @@ Uvicorn `startup complete` yalnız uygulamanın açıldığını gösterir. SQLA
    Mevcut PostgreSQL kullanıyorsanız `./scripts/start-demo.ps1 -UseExistingPostgres`. Başka virtualenv için `-Python <python.exe yolu>` verin. Script hiçbir parolayı değiştirmez, DB oluşturmaz ve sunucuları arka planda başlatmaz.
 5. Aynı ortam değişkenleriyle `backend/` içinde `../.venv/Scripts/python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000` çalıştırın.
 6. `Invoke-RestMethod http://127.0.0.1:8000/health`: HTTP 200 ve `database=ok` olmalı. Ayrı kontrol: `python scripts/demo_preflight.py` migration head'i de doğrular.
-7. İkinci terminalde `frontend/`: `npm.cmd ci`, `npm.cmd run build`, `npm.cmd start`. Frontend API adresi `NEXT_PUBLIC_API_BASE_URL`; varsayılan `http://127.0.0.1:8000`. Özel adres build sırasında ayarlanmalıdır.
+7. İkinci terminalde `frontend/`: `npm.cmd ci`, `npm.cmd run build`, `npm.cmd start`. Frontend API adresi `API_BACKEND_URL`; varsayılan `http://127.0.0.1:8000`. Özel adres build sırasında ayarlanmalıdır.
 
 `DATABASE_URL` process environment değeri `.env` değerini geçersiz kılar. Kök `.env` mutlak dosya yolu ile okunur; backend çalışma dizini değişse de başka `.env` seçilmez. CORS için frontend origin'ini backend `CORS_ORIGINS` listesine açıkça ekleyin.
 
-Auth/authorization ve rate limiting bulunmadığından demo yalnız kontrollü, yerel ortam içindir.
+Auth/ownership ve login/register deneme bütçesi uygulanmıştır. AI quota ve deployment hardening eksikleri nedeniyle demo kontrollü yerel ortam içindir. `/kayit` ile ayrı Aday/Kurum hesapları oluşturun; eski sahipsiz demo kayıtları otomatik aktarılmaz. [Auth kurulumu](AUTH.md).
 
 ## Profil ve eşleşme demosu
 
@@ -32,3 +32,5 @@ Aday oluşturun; isteğe bağlı GitHub projesi ekleyip analiz edin. Gelişim ve
 Anonim GitHub kotası dolarsa gerçek analiz kontrollü hata verir. Tekrar tekrar denemeyin; kota yenilenmesini bekleyin veya yetkili operatör kendi yerel `GITHUB_TOKEN` ayarını kullanabilir. Token'ı arayüze, loga veya commit'e yazmayın. Gemini anahtarı yoksa canlı test `BLOCKED_BY_MISSING_KEY`; rule_based modu anahtarsız çalışır.
 
 3000 meşgulse production frontend `npm.cmd start -- --hostname 127.0.0.1 --port 3001` ile açılabilir. Backend'i başlatan terminalde `CORS_ORIGINS` içine yalnız gerekli local origin'i açıkça koyun; örnek PowerShell: `$env:CORS_ORIGINS='["http://127.0.0.1:3001"]'`. CORS değişikliği backend restart gerektirir. Eski sürecin yeni kodu çalıştırdığını varsaymayın.
+
+Yerel HTTP için `SESSION_COOKIE_SECURE=false`; production HTTPS için `true`. CORS_ORIGINS frontend origin/portunu açıkça içermelidir. Frontend `/api` proxy’si backend 127.0.0.1 adresine bağlanır; localhost cookie’si same-origin kalır.
