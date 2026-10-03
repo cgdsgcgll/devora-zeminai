@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title='ZeminAI', version='0.1.0')
 app.add_middleware(RequestSizeLimitMiddleware)
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins,
-                   allow_methods=['GET', 'POST'], allow_headers=['Content-Type'])
+                   allow_methods=['GET', 'POST', 'PATCH', 'DELETE'], allow_headers=['Content-Type'])
 app.include_router(router)
 
 

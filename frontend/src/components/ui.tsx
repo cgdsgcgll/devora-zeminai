@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { Evidence, Model } from "@/lib/api/client";
+import { familyLabels } from "@/lib/profile";
 import {
   safeSource,
   statusLabels,
@@ -109,6 +110,9 @@ export function CriterionCard({ item }: { item: Model<"NeedCriterion"> }) {
         </span>
       </div>
       {item.reason && <p>{item.reason}</p>}
+      <p className="meta">
+        Kaynak ailesi: {familyLabels[item.kind || "technical_skill"]}
+      </p>
     </article>
   );
 }

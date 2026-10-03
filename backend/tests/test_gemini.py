@@ -144,7 +144,7 @@ def test_project_fabrication_rejected(override):
 
 
 def test_need_semantics_and_no_invented_stack():
-    output = {'criteria': [dict(skill_key=label, skill_label=label, priority=priority,
+    output = {'criteria': [dict(kind='technical_skill', skill_key=label, skill_label=label, priority=priority,
         reason='Explicit request', source_excerpt=label) for label, priority in [
             ('Python', 'required'), ('FastAPI', 'required'), ('Docker', 'preferred')]], 'uncertainties': []}
     data = NeedAnalysisInput(need_id=uuid4(), description='Python ve FastAPI zorunlu, Docker tercih edilir.')

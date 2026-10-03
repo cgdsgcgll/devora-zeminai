@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import (JSON, Boolean, CheckConstraint, DateTime, Float, ForeignKey,
+from sqlalchemy import (JSON, Boolean, CheckConstraint, Date, DateTime, Float, ForeignKey,
                         ForeignKeyConstraint, String, Text, UniqueConstraint, Uuid)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -28,6 +28,26 @@ class Candidate(Identity, Updated, Base):
     __tablename__ = 'candidates'
     name: Mapped[str] = mapped_column(String(200))
     projects: Mapped[list['Project']] = relationship(back_populates='candidate')
+
+
+class ProfileEvidenceItem(Identity, Updated, Base):
+    __tablename__ = 'profile_evidence_items'
+    __table_args__ = (
+        CheckConstraint("category IN ('education', 'certification', 'hackathon', 'event', 'community')"),
+        CheckConstraint("verification_status IN ('declared_only', 'linked', 'verified')"),
+    )
+    candidate_id: Mapped[UUID] = mapped_column(ForeignKey('candidates.id'), index=True)
+    category: Mapped[str] = mapped_column(String(30))
+    title: Mapped[str] = mapped_column(String(200))
+    organization: Mapped[str] = mapped_column(String(200))
+    role: Mapped[str] = mapped_column(String(200))
+    description: Mapped[str] = mapped_column(Text)
+    started_at: Mapped[date | None] = mapped_column(Date)
+    ended_at: Mapped[date | None] = mapped_column(Date)
+    source_url: Mapped[str | None] = mapped_column(String(2000))
+    source_label: Mapped[str] = mapped_column(String(200))
+    verification_status: Mapped[str] = mapped_column(String(20))
+    metadata_json: Mapped[dict] = mapped_column(JSON)
 
 
 class Project(Identity, Updated, Base):
@@ -73,6 +93,7 @@ class NeedCriterion(Identity, Created, Base):
     __table_args__ = (UniqueConstraint('need_id', 'skill_key'),
                       CheckConstraint("priority IN ('required', 'preferred')"))
     need_id: Mapped[UUID] = mapped_column(ForeignKey('organization_needs.id'), index=True)
+    kind: Mapped[str] = mapped_column(String(30), default='technical_skill', server_default='technical_skill')
     skill_key: Mapped[str] = mapped_column(String(64))
     skill_label: Mapped[str] = mapped_column(String(200))
     priority: Mapped[str] = mapped_column(String(20))
@@ -153,6 +174,9 @@ class MatchCriterion(Identity, Base):
     __table_args__ = (UniqueConstraint('match_id', 'criterion_id'),)
     match_id: Mapped[UUID] = mapped_column(ForeignKey('match_results.id'), index=True)
     criterion_id: Mapped[UUID] = mapped_column(ForeignKey('need_criteria.id'))
+    kind: Mapped[str] = mapped_column(String(30), default='technical_skill', server_default='technical_skill')
+    # Immutable snapshots allow edits/deletions without rewriting historical results.
+    profile_evidence: Mapped[list] = mapped_column(JSON, default=list, server_default='[]')
     # Freeze labels/priority so historical explanations remain reproducible.
     skill_key: Mapped[str] = mapped_column(String(64))
     skill_label: Mapped[str] = mapped_column(String(200))

@@ -1,64 +1,21 @@
-# Devora - ZeminAI
+# ZeminAI — ürün vizyonu
 
-ZeminAI, genç yeteneklerin yalnızca klasik CV bilgileriyle değil;
-GitHub çalışmaları, projeleri, teknik becerileri, eğitimleri,
-hackathon deneyimleri ve portföyleri üzerinden keşfedilmesini sağlayan
-yapay zekâ destekli bir yetenek ve iş birliği platformudur.
+ZeminAI, gençleri yalnızca okul, diploma veya CV anahtar kelimeleriyle değil; ürettikleri projeler, geliştirdikleri beceriler, aldıkları eğitimler, sertifikalar, hackathonlar ve topluluk katkıları üzerinden görünür kılan; kurum ihtiyaçlarıyla kanıta dayalı ve açıklanabilir şekilde eşleştiren bir yetenek platformudur.
 
-## 🎯 Amaç
+Temel sorular: Ne ürettin? Ne öğrendin? Neye katıldın? Nasıl katkı verdin? Bunları hangi dayanaklarla gösterebiliyorsun?
 
-Genç yeteneklerin gerçek üretimlerini görünür hâle getirmek ve
-kurumların ihtiyaçlarıyla doğru kişileri yapay zekâ destekli,
-açıklanabilir bir eşleştirme sistemi üzerinden buluşturmak.
+## Bugün çalışan ürün
 
-## 🚀 Çözdüğümüz Problemler
+Next.js, FastAPI, PostgreSQL ve Alembic ile aday/proje/ihtiyaç/eşleşme akışı çalışır. GitHub teknik evidence provider'lardan biridir. Eğitim, sertifika, hackathon, etkinlik ve topluluk kayıtları ayrıca görünür. Kullanıcı linki yalnız kaynak bağlantısı anlamındadır; bağımsız doğrulama değildir.
 
-ZeminAI, Zemin360 kapsamında belirlenen altı probleme bütünleşik
-bir çözüm sunmayı hedeflemektedir:
+Kurum açıkça ilgili kriteri isterse doğru kaynak ailesi değerlendirilir. Okul prestiji, GPA, sertifika/etkinlik sayısı bonus üretmez. Katıldı/finalist/kazandı ayrıdır. Rol veya katılımdan kişilik/soft skill çıkarılmaz. Final skoru AI değil deterministik kriter kapsamı hesaplar.
 
-- Genç Yeteneklerin Keşfi
-- Profil & Portföy Doğruluğu
-- Kurum–Kişi Eşleşmesi
-- Yaşayan Bir Ağ
-- İhtiyaçların Net Tanımı
-- Şeffaf İş Birliği Takibi
+LLM structured extraction, normalization ve sınırlı açıklama içindir; kişilik, yüksek potansiyel, prestij veya hassas özellik değerlendirmesi için değildir.
 
-## 🤖 Nasıl Çalışır?
+## Henüz uygulanmayan hedefler
 
-1. Kullanıcı profilini ve çalışmalarını sisteme ekler.
-2. GitHub, projeler, eğitimler ve hackathon deneyimleri analiz edilir.
-3. Yapay zekâ kullanıcının yetenek profilini oluşturur.
-4. Kurum ihtiyacını doğal dilde tanımlar.
-5. Yapay zekâ kurumun ihtiyaçlarını teknik kriterlere dönüştürür.
-6. Uygun adaylar açıklanabilir bir eşleşme skoru ile sunulur.
-7. İş birliği süreci platform üzerinden takip edilir.
+Provider destekli sertifika doğrulaması, contributor attribution, hesap genelinde sürekli GitHub senkronizasyonu, yaşayan profil otomasyonu, iş birliği yaşam döngüsü ve gelişmiş aday keşfi/ekip kurma yol haritasındadır. Mevcut ürün bunları varmış gibi sunmaz.
 
-## ✨ Temel Özellikler
+Authentication/authorization, tenant izolasyonu ve rate limiting public production öncesi zorunludur. Mevcut sürüm kontrollü demo ve inceleme içindir.
 
-- Yapay zekâ destekli yetenek analizi
-- GitHub ve portföy tabanlı profil oluşturma
-- Doğal dil ile kurum ihtiyacı tanımlama
-- Açıklanabilir kurum–aday eşleşmesi
-- Dinamik ve sürekli güncellenen yetenek profilleri
-- İş birliği ve süreç takibi
-
-## 👥 Takım
-
-**Devora**
-
-Zemin360 Hackathon kapsamında geliştirilmektedir.
-
-## 🛠️ Teknolojiler
-
-Proje geliştirme sürecinde kullanılacak teknolojiler hackathon
-sürecinde ihtiyaçlara göre güncellenecektir.
-
-- Frontend: React / Next.js
-- Backend: Python / FastAPI
-- AI: LLM & NLP
-- Database: PostgreSQL
-- Version Control: Git & GitHub
-
-## 📌 Durum
-
-🚧 Proje geliştirme aşamasındadır.
+Devora ekibi — Zemin360 Hackathon. [Profil sözleşmesi](PROFILE_EVIDENCE.md) · [Yerel demo](LOCAL_DEMO.md).

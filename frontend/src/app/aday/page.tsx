@@ -5,6 +5,7 @@ import { api } from "@/lib/api/client";
 import { validateGithub, validateName } from "@/lib/presentation";
 import { useSession } from "@/components/session";
 import { EvidenceCard, Info, Notes, PageHeader, Empty } from "@/components/ui";
+import { ProfilePanel } from "@/components/profile-panel";
 
 export default function CandidatePage() {
   const s = useSession();
@@ -44,8 +45,12 @@ export default function CandidatePage() {
   }
   return (
     <>
-      <PageHeader step="01 / ADAY & PROJE" title="Bir projeyle başlayın.">
-        Becerileri bir listeden değil, üretildiği yerden inceleyin.
+      <PageHeader
+        step="01 / ADAY & PROFİL"
+        title="Üretiminizi ve gelişiminizi görünür kılın."
+      >
+        Projelerinizi, öğrendiklerinizi ve katkılarınızı dayanaklarıyla bir
+        araya getirin.
       </PageHeader>
       <div className="workspace">
         <div className="stack">
@@ -185,6 +190,9 @@ export default function CandidatePage() {
           <Info>Kanıt gücü, adayın beceri seviyesi değildir.</Info>
         </aside>
       </div>
+      {candidate && (
+        <ProfilePanel key={candidate.id} candidateId={candidate.id} />
+      )}
       {run && (
         <section className="result-section">
           <div className="section-heading horizontal">

@@ -1,12 +1,15 @@
 from app.core.errors import AppError
 from app.schemas.domain import (CriterionMatch, EvidenceStatus, MatchCalculation,
                                 NeedCriterion, Priority, SkillEvidence)
+from app.schemas.profile import ProfileEvidenceItem
+from app.services.matching.profile_resolver import profile_matches, project_matches
 
 MISSING = 'Erişilebilen proje verisinde bu kriteri destekleyen kanıt bulunamadı.'
 
 
 def calculate_match(criteria: list[NeedCriterion], evidence: list[SkillEvidence],
-                    analysis_version: str, uncertainties: list[str] | None = None) -> MatchCalculation:
+                    analysis_version: str, uncertainties: list[str] | None = None,
+                    profile_evidence: list[ProfileEvidenceItem] | None = None) -> MatchCalculation:
     """Pure function. Only observed evidence counts; evidence strength is not a multiplier."""
     if not criteria:
         raise AppError('MATCHING_FAILED', 'İhtiyaç kriterleri boş; önce ihtiyaç kriterlerini belirleyin.', 422)
@@ -14,11 +17,22 @@ def calculate_match(criteria: list[NeedCriterion], evidence: list[SkillEvidence]
         raise AppError('MATCHING_FAILED', 'Tekrarlanan beceri kriterleri desteklenmiyor.', 422)
     rows = []
     for criterion in sorted(criteria, key=lambda c: (c.skill_key, str(c.id))):
-        ids = sorted({e.id for e in evidence if e.skill_key == criterion.skill_key
-                      and e.evidence_status == EvidenceStatus.observed}, key=str)
+        items = sorted({p.id: p for p in (profile_evidence or []) if profile_matches(criterion, p)}.values(), key=lambda p: str(p.id))
+        ids = sorted({e.id for e in evidence if (
+            criterion.kind == 'technical_skill' and e.skill_key == criterion.skill_key
+            and e.evidence_status == EvidenceStatus.observed) or (
+            criterion.kind == 'project_experience' and project_matches(criterion, e))}, key=str)
+        explanation = 'Gözlemlenebilir proje kanıtı bulundu.' if ids else MISSING
+        if criterion.kind not in {'technical_skill', 'project_experience'}:
+            explanation = ('Aday profilinde bu kriteri destekleyen kayıt bulunamadı.' if not items else
+                'İlgili profil kaydı bulundu: ' + ', '.join(sorted({
+                    'Kaynak bağlantısı mevcut (içeriği doğrulanmadı)' if p.verification_status == 'linked'
+                    else 'Beyan (bağımsız doğrulama yok)' if p.verification_status == 'declared_only'
+                    else 'Doğrulanmış' for p in items})) + '. Bu eşleşme teknik beceri veya kişilik değerlendirmesi değildir.')
         rows.append(CriterionMatch(criterion_id=criterion.id, skill_key=criterion.skill_key,
-            skill_label=criterion.skill_label, priority=criterion.priority, matched=bool(ids),
-            evidence_ids=ids, explanation='Gözlemlenebilir proje kanıtı bulundu.' if ids else MISSING))
+            kind=criterion.kind, profile_evidence=items,
+            skill_label=criterion.skill_label, priority=criterion.priority, matched=bool(ids or items),
+            evidence_ids=ids, explanation=explanation))
     required = [r for r in rows if r.priority == Priority.required]
     preferred = [r for r in rows if r.priority == Priority.preferred]
     rc = sum(r.matched for r in required) / len(required) if required else 0.0
@@ -38,10 +52,14 @@ def calculate_match(criteria: list[NeedCriterion], evidence: list[SkillEvidence]
     if any(e.evidence_status != EvidenceStatus.observed for e in evidence):
         notes.append('Yalnızca beyan edilen veya not_found durumundaki kayıtlar skora dahil edilmedi.')
     notes.append('Kanıt bulunmaması adayın beceriye sahip olmadığı anlamına gelmez.')
+    expanded = any(c.kind != 'technical_skill' for c in criteria)
+    if expanded:
+        notes.append('Profil beyanları ve bağlantıları bağımsız doğrulanmadı; yalnız açıkça istenen ilgili deneyim kriterlerini karşılar. Kayıt sayısı bonus değildir.')
     return MatchCalculation(score=score, required_coverage=rc, preferred_coverage=pc,
-        score_explanation=formula +
-                          ' Skor gözlemlenebilir proje kanıtlarının ihtiyaçla uyumudur; işe alınma ihtimali veya genel yetenek puanı değildir.',
-        strengths=[r.skill_label + ': proje kanıtı bulundu.' for r in rows if r.matched],
-        gaps=[r.skill_label + ': ' + MISSING for r in rows if not r.matched],
+        scoring_version='evidence-coverage-v0.3' if expanded else 'evidence-coverage-v0.2',
+        score_explanation=formula + (' Skor ilgili proje kanıtları ve açıkça istenen profil kayıtlarının kriter kapsamıdır; beyan ile doğrulama ayrı gösterilir. Genel yetenek veya işe alınma ihtimali değildir.' if expanded else
+                          ' Skor gözlemlenebilir proje kanıtlarının ihtiyaçla uyumudur; işe alınma ihtimali veya genel yetenek puanı değildir.'),
+        strengths=[r.skill_label + ': ' + (r.explanation if expanded else 'proje kanıtı bulundu.') for r in rows if r.matched],
+        gaps=[r.skill_label + ': ' + r.explanation for r in rows if not r.matched],
         uncertainties=sorted(set(notes)), analysis_version=analysis_version,
         matched_criteria=[r for r in rows if r.matched], unmatched_criteria=[r for r in rows if not r.matched])

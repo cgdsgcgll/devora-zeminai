@@ -7,6 +7,50 @@ from sqlalchemy import create_engine, inspect
 from app.core.config import settings
 
 
+def test_profile_migration_preserves_legacy_project_evidence(tmp_path, monkeypatch):
+    import os
+    from uuid import uuid4
+    from sqlalchemy import select
+    from app.models import domain as m
+
+    # Optional PostgreSQL target must be a newly created, dedicated test DB.
+    url = os.environ.get('TEST_MIGRATION_DATABASE_URL') or 'sqlite:///' + (tmp_path / 'profile-migration.db').as_posix()
+    engine = create_engine(url)
+    assert not inspect(engine).get_table_names(), 'Migration regression requires an empty dedicated database.'
+    monkeypatch.setattr(settings, 'database_url', url)
+    config = Config(str(Path(__file__).resolve().parents[1] / 'alembic.ini'))
+    command.upgrade(config, '6b02_llm_metadata')
+    cid, pid, sid, rid, eid = [uuid4() for _ in range(5)]
+    with engine.begin() as connection:
+        connection.execute(m.Candidate.__table__.insert().values(id=cid, name='Preserve candidate'))
+        connection.execute(m.Project.__table__.insert().values(id=pid, candidate_id=cid,
+            name='Preserve project', description='', source_type='github', source_url='https://github.com/test/repo'))
+        connection.execute(m.RepositorySnapshot.__table__.insert().values(id=sid, project_id=pid,
+            repository_url='https://github.com/test/repo', default_branch='main', commit_sha='a'*40,
+            readme='', languages={}, files=[], limitations=[]))
+        connection.execute(m.AnalysisRun.__table__.insert().values(id=rid, project_id=pid,
+            analysis_type='project', status='completed', analysis_version='legacy'))
+        connection.execute(m.SkillEvidence.__table__.insert().values(id=eid, candidate_id=cid, project_id=pid,
+            snapshot_id=sid, analysis_run_id=rid, skill_key='python', skill_label='Python', evidence_status='observed',
+            evidence_strength='strong', evidence_type='source_file', source_url='https://github.com/test/repo',
+            excerpt='print(1)', reason='Source', limitations=[]))
+    tables = [m.Candidate.__table__, m.Project.__table__, m.RepositorySnapshot.__table__, m.SkillEvidence.__table__]
+    def saved():
+        with engine.connect() as connection:
+            return [connection.execute(select(table)).mappings().all() for table in tables]
+    before = saved()
+    command.upgrade(config, 'head')
+    command.check(config)
+    assert saved() == before
+    command.downgrade(config, '6b02_llm_metadata')
+    assert saved() == before
+    command.upgrade(config, 'head')
+    command.check(config)
+    assert saved() == before
+    assert 'profile_evidence_items' in inspect(engine).get_table_names()
+    engine.dispose()
+
+
 def test_migration_upgrade_check_downgrade(tmp_path, monkeypatch):
     url = 'sqlite:///' + (tmp_path / 'migration.db').as_posix()
     monkeypatch.setattr(settings, 'database_url', url)

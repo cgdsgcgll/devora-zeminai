@@ -321,6 +321,567 @@
         }
       }
     },
+    "/candidates/{candidate_id}/profile-evidence": {
+      "post": {
+        "summary": "Create Profile",
+        "operationId": "create_profile_candidates__candidate_id__profile_evidence_post",
+        "parameters": [
+          {
+            "name": "candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Candidate Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileEvidenceCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileEvidenceItem"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "504": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Gateway Timeout"
+          }
+        }
+      },
+      "get": {
+        "summary": "List Profile",
+        "operationId": "list_profile_candidates__candidate_id__profile_evidence_get",
+        "parameters": [
+          {
+            "name": "candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Candidate Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProfileEvidenceItem"
+                  },
+                  "title": "Response List Profile Candidates  Candidate Id  Profile Evidence Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "504": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Gateway Timeout"
+          }
+        }
+      }
+    },
+    "/profile-evidence/{evidence_id}": {
+      "get": {
+        "summary": "Get Profile",
+        "operationId": "get_profile_profile_evidence__evidence_id__get",
+        "parameters": [
+          {
+            "name": "evidence_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Evidence Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileEvidenceItem"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "504": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Gateway Timeout"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update Profile",
+        "operationId": "update_profile_profile_evidence__evidence_id__patch",
+        "parameters": [
+          {
+            "name": "evidence_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Evidence Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileEvidencePatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileEvidenceItem"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "504": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Gateway Timeout"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Profile",
+        "operationId": "delete_profile_profile_evidence__evidence_id__delete",
+        "parameters": [
+          {
+            "name": "evidence_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Evidence Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "504": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Gateway Timeout"
+          }
+        }
+      }
+    },
     "/candidates/{candidate_id}/projects": {
       "post": {
         "summary": "Create Project",
@@ -1451,7 +2012,12 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "required": ["run", "snapshot", "result", "evidence"],
+        "required": [
+          "run",
+          "snapshot",
+          "result",
+          "evidence"
+        ],
         "title": "AnalysisResponse"
       },
       "AnalysisRun": {
@@ -1487,12 +2053,19 @@
           },
           "analysis_type": {
             "type": "string",
-            "enum": ["project", "need"],
+            "enum": [
+              "project",
+              "need"
+            ],
             "title": "Analysis Type"
           },
           "status": {
             "type": "string",
-            "enum": ["running", "completed", "failed"],
+            "enum": [
+              "running",
+              "completed",
+              "failed"
+            ],
             "title": "Status"
           },
           "analysis_version": {
@@ -1630,7 +2203,10 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "required": ["name", "updated_at"],
+        "required": [
+          "name",
+          "updated_at"
+        ],
         "title": "Candidate"
       },
       "CandidateCreate": {
@@ -1644,11 +2220,27 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "required": ["name"],
+        "required": [
+          "name"
+        ],
         "title": "CandidateCreate"
       },
       "CriterionInput": {
         "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "technical_skill",
+              "project_experience",
+              "education",
+              "certification",
+              "hackathon",
+              "community",
+              "event"
+            ],
+            "title": "Kind",
+            "default": "technical_skill"
+          },
           "skill_key": {
             "type": "string",
             "pattern": "^[a-z][a-z0-9_-]{0,63}$",
@@ -1677,11 +2269,36 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "required": ["skill_key", "skill_label", "priority"],
+        "required": [
+          "skill_key",
+          "skill_label",
+          "priority"
+        ],
         "title": "CriterionInput"
       },
       "CriterionMatch": {
         "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "technical_skill",
+              "project_experience",
+              "education",
+              "certification",
+              "hackathon",
+              "community",
+              "event"
+            ],
+            "title": "Kind",
+            "default": "technical_skill"
+          },
+          "profile_evidence": {
+            "items": {
+              "$ref": "#/components/schemas/ProfileEvidenceItem"
+            },
+            "type": "array",
+            "title": "Profile Evidence"
+          },
           "criterion_id": {
             "type": "string",
             "format": "uuid",
@@ -1751,7 +2368,12 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "required": ["code", "message", "retryable", "details"],
+        "required": [
+          "code",
+          "message",
+          "retryable",
+          "details"
+        ],
         "title": "ErrorDetail"
       },
       "ErrorResponse": {
@@ -1762,7 +2384,9 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "required": ["error"],
+        "required": [
+          "error"
+        ],
         "title": "ErrorResponse"
       },
       "EvidenceInput": {
@@ -1835,12 +2459,20 @@
       },
       "EvidenceStatus": {
         "type": "string",
-        "enum": ["observed", "declared_only", "not_found"],
+        "enum": [
+          "observed",
+          "declared_only",
+          "not_found"
+        ],
         "title": "EvidenceStatus"
       },
       "EvidenceStrength": {
         "type": "string",
-        "enum": ["weak", "medium", "strong"],
+        "enum": [
+          "weak",
+          "medium",
+          "strong"
+        ],
         "title": "EvidenceStrength"
       },
       "EvidenceType": {
@@ -1859,7 +2491,10 @@
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["ok", "degraded"],
+            "enum": [
+              "ok",
+              "degraded"
+            ],
             "title": "Status"
           },
           "service": {
@@ -1870,13 +2505,19 @@
           },
           "database": {
             "type": "string",
-            "enum": ["ok", "unavailable"],
+            "enum": [
+              "ok",
+              "unavailable"
+            ],
             "title": "Database"
           }
         },
         "additionalProperties": false,
         "type": "object",
-        "required": ["status", "database"],
+        "required": [
+          "status",
+          "database"
+        ],
         "title": "Health"
       },
       "MatchCreate": {
@@ -1894,7 +2535,10 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "required": ["candidate_id", "need_id"],
+        "required": [
+          "candidate_id",
+          "need_id"
+        ],
         "title": "MatchCreate"
       },
       "MatchResult": {
@@ -1954,7 +2598,11 @@
           },
           "scoring_version": {
             "type": "string",
-            "enum": ["evidence-coverage-v0.1", "evidence-coverage-v0.2"],
+            "enum": [
+              "evidence-coverage-v0.1",
+              "evidence-coverage-v0.2",
+              "evidence-coverage-v0.3"
+            ],
             "title": "Scoring Version",
             "default": "evidence-coverage-v0.2"
           },
@@ -2054,11 +2702,27 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "required": ["description"],
+        "required": [
+          "description"
+        ],
         "title": "NeedCreate"
       },
       "NeedCriterion": {
         "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "technical_skill",
+              "project_experience",
+              "education",
+              "certification",
+              "hackathon",
+              "community",
+              "event"
+            ],
+            "title": "Kind",
+            "default": "technical_skill"
+          },
           "skill_key": {
             "type": "string",
             "pattern": "^[a-z][a-z0-9_-]{0,63}$",
@@ -2102,7 +2766,12 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "required": ["skill_key", "skill_label", "priority", "need_id"],
+        "required": [
+          "skill_key",
+          "skill_label",
+          "priority",
+          "need_id"
+        ],
         "title": "NeedCriterion"
       },
       "OrganizationNeed": {
@@ -2182,8 +2851,517 @@
       },
       "Priority": {
         "type": "string",
-        "enum": ["required", "preferred"],
+        "enum": [
+          "required",
+          "preferred"
+        ],
         "title": "Priority"
+      },
+      "ProfileEvidenceCreate": {
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": [
+              "education",
+              "certification",
+              "hackathon",
+              "event",
+              "community"
+            ],
+            "title": "Category"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Title"
+          },
+          "organization": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Organization",
+            "default": ""
+          },
+          "role": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Role",
+            "default": ""
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 4000,
+            "title": "Description",
+            "default": ""
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "source_label": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Source Label",
+            "default": ""
+          },
+          "metadata_json": {
+            "$ref": "#/components/schemas/ProfileMetadata"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "category",
+          "title"
+        ],
+        "title": "ProfileEvidenceCreate"
+      },
+      "ProfileEvidenceItem": {
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": [
+              "education",
+              "certification",
+              "hackathon",
+              "event",
+              "community"
+            ],
+            "title": "Category"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Title"
+          },
+          "organization": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Organization",
+            "default": ""
+          },
+          "role": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Role",
+            "default": ""
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 4000,
+            "title": "Description",
+            "default": ""
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "source_label": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Source Label",
+            "default": ""
+          },
+          "metadata_json": {
+            "$ref": "#/components/schemas/ProfileMetadata"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "candidate_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Candidate Id"
+          },
+          "verification_status": {
+            "type": "string",
+            "enum": [
+              "declared_only",
+              "linked",
+              "verified"
+            ],
+            "title": "Verification Status"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "category",
+          "title",
+          "id",
+          "candidate_id",
+          "verification_status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ProfileEvidenceItem"
+      },
+      "ProfileEvidencePatch": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "organization": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "source_label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Label"
+          },
+          "metadata_json": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProfileMetadata"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ProfileEvidencePatch"
+      },
+      "ProfileMetadata": {
+        "properties": {
+          "program": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Program"
+          },
+          "education_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "degree",
+                  "course",
+                  "bootcamp",
+                  "other"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Education Type"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "ongoing",
+                  "completed",
+                  "left"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "student_year": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 6.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Student Year"
+          },
+          "credential_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credential Id"
+          },
+          "issued_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issued At"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "project_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project Name"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "participant",
+                  "finalist",
+                  "winner"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result"
+          },
+          "participation_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "participant",
+                  "organizer",
+                  "speaker",
+                  "mentor",
+                  "volunteer",
+                  "member",
+                  "leader"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Participation Type"
+          },
+          "focus": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "technology",
+                  "other"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Focus"
+          },
+          "responsibility": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Responsibility"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ProfileMetadata"
       },
       "Project": {
         "properties": {
@@ -2233,7 +3411,12 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "required": ["name", "source_url", "candidate_id", "updated_at"],
+        "required": [
+          "name",
+          "source_url",
+          "candidate_id",
+          "updated_at"
+        ],
         "title": "Project"
       },
       "ProjectAnalysisResult": {
@@ -2316,7 +3499,10 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "required": ["name", "source_url"],
+        "required": [
+          "name",
+          "source_url"
+        ],
         "title": "ProjectCreate"
       },
       "RepositorySnapshot": {
@@ -2509,7 +3695,12 @@
         },
         "additionalProperties": false,
         "type": "object",
-        "required": ["path", "content", "sha", "source_url"],
+        "required": [
+          "path",
+          "content",
+          "sha",
+          "source_url"
+        ],
         "title": "SnapshotFile"
       }
     }

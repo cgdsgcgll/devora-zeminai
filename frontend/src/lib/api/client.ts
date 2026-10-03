@@ -5,6 +5,7 @@ export type Model<K extends keyof components["schemas"]> =
 type Persisted<T> = T & { id: string };
 export type Evidence = Persisted<Model<"SkillEvidence">>;
 export type Candidate = Persisted<Model<"Candidate">>;
+export type ProfileEvidence = Model<"ProfileEvidenceItem">;
 export type Project = Persisted<Model<"Project">>;
 export type Need = Persisted<Model<"OrganizationNeed">>;
 export type Match = Persisted<Model<"MatchResult">>;
@@ -46,17 +47,23 @@ export function parseApiError(body: unknown, status: number): ApiError {
   );
 }
 export function userError(error: unknown): string {
+  if (error instanceof ApiError && error.code === "DATABASE_ERROR")
+    return "Veritabanı bağlantısı hazır değil. Yerel demo servislerini kontrol edin.";
   return error instanceof ApiError
     ? error.message
     : "Beklenmeyen bir sorun oluştu. İşlemi tekrar deneyebilirsiniz.";
 }
-async function request<T>(path: string, body?: unknown): Promise<T> {
+async function request<T>(
+  path: string,
+  body?: unknown,
+  method?: "PATCH" | "DELETE",
+): Promise<T> {
   let response: Response;
   try {
     response = await fetch(
       `${(process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000").replace(/\/$/, "")}${path}`,
       {
-        method: body === undefined ? "GET" : "POST",
+        method: method || (body === undefined ? "GET" : "POST"),
         headers:
           body === undefined
             ? undefined
@@ -72,6 +79,7 @@ async function request<T>(path: string, body?: unknown): Promise<T> {
       true,
     );
   }
+  if (response.ok && response.status === 204) return undefined as T;
   const data: unknown = await response.json().catch(() => null);
   if (!response.ok) throw parseApiError(data, response.status);
   if (!data)
@@ -92,11 +100,22 @@ async function request<T>(path: string, body?: unknown): Promise<T> {
         "INVALID_RESPONSE",
         "Analiz kanıt kayıtları okunamadı.",
       );
+  } else if (path.endsWith("/profile-evidence") && body === undefined) {
+    if (!Array.isArray(data) || !data.every(hasId))
+      throw new ApiError("INVALID_RESPONSE", "Profil kayıtları okunamadı.");
   } else if (!hasId(data))
     throw new ApiError("INVALID_RESPONSE", "Servis kaydının kimliği eksik.");
   return data as T;
 }
 export const api = {
+  profiles: (id: string) =>
+    request<ProfileEvidence[]>(`/candidates/${id}/profile-evidence`),
+  createProfile: (id: string, data: Model<"ProfileEvidenceCreate">) =>
+    request<ProfileEvidence>(`/candidates/${id}/profile-evidence`, data),
+  updateProfile: (id: string, data: Model<"ProfileEvidencePatch">) =>
+    request<ProfileEvidence>(`/profile-evidence/${id}`, data, "PATCH"),
+  deleteProfile: (id: string) =>
+    request<void>(`/profile-evidence/${id}`, undefined, "DELETE"),
   createCandidate: (data: Model<"CandidateCreate">) =>
     request<Candidate>("/candidates", data),
   candidate: (id: string) => request<Candidate>(`/candidates/${id}`),

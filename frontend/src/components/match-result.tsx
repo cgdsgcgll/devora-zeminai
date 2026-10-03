@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { api, userError, type Match, type Evidence } from "@/lib/api/client";
 import { scoreLabel, scoreExplanation } from "@/lib/presentation";
 import { EvidenceCard, Notes } from "./ui";
+import { ProfileCard } from "./profile-card";
+import { familyLabels } from "@/lib/profile";
 export function MatchResult({ result }: { result: Match }) {
   const [evidence, setEvidence] = useState<Evidence[]>([]);
   const [error, setError] = useState("");
@@ -41,7 +43,11 @@ export function MatchResult({ result }: { result: Match }) {
             {Number(result.score.toFixed(2))}
             <span>/ 100</span>
           </p>
-          <p>{scoreExplanation}</p>
+          <p>
+            {result.scoring_version === "evidence-coverage-v0.3"
+              ? "Açık ihtiyaç kriterlerinin ilgili proje kanıtları ve profil kayıtlarıyla karşılanma oranı."
+              : scoreExplanation}
+          </p>
           <span className="score-footnote">
             İşe alınma olasılığı veya genel yetenek puanı değildir.
           </span>
@@ -93,6 +99,12 @@ export function MatchResult({ result }: { result: Match }) {
                 </span>
               </div>
               <p>{c.explanation}</p>
+              <p className="meta">
+                Kaynak ailesi: {familyLabels[c.kind || "technical_skill"]}
+              </p>
+              {c.profile_evidence?.map((item) => (
+                <ProfileCard key={item.id} item={item} />
+              ))}
               <div className="evidence-links">
                 {c.evidence_ids.map((id, i) => (
                   <a href={`#evidence-${id}`} key={id}>
@@ -110,7 +122,8 @@ export function MatchResult({ result }: { result: Match }) {
           </h2>
           {!result.unmatched_criteria.length && (
             <p className="muted">
-              Tüm kriterler gözlemlenen kanıtlarla karşılandı.
+              Tüm kriterler ilgili kaynaklarla karşılandı. Beyan ve doğrulama
+              durumlarını ayrıca inceleyin.
             </p>
           )}
           {result.unmatched_criteria.map((c) => (
@@ -122,11 +135,19 @@ export function MatchResult({ result }: { result: Match }) {
                 </span>
               </div>
               <p>{c.explanation}</p>
+              <p className="meta">
+                Kaynak ailesi: {familyLabels[c.kind || "technical_skill"]}
+              </p>
             </article>
           ))}
         </section>
       </div>
-      <Notes title="Güçlü yönler" items={result.strengths} />
+      <p className="small">
+        Bu sonuç hesaplama anındaki kayıtları gösterir. Profil
+        değişikliklerinden sonra eşleşmeyi yenileyin; eski sonuçlar
+        değiştirilmez.
+      </p>
+      <Notes title="Desteklenen kriterler" items={result.strengths} />
       <Notes title="Kanıt kapsamındaki eksikler" items={result.gaps} />
       <Notes title="Belirsizlikler" items={result.uncertainties} />
       <section className="result-section">

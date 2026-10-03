@@ -5,20 +5,20 @@ import { Empty, PageHeader } from "@/components/ui";
 import { MatchResult } from "@/components/match-result";
 export default function MatchPage() {
   const s = useSession();
-  const { candidate, need, run, match } = s.data;
+  const { candidate, need, match } = s.data;
   return (
     <>
       <PageHeader step="03 / EŞLEŞME" title="Uyumu, dayanaklarıyla görün.">
-        Bir puanla yetinmeyin. Hangi beklentinin hangi proje kanıtıyla
-        karşılandığını inceleyin.
+        Bir puanla yetinmeyin. Hangi beklentinin hangi kaynakla karşılandığını
+        inceleyin.
       </PageHeader>
-      {!candidate || !run ? (
+      {!candidate ? (
         <Empty
-          title="Önce proje kanıtlarını hazırlayın"
+          title="Önce aday profilini hazırlayın"
           href="/aday"
           action="Aday & Projeye git"
         >
-          Eşleşme için bir aday ve tamamlanmış proje analizi gerekiyor.
+          Eşleşme için bir aday ve proje analizi veya profil kaydı gerekiyor.
         </Empty>
       ) : !need?.criteria.length ? (
         <Empty
