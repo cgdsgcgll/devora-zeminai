@@ -2,7 +2,7 @@
 
 **Doğrulanabilir Yetenek ve Akıllı Eşleşme Platformu**
 
-ZeminAI, adayların public GitHub projelerinden gözlemlenebilir teknik kanıtlar çıkarır ve kurum ihtiyaçlarını yapılandırılmış kriterlere dönüştürür. CV ve öz-beyanın yanında incelenebilir kaynaklar sunar; eşleşme sonucunu hangi kriterin hangi proje kanıtıyla karşılandığını göstererek açıklar. Çalışan MVP, FastAPI tabanlı bir backend’dir; demo Swagger üzerinden kullanılabilir.
+ZeminAI, adayların public GitHub projelerinden gözlemlenebilir teknik kanıtlar çıkarır ve kurum ihtiyaçlarını yapılandırılmış kriterlere dönüştürür. CV ve öz-beyanın yanında incelenebilir kaynaklar sunar; eşleşme sonucunu hangi kriterin hangi proje kanıtıyla karşılandığını göstererek açıklar. Çalışan MVP, Next.js arayüzü ve FastAPI backend’i üzerinden aday → proje analizi → kurum ihtiyacı → eşleşme akışını sunar.
 
 ## Problem
 
@@ -49,7 +49,7 @@ Tek backend içinde modüler bir yapı kullanılır; ayrı mikroservisler yoktur
 
 ```mermaid
 flowchart TD
-    U[Swagger / API istemcisi] --> API[FastAPI endpointleri]
+    U[Next.js / Swagger / API istemcisi] --> API[FastAPI endpointleri]
     API --> W[Workflow katmanı]
     W --> G[GitHub fetch]
     G --> S[RepositorySnapshot]
@@ -135,6 +135,7 @@ Kod varsayılanı `rule_based`, `.env.example` demo seçimi `gemini`dir. Modelle
 
 | Katman | Teknoloji |
 |---|---|
+| Frontend | Next.js 16.3.8, React 19.3, TypeScript, App Router |
 | Backend | Python 3.12+, FastAPI, Uvicorn |
 | Validation | Pydantic 2, pydantic-settings |
 | ORM / migration | SQLAlchemy 2, Alembic |
@@ -143,7 +144,7 @@ Kod varsayılanı `rule_based`, `.env.example` demo seçimi `gemini`dir. Modelle
 | Test | pytest, HTTP mock transport |
 | Yerel veritabanı | Docker Compose, PostgreSQL 16 |
 
-Sürümler [requirements.txt](backend/requirements.txt) içinde sabittir. `frontend/` yalnız plan/placeholder içerir; Next.js + TypeScript uygulaması henüz geliştirilmemiştir.
+Sürümler [requirements.txt](backend/requirements.txt) içinde sabittir. Frontend kurulumu ve sözleşme üretimi [frontend/README.md](frontend/README.md) içinde açıklanır.
 
 ## API
 
@@ -187,7 +188,7 @@ Platformunuza göre environment dosyasını kopyalayın ve sanal ortamı etkinle
 Repo kökündeki `.env` içinde Gemini anahtarınızı yerel olarak tanımlayın; anahtarı Git’e eklemeyin. Anahtarsız deneme için `LLM_PROVIDER=rule_based` seçin. Ardından ortak adımları çalıştırın:
 
 ```bash
-python -m pip install -r backend/requirements.txt
+python -m pip install --upgrade --upgrade-strategy eager -r backend/requirements.txt
 docker compose up -d --wait
 cd backend
 python -m alembic upgrade head
@@ -196,6 +197,41 @@ python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
 Swagger’ı açıp MVP akışını izleyin. Sunucuyu durdurduktan sonra aynı ortamda `python -m pytest -q` çalıştırabilirsiniz. Yerel PostgreSQL kullanıyorsanız Compose adımını atlayıp `DATABASE_URL` değerini kendi geliştirme veritabanınıza göre düzenleyin. Uygulama başlangıcı tablo oluşturmaz; migration adımı gereklidir.
 
+Dependency hardening ile FastAPI **0.142.2**, transitif Starlette **1.7.0** ve
+pytest **9.0.3** temiz Python 3.12 ortamında doğrulandı. Starlette doğrudan pinlenmez.
+Mevcut venv'de eski transitif sürümün korunmaması için yukarıdaki `--upgrade-strategy eager`
+önemlidir; tercihen temiz venv kullanın. Kurulumdan sonra doğrulayın:
+
+```bash
+python -c "import fastapi, starlette; from packaging.version import Version; print(fastapi.__version__, starlette.__version__); assert Version(starlette.__version__) >= Version('1.3.1')"
+```
+
+### Web arayüzünü başlatma
+
+Backend açıkken ayrı terminalde `frontend/` dizinine geçin. Node.js 22.13+ kullanın ve
+`.env.example` dosyasını `.env.local` olarak kopyalayın. Frontend ayarı:
+
+```env
+NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
+```
+
+```bash
+npm install
+npm run dev
+```
+
+[Web uygulamasını](http://localhost:3000) açın. `/aday`, `/ihtiyac` ve `/eslesme` sayfaları gerçek API’yi kullanır.
+Frontend key içermez; Gemini/OpenAI anahtarları backend’de kalır. Kalite kontrolü için `npm run lint`,
+`npm test` ve `npm run build` kullanılır. Jüri demosunu geliştirme göstergesi olmadan,
+yalnız yerel arayüzde çalıştırmak için:
+
+```bash
+npm run build
+npm run start -- --hostname 127.0.0.1
+```
+
+Production build modu, uygulamanın production güvenliğine hazır olduğu anlamına gelmez.
+
 ### Environment ayarları
 
 `.env` repo kökünden otomatik okunur; process environment değişkenleri önceliklidir. Aşağıdaki değerler [.env.example](.env.example) ile uyumludur.
@@ -203,6 +239,7 @@ Swagger’ı açıp MVP akışını izleyin. Sunucuyu durdurduktan sonra aynı o
 | Değişken | Örnek / kullanım |
 |---|---|
 | `DATABASE_URL` | `postgresql+psycopg://postgres:postgres@localhost:5432/zeminai`; yalnız yerel Compose örneği |
+| `CORS_ORIGINS` | `["http://localhost:3000","http://127.0.0.1:3000"]`; izin verilen frontend origin’leri |
 | `GITHUB_TOKEN` | Boş; public repository erişimi için isteğe bağlı |
 | `LLM_PROVIDER` | `gemini` |
 | `GEMINI_API_KEY` | Boş; Gemini için yerel olarak doldurun |
@@ -217,9 +254,9 @@ Gemini anahtarı [Google AI Studio](https://aistudio.google.com/apikey) üzerind
 
 ## Testler ve Doğrulama
 
-**131 tests passed.** Bu dokümantasyon incelemesinde SQLite suite’i yeniden çalıştırıldı. Aynı 131 test PostgreSQL 18.6 üzerinde önceki backend doğrulamasında da geçti.
+**163 backend testi geçti** (CORS ve güvenlik regresyonları dahil). Frontend lint, TypeScript production build ve 7 mantık testiyle kontrol edilir. CORS eklenmeden önceki 131 test PostgreSQL 18.6 üzerinde de doğrulanmıştır.
 
-Kapsam: matching sınır durumları, API oluşturma/okuma akışları, GitHub HTTP mock’ları, evidence semantiği, provider timeout/429/5xx hataları, Gemini istek sözleşmesi, structured output doğrulaması, metadata ve migration upgrade/downgrade ile eski kayıtların korunması. Testler gerçek API anahtarı veya internet gerektirmez. Mevcut Starlette/AnyIO deprecation uyarısı testleri başarısız kılmaz.
+Kapsam: matching sınır durumları, API oluşturma/okuma akışları, GitHub HTTP mock’ları, evidence semantiği, provider timeout/429/5xx hataları, Gemini istek sözleşmesi, structured output doğrulaması, metadata ve migration upgrade/downgrade ile eski kayıtların korunması. Testler gerçek API anahtarı veya internet gerektirmez. Starlette TestClient’ın httpx kullanımına ilişkin deprecation uyarısı testleri başarısız kılmaz.
 
 Etkin sanal ortamla `backend/` içinde:
 
@@ -236,6 +273,14 @@ python -m alembic check
 
 ## Güvenlik ve Güvenilirlik İlkeleri
 
+**MVP kontrollü yerel demo içindir.** Public deployment öncesinde authentication,
+kayıt sahipliği kontrolleri, abuse/kota koruması ve deployment güvenlik
+kontrolleri gerekir. CORS authentication değildir. Kapsam, bulgular ve
+sınırlar [güvenlik değerlendirmesinde](docs/SECURITY_REVIEW.md) açıklanır.
+
+İstek gövdeleri JSON parse öncesinde 1 MiB ile sınırlıdır; aşımda
+`413 / PAYLOAD_TOO_LARGE` standart hata cevabı döner.
+
 - Repository metni sistem talimatı değil, güvenilmeyen veri olarak gönderilir; dosyalardaki talimatları izlememesi modele açıkça söylenir. Bu, prompt injection’a karşı mutlak garanti değildir.
 - Structured output strict Pydantic ile doğrulanır. Uydurulan path, gönderilmeyen alıntı ve kaynakta desteklenmeyen beceri reddedilir; kaynak URL’leri backend tarafından belirlenir.
 - GitHub okuyucusu yalnız public repository kabul eder; en fazla 30 dosya, dosya başına 100 KB ve toplam 1 MB içerik alır. LLM bağlamında dosya alıntıları ayrıca sınırlandırılır; tüm repository’nin analiz edildiği iddia edilmez.
@@ -247,13 +292,14 @@ python -m alembic check
 
 ### Uygulananlar
 
+- Responsive Next.js web akışı, gerçek API entegrasyonu, loading/error/empty durumları ve ID tabanlı demo devamlılığı.
+
 - Aday, proje, ihtiyaç ve eşleşme oluşturma/okuma; Swagger sözleşmesi.
 - Public GitHub snapshot, kaynaklı evidence, üç analiz modu ve kalıcı analiz kayıtları.
 - Deterministik scoring, kriter/kanıt ilişkileri, PostgreSQL modeli ve Alembic migration’ları.
 
 ### Sonraki Adımlar
 
-- Frontend MVP ve kullanıcı akışları.
 - Authentication/authorization ve tenant izolasyonu.
 - Background jobs, analiz yeniden başlatma ve sürekli profil güncellemeleri.
 - Contributor attribution ve tam GitHub hesap aktarımı.
@@ -271,7 +317,7 @@ backend/
   migrations/              Alembic migration’ları
   tests/                   Otomatik testler
   scripts/                 Canlı smoke testi
-frontend/                  Plan/placeholder
+frontend/                  Next.js App Router, API client ve arayüz testleri
 docs/                      Vizyon ve geliştirme kayıtları
 docker-compose.yml         Yerel PostgreSQL
 .env.example               Secretsız demo ayarları

@@ -105,3 +105,32 @@ def test_http_response_size_limit():
         with pytest.raises(AppError) as caught:
             provider._get(client, 'https://api.github.com/repos/a/b', max_bytes=20)
     assert caught.value.code == 'GITHUB_FETCH_FAILED'
+
+
+@pytest.mark.parametrize('url', [
+    'file:///etc/passwd', 'https://localhost/a/b', 'https://10.0.0.1/a/b',
+    'https://169.254.169.254/latest/meta-data', 'https://[::1]/a/b',
+    'https://github.com:8443/a/b', 'https://github.com/a/%2e%2e',
+    'https://github.com/a/b#fragment',
+])
+def test_ssrf_inputs_rejected_before_network(url):
+    def handle(request):
+        pytest.fail('Untrusted URL reached HTTP transport')
+
+    with pytest.raises(AppError) as caught:
+        GitHubProvider(transport=httpx.MockTransport(handle)).fetch(url)
+    assert caught.value.code == 'INVALID_SOURCE_URL'
+
+
+@pytest.mark.parametrize('status', [301, 302, 307, 308])
+def test_redirect_cannot_reach_internal_host(status):
+    calls = []
+
+    def handle(request):
+        calls.append(str(request.url))
+        assert request.url.host == 'api.github.com'
+        return httpx.Response(status, headers={'Location': 'http://127.0.0.1/private'}, text='redirect')
+
+    with pytest.raises(AppError):
+        GitHubProvider(transport=httpx.MockTransport(handle)).fetch('https://github.com/test/repo')
+    assert calls == ['https://api.github.com/repos/test/repo']
