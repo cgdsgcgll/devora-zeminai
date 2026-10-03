@@ -1,9 +1,10 @@
 "use client";
 import Link from "next/link";
+import { profileHighlights } from "@/lib/visual-summary";
 import { useEffect, useState } from "react";
 import { api, userError, type Model } from "@/lib/api/client";
 import { useSession } from "@/components/session";
-import { PageHeader, Notes, Empty } from "@/components/ui";
+import { Notes, Empty } from "@/components/ui";
 import { LoadingState } from "@/components/feedback";
 import {
   provenanceLabels,
@@ -13,7 +14,7 @@ import {
 } from "@/lib/profile";
 
 function ProfileView({ candidateId }: { candidateId: string }) {
-  const [section, setSection] = useState("Özet");
+  const [section, setSection] = useState("Zaman Çizelgesi");
   const [months, setMonths] = useState(0);
   const [retry, setRetry] = useState(0);
   const [response, setResponse] = useState<{
@@ -45,8 +46,26 @@ function ProfileView({ candidateId }: { candidateId: string }) {
   const error = response?.key === key ? response.error : undefined;
   return (
     <>
-      <nav className="view-switch" aria-label="Profil bölümleri">
-        {["Özet", "Yetenek Haritası", "Zaman Çizelgesi", "Kanıt Pasaportu"].map(
+      {data && (
+        <div className="profile-facts" aria-label="Profil kapsamı">
+          {profileHighlights(data.summary).map((f) => (
+            <div key={f.label}>
+              <strong>{f.count}</strong>
+              <span>{f.label}</span>
+            </div>
+          ))}
+          <p>
+            Genel yetenek puanı değil,
+            <br />
+            hikâyenizin kayıt kapsamı.
+          </p>
+        </div>
+      )}
+      <nav
+        className="view-switch profile-segments"
+        aria-label="Profil bölümleri"
+      >
+        {["Zaman Çizelgesi", "Kanıt Pasaportu", "Yetenek Haritası", "Özet"].map(
           (label) => (
             <button
               className="button secondary"
@@ -220,22 +239,27 @@ export default function LivingProfilePage() {
   const { data, ready } = useSession();
   return (
     <>
-      <PageHeader step="YAŞAYAN YETENEK PROFİLİ" title="Yaşayan profiliniz.">
-        Üretim, öğrenme ve katkılarınız; tek bir yerde, kaynaklarıyla birlikte.
-      </PageHeader>
       {!ready ? (
         <p role="status">Seçim yükleniyor…</p>
       ) : data.candidate ? (
         <>
-          <div className="profile-identity">
+          <header className="profile-masthead">
+            <div className="profile-monogram" aria-hidden="true">
+              {data.candidate.name.charAt(0).toLocaleUpperCase("tr")}
+            </div>
             <div>
-              <p className="eyebrow">PROFİL SAHİBİ</p>
-              <h2>{data.candidate.name}</h2>
+              <h1>{data.candidate.name}</h1>
+              <p className="eyebrow">YAŞAYAN YETENEK PROFİLİ</p>
+              <p className="lead">
+                Ürettikleriniz, öğrendikleriniz ve katkılarınız.
+                <br />
+                Zaman içinde gelişen profesyonel hikâyeniz.
+              </p>
             </div>
             <Link className="button" href="/aday#experiences">
-              + Deneyim ekle
+              Deneyim ekle
             </Link>
-          </div>
+          </header>
           <ProfileView
             key={data.candidate.id}
             candidateId={data.candidate.id}

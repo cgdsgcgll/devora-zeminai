@@ -45,11 +45,7 @@ export function MatchResult({ result }: { result: Match }) {
       <div className="score-layout">
         <div className="score-card">
           <p className="eyebrow">{scoreLabel}</p>
-          <h2 className="score-context">
-            Bu ihtiyaca ilişkin
-            <br />
-            kanıt kapsamı
-          </h2>
+          <h2 className="score-context">Bu ihtiyaç için kanıt uyumu</h2>
           <p className="score">
             {Number(result.score.toFixed(2))}
             <span>/ 100</span>
@@ -60,7 +56,8 @@ export function MatchResult({ result }: { result: Match }) {
               : scoreExplanation}
           </p>
           <span className="score-footnote">
-            İşe alınma olasılığı veya genel yetenek puanı değildir.
+            Bu bir genel yetenek puanı değildir. İşe alınma olasılığını
+            göstermez.
           </span>
           <p className="small">{technicalScoreExplanation}</p>
         </div>
@@ -105,7 +102,7 @@ export function MatchResult({ result }: { result: Match }) {
       <div className="criteria-grid match-criteria">
         <section>
           <h2>
-            Karşılanan kriterler{" "}
+            Kanıt bulunan kriterler{" "}
             <span className="count">{result.matched_criteria.length}</span>
           </h2>
           {!result.matched_criteria.length && (
@@ -138,7 +135,7 @@ export function MatchResult({ result }: { result: Match }) {
         </section>
         <section>
           <h2>
-            Henüz karşılanmayan kriterler{" "}
+            Henüz yeterli kanıt bulunmayan kriterler{" "}
             <span className="count">{result.unmatched_criteria.length}</span>
           </h2>
           {!result.unmatched_criteria.length && (

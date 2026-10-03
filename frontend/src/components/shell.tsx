@@ -6,24 +6,27 @@ import { useSession } from "./session";
 import { SuccessNotice } from "./feedback";
 
 const links = [
-  ["/aday", "Profil oluştur"],
-  ["/profil", "Profilim"],
-  ["/ihtiyac", "İhtiyaç tanımla"],
-  ["/eslesme", "Uyumu incele"],
-  ["/kesif", "Aday keşfet"],
+  ["/profil", "Profil"],
+  ["/ihtiyac", "İhtiyaç"],
+  ["/kesif", "Keşif"],
 ];
 export function AppHeader() {
   const path = usePathname();
-  const { busy, ready, reset } = useSession();
+  const { busy, ready, reset, data } = useSession();
   const [confirmReset, setConfirmReset] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   return (
-    <header className="app-header">
+    <header
+      className="app-header"
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          setMenuOpen(false);
+          document.querySelector<HTMLButtonElement>(".menu-toggle")?.focus();
+        }
+      }}
+    >
       <div className="header-inner">
         <Link href="/" className="brand" aria-label="ZeminAI ana sayfa">
-          <span className="brand-mark" aria-hidden="true">
-            z
-          </span>
           Zemin<span>AI</span>
         </Link>
         <button
@@ -33,40 +36,66 @@ export function AppHeader() {
           onClick={() => setMenuOpen(!menuOpen)}
         >
           {menuOpen ? "Menüyü kapat" : "Menü"}{" "}
-          <span aria-hidden="true">☰</span>
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            aria-hidden="true"
+          >
+            <path d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
         </button>
         <nav
           id="main-navigation"
           className={menuOpen ? "nav-open" : ""}
           aria-label="Ana navigasyon"
-          onKeyDown={(event) => {
-            if (event.key === "Escape") {
-              setMenuOpen(false);
-              document
-                .querySelector<HTMLButtonElement>(".menu-toggle")
-                ?.focus();
-            }
-          }}
         >
           {links.map(([href, label]) => (
             <Link
               key={href}
               href={href}
-              aria-current={path === href ? "page" : undefined}
+              aria-current={
+                path === href || (href === "/profil" && path === "/aday")
+                  ? "page"
+                  : undefined
+              }
               onClick={() => setMenuOpen(false)}
             >
               {label}
             </Link>
           ))}
         </nav>
+        <Link
+          className="button header-cta"
+          onClick={() => setMenuOpen(false)}
+          href={
+            path === "/ihtiyac" || path === "/kesif"
+              ? "/eslesme"
+              : data.candidate
+                ? "/aday#experiences"
+                : "/aday"
+          }
+        >
+          {path === "/ihtiyac" || path === "/kesif"
+            ? "Uyumu incele"
+            : data.candidate
+              ? "Deneyim ekle"
+              : "Başlayın"}
+        </Link>
+      </div>
+      <details className="demo-tools">
+        <summary>Demo oturumu</summary>
         <button
-          className="text-button reset"
+          className="text-button"
           disabled={!!busy || !ready}
           onClick={() => setConfirmReset(true)}
         >
           Demoyu sıfırla
         </button>
-      </div>
+      </details>
       {confirmReset && (
         <div
           className="reset-confirm callout"
@@ -125,19 +154,6 @@ export function SessionStatus() {
           <span className="spinner" aria-hidden="true" />
           <div>
             <strong>{busy || "Demo yükleniyor…"}</strong>
-            {busy.includes("analiz") && (
-              <p>
-                Erişilebilen proje kaynakları inceleniyor. Sonuçlar, kaynaklarla
-                desteklenip desteklenmediği kontrol edilerek hazırlanır. Bu
-                işlem birkaç dakika sürebilir; sayfayı açık tutabilirsiniz.
-              </p>
-            )}
-            {busy.includes("kriter") && (
-              <p>
-                Gerekli ve tercih edilen kriterler, yalnızca verdiğiniz ihtiyaç
-                metnine dayanarak hazırlanıyor.
-              </p>
-            )}
           </div>
         </div>
       )}
@@ -164,40 +180,5 @@ export function SessionStatus() {
         </p>
       )}
     </>
-  );
-}
-export function Steps() {
-  const path = usePathname();
-  const { data } = useSession();
-  if (!["/aday", "/ihtiyac", "/eslesme"].includes(path)) return null;
-  return (
-    <ol className="steps" aria-label="Demo adımları">
-      {[
-        ["/aday", "Profil"],
-        ["/ihtiyac", "İhtiyaç"],
-        ["/eslesme", "Uyum"],
-      ].map(([href, label], i) => (
-        <li key={href}>
-          <Link
-            href={href}
-            aria-current={path === href ? "step" : undefined}
-            data-complete={Boolean(
-              (i === 0 && data.run) ||
-              (i === 1 && data.need) ||
-              (i === 2 && data.match),
-            )}
-          >
-            <span>
-              {(i === 0 && data.run) ||
-              (i === 1 && data.need) ||
-              (i === 2 && data.match)
-                ? "✓"
-                : `0${i + 1}`}
-            </span>
-            {label}
-          </Link>
-        </li>
-      ))}
-    </ol>
   );
 }

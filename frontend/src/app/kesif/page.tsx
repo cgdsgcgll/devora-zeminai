@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { discoveryPreview } from "@/lib/visual-summary";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api, userError, type Model } from "@/lib/api/client";
@@ -112,7 +113,7 @@ function DiscoveryView({
           )}
           <div className="discovery-grid">
             {data.candidates.map((candidate) => (
-              <article className="panel" key={candidate.candidate_id}>
+              <article className="discovery-row" key={candidate.candidate_id}>
                 <h2>{candidate.label}</h2>
                 <label className="team-select">
                   <input
@@ -147,17 +148,13 @@ function DiscoveryView({
                 <div className="criterion-preview" aria-label="Kriter özeti">
                   <p>
                     <strong>Dayanak bulunan</strong>
-                    {candidate.criteria
-                      .filter((c) => c.matched)
-                      .map((c) => c.label)
-                      .join(" · ") || "Henüz karşılanan kriter yok"}
+                    {discoveryPreview(candidate.criteria).signals.join(" · ") ||
+                      "Henüz karşılanan kriter yok"}
                   </p>
                   <p>
-                    <strong>Henüz karşılanmayan</strong>
-                    {candidate.criteria
-                      .filter((c) => !c.matched)
-                      .map((c) => c.label)
-                      .join(" · ") || "Tüm kriterler karşılandı"}
+                    <strong>Eksik dayanak</strong>
+                    {discoveryPreview(candidate.criteria).missing} kriter için
+                    henüz yeterli kanıt yok
                   </p>
                 </div>
                 <details>
@@ -286,10 +283,10 @@ export default function DiscoveryPage() {
   const { data, ready, busy } = useSession();
   const [anonymous, setAnonymous] = useState(true);
   return (
-    <>
+    <div className="discovery-page">
       <PageHeader
         step="KURUM / ADAY KEŞFİ"
-        title="İhtiyacınıza ilişkin kanıtları keşfedin."
+        title="İhtiyaçla ilgili olanı görün."
       >
         Adayları bu ihtiyaca ilişkin kriter kapsamıyla inceleyin. Genel yetenek
         sıralaması değildir.
@@ -307,27 +304,30 @@ export default function DiscoveryPage() {
         </Empty>
       ) : (
         <>
-          <p className="callout">
-            Seçili ihtiyaç: {data.need.description}{" "}
+          <p className="need-brief">
+            <span className="eyebrow">SEÇİLİ İHTİYAÇ</span>{" "}
+            {data.need.description}{" "}
             <Link href="/ihtiyac">İhtiyacı değiştir →</Link>
           </p>
-          <label className="team-select">
-            <input
-              type="checkbox"
-              checked={anonymous}
-              disabled={!!busy}
-              onChange={(e) => setAnonymous(e.target.checked)}
-            />{" "}
-            Kanıt odaklı görünüm
-          </label>
-          <details className="disclosure">
-            <summary>Kanıt odaklı görünüm neyi değiştirir?</summary>
-            <p>
-              İsimler ve kimlik içerebilen kaynak metinleri gizlenir. Tam
-              anonimlik ya da tarafsızlık garantisi verilmez; kriter kapsamı
-              aynı kalır.
-            </p>
-          </details>
+          <div className="discovery-controls">
+            <label className="team-select">
+              <input
+                type="checkbox"
+                checked={anonymous}
+                disabled={!!busy}
+                onChange={(e) => setAnonymous(e.target.checked)}
+              />{" "}
+              Kanıt odaklı görünüm
+            </label>
+            <details className="disclosure">
+              <summary>Kanıt odaklı görünüm neyi değiştirir?</summary>
+              <p>
+                İsimler ve kimlik içerebilen kaynak metinleri gizlenir. Tam
+                anonimlik ya da tarafsızlık garantisi verilmez; kriter kapsamı
+                aynı kalır.
+              </p>
+            </details>
+          </div>
           <DiscoveryView
             key={`${data.need.id}:${anonymous}`}
             needId={data.need.id}
@@ -335,6 +335,6 @@ export default function DiscoveryPage() {
           />
         </>
       )}
-    </>
+    </div>
   );
 }

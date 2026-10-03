@@ -2,111 +2,126 @@ import Link from "next/link";
 export default function Home() {
   return (
     <>
-      <section className="hero">
-        <div>
-          <p className="eyebrow">ZEMİNAI / YAŞAYAN YETENEK PROFİLİ</p>
-          <h1>
-            Yaptıklarınız
-            <br />
-            görünür olsun.
-          </h1>
-          <p className="hero-subtitle">
-            Projelerinizi ve deneyimlerinizi kaynaklarıyla bir araya getiren
-            yaşayan yetenek profili.
-          </p>
-          <p className="lead">
-            Ne ürettiğinizi, ne öğrendiğinizi ve nerelerde katkı verdiğinizi
-            görünür kılın. Kurumlar, ihtiyaçlarıyla ilişkili dayanakları
-            inceleyebilsin.
-          </p>
-          <div className="hero-actions">
-            <Link className="button" href="/aday">
-              Profilimi oluştur <span aria-hidden="true">→</span>
-            </Link>
-            <Link className="button secondary" href="/ihtiyac">
-              Kurum için ihtiyaç tanımla
-            </Link>
-          </div>
-          <p className="small">
-            GitHub teknik kanıtları · Eğitim · Sertifika · Hackathon · Topluluk
-          </p>
-        </div>
-        <div
-          className="hero-diagram"
-          aria-label="Kaynak kanıtından açıklanabilir eşleşmeye giden kavramsal akış"
-        >
-          <div className="diagram-top">
-            <span className="eyebrow">HER BİLGİNİN BİR DAYANAĞI</span>
-          </div>
-          <div className="diagram-row">
-            <span className="diagram-number">01</span>
-            <div>
-              <strong>Deneyiminizi ekleyin</strong>
-              <p>Ürettiğiniz proje, öğrendiğiniz konu, verdiğiniz katkı.</p>
-            </div>
-          </div>
-          <div className="diagram-row">
-            <span className="diagram-number">02</span>
-            <div>
-              <strong>Kaynağıyla görünür olsun</strong>
-              <p>Beyan, bağlantı ve gözlemlenen kullanım ayrı gösterilir.</p>
-            </div>
-          </div>
-          <div className="diagram-row accent">
-            <span className="diagram-number">03</span>
-            <div>
-              <strong>İhtiyaçla ilişkisini görün</strong>
-              <p>Bir puanın yanında, hangi kriteri neyin desteklediği.</p>
-            </div>
-          </div>
-          <p className="diagram-note">
-            Bir sonuçtan fazlası: sonucun dayanağı.
-          </p>
+      <section className="landing-hero">
+        <p className="eyebrow">Kanıta dayalı yetenek profili</p>
+        <h1>
+          Ne ürettiğinizi,
+          <br className="desktop-break" /> ne öğrendiğinizi ve nerelerde katkı
+          verdiğinizi <span>görünür kılın.</span>
+        </h1>
+        <p className="lead">
+          Profesyonel hikâyenizi projeleriniz ve deneyimlerinizle anlatın.
+          <br className="desktop-break" /> İhtiyaçlarla ilişkiniz,
+          dayanaklarıyla anlaşılsın.
+        </p>
+        <div className="hero-actions">
+          <Link className="button" href="/aday">
+            Profilimi oluştur
+          </Link>
+          <Link className="button secondary" href="/ihtiyac">
+            Kurum ihtiyacı oluştur
+          </Link>
         </div>
       </section>
-      <section className="home-process">
+      <section className="story-section" aria-labelledby="story-title">
         <div className="section-heading">
-          <p className="eyebrow">ÜÇ ADIMDA</p>
-          <h2>
-            Profilinizin anlattığını
-            <br />
-            ihtiyaçla buluşturun.
-          </h2>
+          <p className="eyebrow">NASIL ÇALIŞIR?</p>
+          <h2 id="story-title">Bir sonuç. Açık bir dayanak.</h2>
+          <p className="muted">
+            Deneyiminizden ihtiyaca uzanan, izlenebilir bir bağ.
+          </p>
         </div>
-        <div className="process-grid">
+        <ol className="evidence-story">
           {[
             [
-              "01",
-              "Profilini görünür kıl",
-              "GitHub projelerinizi analiz edin; eğitim, sertifika, hackathon ve topluluk kayıtlarınızı ekleyin.",
+              "Beyan",
+              "Hikâyenizi anlatın.",
+              "Projelerinizi, eğitiminizi ve katkılarınızı bir araya getirin.",
             ],
             [
-              "02",
-              "İhtiyacı yapılandır",
-              "Aradığınız becerileri gerekli ve tercih edilen kriterlere dönüştürün.",
+              "Kanıt",
+              "Kaynağını görün.",
+              "Bir bağlantı, bir beyan ve gözlemlenen kullanım ayrı gösterilir.",
             ],
             [
-              "03",
-              "Uyumu incele",
-              "Skoru, karşılanan kriterleri ve kaynak kanıtlarını birlikte görün.",
+              "İhtiyaç",
+              "Beklentiyi netleştirin.",
+              "Gerekli ve tercih edilen kriterleri kendi cümlelerinizle tanımlayın.",
             ],
-          ].map(([n, t, d]) => (
-            <article key={n}>
-              <span className="eyebrow">{n}</span>
-              <h3>{t}</h3>
-              <p>{d}</p>
-            </article>
+            [
+              "Açıklanabilir eşleşme",
+              "İlişkiyi inceleyin.",
+              "Hangi kriterin hangi kaynakla desteklendiğini görün.",
+            ],
+          ].map(([label, title, body], i) => (
+            <li key={label}>
+              <span className="story-index">0{i + 1}</span>
+              <p className="story-label">{label}</p>
+              <h3>{title}</h3>
+              <p>{body}</p>
+            </li>
           ))}
+        </ol>
+      </section>
+      <section className="evidence-feature" aria-labelledby="evidence-title">
+        <div>
+          <p className="eyebrow">AYRINTI FARK YARATIR</p>
+          <h2 id="evidence-title">
+            Bir teknoloji adı.
+            <br />
+            İki farklı dayanak.
+          </h2>
+          <p className="lead">
+            Bir README’de yazanla kaynak dosyasında gözlemlenen aynı şey
+            değildir. ZeminAI bu ayrımı görünür tutar.
+          </p>
+          <p className="small">
+            Aşağıdaki örnek kavramsaldır; bir adaya ait analiz sonucu değildir.
+          </p>
+        </div>
+        <div className="evidence-example">
+          <p className="example-caption">ÖRNEK / PYTHON</p>
+          <div>
+            <span className="evidence-marker" aria-hidden="true" />
+            <div>
+              <h3>“Python kullanıyorum.”</h3>
+              <p>Proje açıklaması · Yalnızca beyan</p>
+            </div>
+          </div>
+          <div>
+            <span className="evidence-marker filled" aria-hidden="true" />
+            <div>
+              <h3>Kaynakta Python kullanımı</h3>
+              <p>Kaynak dosyası · Gözlemlenen kullanım</p>
+            </div>
+          </div>
+          <p className="small">Kanıt gücü, beceri seviyesi değildir.</p>
         </div>
       </section>
-      <aside className="home-note">
-        <strong>Skor bir işe alınma olasılığı değildir.</strong>
-        <p>
-          Eşleşme, açık ihtiyaç kriterleri ile ilgili kaynakların uyumunu
-          gösterir. Profil bağlantıları bağımsız doğrulama değildir. Okul
-          prestiji veya kayıt sayısı bonus getirmez.
-        </p>
-      </aside>
+      <section className="entry-paths" aria-label="Başlangıç yolları">
+        <article>
+          <p className="eyebrow">ADAYLAR İÇİN</p>
+          <h2>Hikâyenize yer açın.</h2>
+          <p>
+            Projeler, eğitim, hackathonlar ve topluluk katkıları. Zaman içinde
+            gelişen tek bir profil.
+          </p>
+          <Link href="/aday">
+            Profilimi oluşturmaya başla <span aria-hidden="true">→</span>
+          </Link>
+        </article>
+        <article>
+          <p className="eyebrow">KURUMLAR İÇİN</p>
+          <h2>İhtiyaçtan başlayın.</h2>
+          <p>
+            Genel yargılar yerine, belirli bir ihtiyaç için hangi dayanakların
+            bulunduğunu inceleyin.
+          </p>
+          <Link href="/ihtiyac">
+            İhtiyacımı tanımla <span aria-hidden="true">→</span>
+          </Link>
+        </article>
+      </section>
     </>
   );
 }

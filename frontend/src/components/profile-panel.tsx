@@ -15,17 +15,10 @@ import {
 } from "@/lib/profile";
 import { useSession } from "./session";
 import { ProfileCard } from "./profile-card";
-import { LoadingState, SuccessNotice } from "./feedback";
+import { ExperienceChooser } from "./experience-chooser";
+import { LoadingState, SuccessNotice, ButtonProgress } from "./feedback";
 
 type Category = ProfileEvidence["category"];
-const categoryHelp: Record<Category, string> = {
-  portfolio: "Yayınladığınız çalışmalar",
-  education: "Okul, kurs veya program",
-  certification: "Aldığınız belgeler",
-  hackathon: "Ürettiğiniz projeler ve katılım",
-  event: "Katıldığınız etkinlikler",
-  community: "Topluluk katkılarınız",
-};
 function Field({
   name,
   label,
@@ -68,6 +61,8 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
   const [error, setError] = useState("");
   const [validation, setValidation] = useState("");
   const [retry, setRetry] = useState(0);
+  const [stage, setStage] = useState<"choose" | "form">("choose");
+  const chooserHeading = useRef<HTMLHeadingElement>(null);
   const [category, setCategory] = useState<Category>("education");
   const [editing, setEditing] = useState<ProfileEvidence>();
   const [formVersion, setFormVersion] = useState(0);
@@ -96,6 +91,18 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
       active = false;
     };
   }, [candidateId, retry]);
+  const previousStage = useRef(stage);
+  useEffect(() => {
+    if (stage === "form") formHeading.current?.focus();
+    else if (previousStage.current === "form") chooserHeading.current?.focus();
+    previousStage.current = stage;
+  }, [stage, category, editing]);
+  useEffect(() => {
+    if (window.location.hash === "#experiences") {
+      document.getElementById("experiences")?.scrollIntoView();
+      chooserHeading.current?.focus({ preventScroll: true });
+    }
+  }, []);
   function resetForm() {
     setEditing(undefined);
     setValidation("");
@@ -158,6 +165,8 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
           : [...current, saved],
       );
       resetForm();
+      setStage("choose");
+      chooserHeading.current?.focus();
       setNotice(
         "Profil kaydı kaydedildi. Güncel karşılaştırma için eşleşmeyi yeniden hesaplayın.",
       );
@@ -202,303 +211,342 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
           </button>
         </div>
       )}
-      <div className="profile-layout">
-        <section className="panel profile-form" id="experience-form">
-          <h3 ref={formHeading} tabIndex={-1}>
-            {editing ? "Kaydı düzenle" : "Deneyiminizi ekleyin"}
-          </h3>
-          <p className="muted">
-            Önce kayıt türünü seçin. Yıldızlı alanlar zorunlu; diğer ayrıntıları
-            isterseniz ekleyebilirsiniz.
-          </p>
-          <fieldset
-            className="category-picker"
-            disabled={disabled || !!editing}
+      <div className="experience-studio">
+        <section
+          className="panel profile-form"
+          id="experience-form"
+          data-stage={stage}
+          onKeyDown={(event) => {
+            if (event.key === "Escape" && stage === "form" && !disabled) {
+              resetForm();
+              setStage("choose");
+            }
+          }}
+        >
+          <h3
+            ref={chooserHeading}
+            tabIndex={-1}
+            className={stage === "choose" ? "studio-title" : "sr-only"}
           >
-            <legend>Ne eklemek istersiniz?</legend>
-            {Object.entries(categoryLabels).map(([key, label]) => (
-              <button
-                type="button"
-                key={key}
-                aria-pressed={category === key}
-                onClick={() => {
-                  setCategory(key as Category);
-                  setFormVersion((v) => v + 1);
-                  setError("");
-                  setValidation("");
+            Deneyim ekle
+          </h3>
+          {stage === "choose" ? (
+            <>
+              <p className="muted">
+                Bir kategori seçin. Ayrıntıları bir sonraki adımda ekleyin.
+              </p>
+              <ExperienceChooser
+                disabled={disabled}
+                onChoose={(next) => {
+                  resetForm();
+                  setCategory(next);
+                  setStage("form");
                   setNotice("");
                 }}
+              />
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="text-button back-link"
+                disabled={disabled}
+                onClick={() => {
+                  resetForm();
+                  setStage("choose");
+                  chooserHeading.current?.focus();
+                }}
               >
-                <strong>{label}</strong>
-                <span>{categoryHelp[key as Category]}</span>
+                ← Kategorilere dön
               </button>
-            ))}
-          </fieldset>
-          {editing && (
-            <p className="callout">
-              Mevcut kaydı düzenliyorsunuz. Kategori değişmez; yeni bir tür
-              eklemek için önce vazgeçin.
-            </p>
-          )}
-          <form
-            key={`${formVersion}-${editing?.id || "new"}-${category}`}
-            onSubmit={submit}
-          >
-            <fieldset disabled={disabled} className="profile-fields">
-              {validation && (
-                <p className="error" role="alert">
-                  {validation}
+              <h3 ref={formHeading} tabIndex={-1} className="studio-title">
+                {editing
+                  ? "Kaydı düzenle"
+                  : `${categoryLabels[category]} deneyiminiz`}
+              </h3>
+              <p className="muted">
+                Yıldızlı alan zorunlu. Diğer ayrıntıları isterseniz ekleyin.
+              </p>
+              {editing && (
+                <p className="callout">
+                  Mevcut kaydı düzenliyorsunuz. Kategori değişmez; yeni bir tür
+                  eklemek için önce vazgeçin.
                 </p>
               )}
-              <Field
-                name="title"
-                label={
-                  category === "education"
-                    ? "Eğitim başlığı"
-                    : category === "certification"
-                      ? "Sertifika adı"
-                      : category === "hackathon"
-                        ? "Hackathon adı"
-                        : category === "portfolio"
-                          ? "Portföy başlığı"
-                          : "Etkinlik / topluluk adı"
-                }
-                value={editing?.title}
-                required
-              />
-              <Field
-                name="organization"
-                label={
-                  category === "certification"
-                    ? "Sağlayıcı"
-                    : "Kurum / organizatör"
-                }
-                value={editing?.organization}
-              />
-              <details
-                className="form-details"
-                open={editing ? true : undefined}
+              <form
+                key={`${formVersion}-${editing?.id || "new"}-${category}`}
+                onSubmit={submit}
               >
-                <summary>
-                  Deneyim ayrıntıları{" "}
-                  <span className="optional">İsteğe bağlı</span>
-                </summary>
-                <p className="small">
-                  Eğitim durumu, katılım, rol ve tarihler. İlgili ihtiyaçlarla
-                  karşılaştırmada bu bilgiler kullanılabilir.
-                </p>
-                {category === "portfolio" && (
-                  <div>
-                    <label htmlFor="profile-output_type">
-                      Üretim çıktısı türü
-                    </label>
-                    <select
-                      id="profile-output_type"
-                      name="output_type"
-                      defaultValue={meta?.output_type || ""}
-                    >
-                      <option value="">Belirtilmedi</option>
-                      {Object.entries(outputLabels).map(([key, label]) => (
-                        <option value={key} key={key}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
+                <fieldset disabled={disabled} className="profile-fields">
+                  {validation && (
+                    <p className="error" role="alert">
+                      {validation}
+                    </p>
+                  )}
+                  <Field
+                    name="title"
+                    label={
+                      category === "education"
+                        ? "Eğitim başlığı"
+                        : category === "certification"
+                          ? "Sertifika adı"
+                          : category === "hackathon"
+                            ? "Hackathon adı"
+                            : category === "portfolio"
+                              ? "Portföy başlığı"
+                              : "Etkinlik / topluluk adı"
+                    }
+                    value={editing?.title}
+                    required
+                  />
+                  <Field
+                    name="organization"
+                    label={
+                      category === "certification"
+                        ? "Sağlayıcı"
+                        : "Kurum / organizatör"
+                    }
+                    value={editing?.organization}
+                  />
+                  <details
+                    className="form-details"
+                    open={editing ? true : undefined}
+                  >
+                    <summary>
+                      Deneyim ayrıntıları{" "}
+                      <span className="optional">İsteğe bağlı</span>
+                    </summary>
                     <p className="small">
-                      Bağlantı olarak saklanır; dış sayfa indirilmez ve
-                      gözlemlenmiş kanıt sayılmaz.
+                      Eğitim durumu, katılım, rol ve tarihler. İlgili
+                      ihtiyaçlarla karşılaştırmada bu bilgiler kullanılabilir.
                     </p>
-                  </div>
-                )}
-                {category === "education" && (
-                  <>
-                    <Field
-                      name="program"
-                      label="Program / bölüm"
-                      value={meta?.program}
-                    />
-                    <label htmlFor="profile-education_type">Eğitim türü</label>
-                    <select
-                      id="profile-education_type"
-                      name="education_type"
-                      defaultValue={meta?.education_type || ""}
-                    >
-                      <option value="">Belirtilmedi</option>
-                      <option value="degree">Diploma programı</option>
-                      <option value="course">Kurs</option>
-                      <option value="bootcamp">Bootcamp</option>
-                      <option value="other">Diğer</option>
-                    </select>
-                    <label htmlFor="profile-status">Eğitim durumu</label>
-                    <select
-                      id="profile-status"
-                      name="status"
-                      defaultValue={meta?.status || ""}
-                    >
-                      <option value="">Belirtilmedi</option>
-                      <option value="ongoing">Devam ediyor</option>
-                      <option value="completed">Tamamlandı</option>
-                      <option value="left">Ayrıldı</option>
-                    </select>
-                    <Field
-                      name="student_year"
-                      label="Sınıf (isteğe bağlı, 1–6)"
-                      type="number"
-                      value={meta?.student_year}
-                    />
-                    <p className="field-help">
-                      Okul prestiji ve GPA puanlama faktörü değildir.
-                    </p>
-                  </>
-                )}
-                {category === "certification" && (
-                  <>
-                    <Field
-                      name="issued_at"
-                      label="Veriliş tarihi"
-                      type="date"
-                      value={meta?.issued_at}
-                    />
-                    <Field
-                      name="expires_at"
-                      label="Geçerlilik sonu (isteğe bağlı)"
-                      type="date"
-                      value={meta?.expires_at}
-                    />
-                    <Field
-                      name="credential_id"
-                      label="Belge numarası (isteğe bağlı)"
-                      value={meta?.credential_id}
-                    />
-                  </>
-                )}
-                {category === "hackathon" && (
-                  <>
-                    <Field
-                      name="project_name"
-                      label="Proje adı"
-                      value={meta?.project_name}
-                    />
-                    <label htmlFor="profile-result">Sonuç</label>
-                    <select
-                      id="profile-result"
-                      name="result"
-                      defaultValue={meta?.result || ""}
-                    >
-                      <option value="">Belirtilmedi</option>
-                      <option value="participant">Katıldı</option>
-                      <option value="finalist">Finalist</option>
-                      <option value="winner">Kazandı</option>
-                    </select>
-                  </>
-                )}
-                {(category === "event" || category === "community") && (
-                  <>
-                    {category === "community" && (
-                      <>
-                        <label htmlFor="profile-focus">Topluluk alanı</label>
+                    {category === "portfolio" && (
+                      <div>
+                        <label htmlFor="profile-output_type">
+                          Üretim çıktısı türü
+                        </label>
                         <select
-                          id="profile-focus"
-                          name="focus"
-                          defaultValue={meta?.focus || ""}
+                          id="profile-output_type"
+                          name="output_type"
+                          defaultValue={meta?.output_type || ""}
                         >
                           <option value="">Belirtilmedi</option>
-                          <option value="technology">Teknoloji</option>
+                          {Object.entries(outputLabels).map(([key, label]) => (
+                            <option value={key} key={key}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="small">
+                          Bağlantı olarak saklanır; dış sayfa indirilmez ve
+                          gözlemlenmiş kanıt sayılmaz.
+                        </p>
+                      </div>
+                    )}
+                    {category === "education" && (
+                      <>
+                        <Field
+                          name="program"
+                          label="Program / bölüm"
+                          value={meta?.program}
+                        />
+                        <label htmlFor="profile-education_type">
+                          Eğitim türü
+                        </label>
+                        <select
+                          id="profile-education_type"
+                          name="education_type"
+                          defaultValue={meta?.education_type || ""}
+                        >
+                          <option value="">Belirtilmedi</option>
+                          <option value="degree">Diploma programı</option>
+                          <option value="course">Kurs</option>
+                          <option value="bootcamp">Bootcamp</option>
                           <option value="other">Diğer</option>
+                        </select>
+                        <label htmlFor="profile-status">Eğitim durumu</label>
+                        <select
+                          id="profile-status"
+                          name="status"
+                          defaultValue={meta?.status || ""}
+                        >
+                          <option value="">Belirtilmedi</option>
+                          <option value="ongoing">Devam ediyor</option>
+                          <option value="completed">Tamamlandı</option>
+                          <option value="left">Ayrıldı</option>
+                        </select>
+                        <Field
+                          name="student_year"
+                          label="Sınıf (isteğe bağlı, 1–6)"
+                          type="number"
+                          value={meta?.student_year}
+                        />
+                        <p className="field-help">
+                          Okul prestiji ve GPA puanlama faktörü değildir.
+                        </p>
+                      </>
+                    )}
+                    {category === "certification" && (
+                      <>
+                        <Field
+                          name="issued_at"
+                          label="Veriliş tarihi"
+                          type="date"
+                          value={meta?.issued_at}
+                        />
+                        <Field
+                          name="expires_at"
+                          label="Geçerlilik sonu (isteğe bağlı)"
+                          type="date"
+                          value={meta?.expires_at}
+                        />
+                        <Field
+                          name="credential_id"
+                          label="Belge numarası (isteğe bağlı)"
+                          value={meta?.credential_id}
+                        />
+                      </>
+                    )}
+                    {category === "hackathon" && (
+                      <>
+                        <Field
+                          name="project_name"
+                          label="Proje adı"
+                          value={meta?.project_name}
+                        />
+                        <label htmlFor="profile-result">Sonuç</label>
+                        <select
+                          id="profile-result"
+                          name="result"
+                          defaultValue={meta?.result || ""}
+                        >
+                          <option value="">Belirtilmedi</option>
+                          <option value="participant">Katıldı</option>
+                          <option value="finalist">Finalist</option>
+                          <option value="winner">Kazandı</option>
                         </select>
                       </>
                     )}
-                    <label htmlFor="profile-participation_type">
-                      Katılım türü
-                    </label>
-                    <select
-                      id="profile-participation_type"
-                      name="participation_type"
-                      defaultValue={meta?.participation_type || ""}
-                    >
-                      <option value="">Belirtilmedi</option>
-                      {Object.entries(participationLabels).map(
-                        ([key, label]) => (
-                          <option key={key} value={key}>
-                            {label}
-                          </option>
-                        ),
-                      )}
-                    </select>
+                    {(category === "event" || category === "community") && (
+                      <>
+                        {category === "community" && (
+                          <>
+                            <label htmlFor="profile-focus">
+                              Topluluk alanı
+                            </label>
+                            <select
+                              id="profile-focus"
+                              name="focus"
+                              defaultValue={meta?.focus || ""}
+                            >
+                              <option value="">Belirtilmedi</option>
+                              <option value="technology">Teknoloji</option>
+                              <option value="other">Diğer</option>
+                            </select>
+                          </>
+                        )}
+                        <label htmlFor="profile-participation_type">
+                          Katılım türü
+                        </label>
+                        <select
+                          id="profile-participation_type"
+                          name="participation_type"
+                          defaultValue={meta?.participation_type || ""}
+                        >
+                          <option value="">Belirtilmedi</option>
+                          {Object.entries(participationLabels).map(
+                            ([key, label]) => (
+                              <option key={key} value={key}>
+                                {label}
+                              </option>
+                            ),
+                          )}
+                        </select>
+                        <Field
+                          name="responsibility"
+                          label="Sorumluluk"
+                          max={1000}
+                          value={meta?.responsibility}
+                        />
+                      </>
+                    )}
                     <Field
-                      name="responsibility"
-                      label="Sorumluluk"
-                      max={1000}
-                      value={meta?.responsibility}
+                      name="role"
+                      label="Rol (isteğe bağlı)"
+                      value={editing?.role}
                     />
-                  </>
-                )}
-                <Field
-                  name="role"
-                  label="Rol (isteğe bağlı)"
-                  value={editing?.role}
-                />
-                <div className="profile-dates">
+                    <div className="profile-dates">
+                      <Field
+                        name="started_at"
+                        label="Başlangıç / tarih"
+                        type="date"
+                        value={editing?.started_at}
+                      />
+                      <Field
+                        name="ended_at"
+                        label="Bitiş (isteğe bağlı)"
+                        type="date"
+                        value={editing?.ended_at}
+                      />
+                    </div>
+                    <label htmlFor="profile-description">
+                      {category === "hackathon"
+                        ? "Proje açıklaması"
+                        : "Açıklama"}
+                    </label>
+                    <textarea
+                      id="profile-description"
+                      name="description"
+                      defaultValue={editing?.description || ""}
+                      maxLength={4000}
+                      rows={3}
+                    />
+                  </details>
                   <Field
-                    name="started_at"
-                    label="Başlangıç / tarih"
-                    type="date"
-                    value={editing?.started_at}
+                    name="source_url"
+                    label="Kaynak bağlantısı (isteğe bağlı, HTTPS)"
+                    type="url"
+                    max={2000}
+                    value={editing?.source_url}
                   />
                   <Field
-                    name="ended_at"
-                    label="Bitiş (isteğe bağlı)"
-                    type="date"
-                    value={editing?.ended_at}
+                    name="source_label"
+                    label="Kaynak etiketi (isteğe bağlı)"
+                    value={editing?.source_label}
                   />
-                </div>
-                <label htmlFor="profile-description">
-                  {category === "hackathon" ? "Proje açıklaması" : "Açıklama"}
-                </label>
-                <textarea
-                  id="profile-description"
-                  name="description"
-                  defaultValue={editing?.description || ""}
-                  maxLength={4000}
-                  rows={3}
-                />
-              </details>
-              <Field
-                name="source_url"
-                label="Kaynak bağlantısı (isteğe bağlı, HTTPS)"
-                type="url"
-                max={2000}
-                value={editing?.source_url}
-              />
-              <Field
-                name="source_label"
-                label="Kaynak etiketi (isteğe bağlı)"
-                value={editing?.source_label}
-              />
-              <p className="field-help">
-                Bağlantı eklemek doğrulama değildir. Linkler otomatik ziyaret
-                edilmez.
-              </p>
-              <div className="profile-actions">
-                <button className="button">
-                  {session.busy === "Profil kaydı kaydediliyor…"
-                    ? "Kaydediliyor…"
-                    : editing
-                      ? "Değişiklikleri kaydet"
-                      : "Deneyimi kaydet"}
-                </button>
-                {editing && (
-                  <button
-                    type="button"
-                    className="button secondary"
-                    onClick={resetForm}
-                  >
-                    Vazgeç
-                  </button>
-                )}
-              </div>
-            </fieldset>
-          </form>
+                  <p className="field-help">
+                    Bağlantı eklemek doğrulama değildir. Linkler otomatik
+                    ziyaret edilmez.
+                  </p>
+                  <div className="profile-actions">
+                    <button className="button">
+                      <ButtonProgress
+                        active={session.busy === "Profil kaydı kaydediliyor…"}
+                      />
+                      {session.busy === "Profil kaydı kaydediliyor…"
+                        ? "Kaydediliyor…"
+                        : editing
+                          ? "Değişiklikleri kaydet"
+                          : "Deneyimi kaydet"}
+                    </button>
+                    {editing && (
+                      <button
+                        type="button"
+                        className="button secondary"
+                        onClick={() => {
+                          resetForm();
+                          setStage("choose");
+                          chooserHeading.current?.focus();
+                        }}
+                      >
+                        Vazgeç
+                      </button>
+                    )}
+                  </div>
+                </fieldset>
+              </form>
+            </>
+          )}
         </section>
         <section
           className="profile-timeline"
@@ -522,6 +570,7 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
                   className="button secondary"
                   disabled={disabled}
                   onClick={() => {
+                    setStage("form");
                     setCategory("hackathon");
                     resetForm();
                     formHeading.current?.focus();
@@ -540,6 +589,7 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
                   className="button secondary"
                   disabled={disabled}
                   onClick={() => {
+                    setStage("form");
                     setEditing(item);
                     setCategory(item.category);
                     setConfirmDelete("");

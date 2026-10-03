@@ -57,9 +57,6 @@ export function Empty({
 }) {
   return (
     <section className="empty">
-      <span className="empty-mark" aria-hidden="true">
-        ◎
-      </span>
       <h2>{title}</h2>
       <p>{children}</p>
       {href && (

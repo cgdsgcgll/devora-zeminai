@@ -4,7 +4,8 @@ import Link from "next/link";
 import { api } from "@/lib/api/client";
 import { validateGithub, validateName } from "@/lib/presentation";
 import { useSession } from "@/components/session";
-import { EvidenceCard, Info, Notes, PageHeader, Empty } from "@/components/ui";
+import { EvidenceCard, Notes, PageHeader, Empty } from "@/components/ui";
+import { ProcessingState, ButtonProgress } from "@/components/feedback";
 import { ProfilePanel } from "@/components/profile-panel";
 
 export default function CandidatePage() {
@@ -45,10 +46,30 @@ export default function CandidatePage() {
   }
   return (
     <>
-      <PageHeader step="01 / ADAY & PROFİL" title="Profilinizi oluşturun.">
+      <PageHeader
+        step="SİZİN HİKÂYENİZ"
+        title={
+          candidate
+            ? "Profilinize yeni bir dayanak."
+            : "Bir başlangıç. Sizinle."
+        }
+      >
         Projelerinizi, öğrendiklerinizi ve katkılarınızı dayanaklarıyla bir
         araya getirin.
       </PageHeader>
+      <ol className="journey-steps" aria-label="Profil oluşturma adımları">
+        {[
+          ["Profil", !!candidate],
+          ["Proje", !!project],
+          ["Kanıtlar", !!run],
+        ].map(([label, complete], i) => (
+          <li key={String(label)} data-complete={complete}>
+            <span>{complete ? "✓" : i + 1}</span>
+            {label}
+            <small>{complete ? "Kaydedildi" : "Bekliyor"}</small>
+          </li>
+        ))}
+      </ol>
       {candidate && (
         <nav className="action-bar" aria-label="Profil işlemleri">
           <a className="button" href="#experiences">
@@ -62,7 +83,7 @@ export default function CandidatePage() {
           </span>
         </nav>
       )}
-      <div className="workspace">
+      <div className="candidate-workspace">
         <div className="stack">
           {validation && (
             <p id="form-error" className="error" role="alert">
@@ -72,7 +93,7 @@ export default function CandidatePage() {
           <section className="panel">
             <div className="section-title">
               <span className="mini-number">01</span>
-              <h2>Aday bilgisi</h2>
+              <h2>Profiliniz</h2>
               {candidate && <span className="badge observed">Kaydedildi</span>}
             </div>
             {candidate ? (
@@ -95,9 +116,10 @@ export default function CandidatePage() {
                   aria-describedby={validation ? "form-error" : undefined}
                 />
                 <button className="button" disabled={disabled}>
+                  <ButtonProgress active={!!s.busy} />
                   {s.busy === "Aday oluşturuluyor…"
                     ? "Oluşturuluyor…"
-                    : "Adayı oluştur"}
+                    : "Profilimi oluştur"}
                 </button>
               </form>
             )}
@@ -105,7 +127,7 @@ export default function CandidatePage() {
           <section className="panel">
             <div className="section-title">
               <span className="mini-number">02</span>
-              <h2>Proje bilgisi</h2>
+              <h2>Projenizi ekleyin</h2>
               {project && <span className="badge observed">Kaydedildi</span>}
             </div>
             {project ? (
@@ -123,6 +145,9 @@ export default function CandidatePage() {
                     })
                   }
                 >
+                  <ButtonProgress
+                    active={s.busy === "Proje analiz ediliyor…"}
+                  />
                   {s.busy === "Proje analiz ediliyor…"
                     ? "Analiz ediliyor…"
                     : run
@@ -182,6 +207,7 @@ export default function CandidatePage() {
                   Yalnızca herkese açık GitHub depoları analiz edilebilir.
                 </p>
                 <button className="button" disabled={disabled}>
+                  <ButtonProgress active={!!s.busy} />
                   {s.busy === "Proje oluşturuluyor…"
                     ? "Kaydediliyor…"
                     : "Projeyi kaydet"}
@@ -190,24 +216,15 @@ export default function CandidatePage() {
             )}
           </section>
         </div>
-        <aside className="side-note">
-          <p className="eyebrow">NEYE BAKIYORUZ?</p>
-          <h2>
-            Beyan değil, <br />
-            dayanak.
-          </h2>
-          <p>
-            Kaynak dosyalar, bağımlılıklar ve deponun dil bilgisi birlikte
-            değerlendirilir.
-          </p>
-          <div className="divider" />
-          <p>
-            README’de geçen bir teknoloji, tek başına gözlemlenen kullanım
-            sayılmaz.
-          </p>
-          <Info>Kanıt gücü, adayın beceri seviyesi değildir.</Info>
-        </aside>
       </div>
+      {s.busy === "Proje analiz ediliyor…" && (
+        <ProcessingState kind="project" />
+      )}
+      <p className="method-note">
+        README’de bir teknolojinin geçmesi, gözlemlenen kullanım değildir.
+        Kaynak dosyalar, bağımlılıklar ve deponun dil bilgisi birlikte
+        incelenir. Kanıt gücü, beceri seviyesi değildir.
+      </p>
       {candidate && (
         <ProfilePanel key={candidate.id} candidateId={candidate.id} />
       )}

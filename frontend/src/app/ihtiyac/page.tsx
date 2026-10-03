@@ -5,6 +5,7 @@ import { api } from "@/lib/api/client";
 import { validateNeed } from "@/lib/presentation";
 import { useSession } from "@/components/session";
 import { PageHeader, CriterionCard, Notes, Empty } from "@/components/ui";
+import { ProcessingState, ButtonProgress } from "@/components/feedback";
 export default function NeedPage() {
   const s = useSession();
   const [description, setDescription] = useState("");
@@ -27,15 +28,18 @@ export default function NeedPage() {
     );
   }
   return (
-    <>
-      <PageHeader step="02 / KURUM İHTİYACI" title="Ne üretmek istiyorsunuz?">
+    <div className="need-page">
+      <PageHeader
+        step="KURUM İHTİYACI"
+        title="Nasıl bir ekip arkadaşı arıyorsunuz?"
+      >
         İhtiyacı kendi cümlelerinizle anlatın. Gerekli beceriler ve
         tercihlerinizi açıkça ayırın.
       </PageHeader>
-      <div className="workspace">
+      <div className="need-workspace">
         <section className="panel">
           <div className="section-title">
-            <h2>İhtiyacı tanımlayın</h2>
+            <h2>İhtiyacınız</h2>
             <button
               type="button"
               className="text-button"
@@ -66,7 +70,7 @@ export default function NeedPage() {
             </label>
             <textarea
               id="need-description"
-              rows={5}
+              rows={7}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               maxLength={20000}
@@ -101,34 +105,18 @@ export default function NeedPage() {
               />
             </details>
             <button className="button" disabled={!s.ready || !!s.busy}>
-              {s.busy ? "İhtiyaç yapılandırılıyor…" : "İhtiyacı yapılandır"}{" "}
+              <ButtonProgress active={!!s.busy} />
+              {s.busy
+                ? "İhtiyaç yapılandırılıyor…"
+                : "İhtiyacı yapılandır"}{" "}
               <span aria-hidden="true">↗</span>
             </button>
           </form>
         </section>
-        <aside className="side-note">
-          <p className="eyebrow">NET KRİTERLER, AÇIK SONUÇ</p>
-          <h2>
-            Gerekli olanı <br />
-            tercihten ayırın.
-          </h2>
-          <p>
-            <strong>Gerekli</strong>
-            <br />
-            İhtiyacın zorunlu beceri veya deneyim kriterleri.
-          </p>
-          <p>
-            <strong>Tercih edilen</strong>
-            <br />
-            Tercih edilen beceri veya deneyim kriterleri.
-          </p>
-          <div className="divider" />
-          <p>
-            Metinde belirtilmeyen bir teknoloji, sırf sektörde yaygın olduğu
-            için kriter olmamalı.
-          </p>
-        </aside>
       </div>
+      {s.busy === "İhtiyaç kriterleri hazırlanıyor…" && (
+        <ProcessingState kind="need" />
+      )}
       {s.data.need && (
         <section className="result-section">
           <div className="section-heading horizontal">
@@ -172,6 +160,6 @@ export default function NeedPage() {
           <Notes title="Belirsizlikler" items={s.data.need.uncertainties} />
         </section>
       )}
-    </>
+    </div>
   );
 }

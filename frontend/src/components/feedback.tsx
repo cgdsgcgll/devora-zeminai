@@ -43,7 +43,10 @@ export function SuccessNotice({
       <span className="success-icon" aria-hidden="true">
         ✓
       </span>
-      <p>{message}</p>
+      <div className="notice-copy">
+        <strong>İşlem tamamlandı</strong>
+        <p>{message}</p>
+      </div>
       {onDismiss && (
         <button
           type="button"
@@ -56,4 +59,41 @@ export function SuccessNotice({
       )}
     </div>
   );
+}
+
+export function ProcessingState({
+  kind,
+}: {
+  kind: "project" | "need" | "match";
+}) {
+  const copy = {
+    project: [
+      "Proje kanıtları inceleniyor",
+      "Kaynak dosyalar ve proje açıklamaları teknik kullanım sinyalleri için değerlendiriliyor.",
+    ],
+    need: [
+      "İhtiyacınız yapılandırılıyor",
+      "Gerekli ve tercih edilen kriterler, verdiğiniz ihtiyaç metnine dayanarak hazırlanıyor.",
+    ],
+    match: [
+      "Kanıt uyumu hesaplanıyor",
+      "Bu ihtiyaç için kriterler ve ilgili kaynak dayanakları karşılaştırılıyor.",
+    ],
+  }[kind];
+  return (
+    <section className="processing-state" role="status" aria-live="polite">
+      <span className="spinner" aria-hidden="true" />
+      <h2>{copy[0]}</h2>
+      <p>{copy[1]}</p>
+      <p className="small">
+        İşlem tamamlandığında sonuç burada görünecek. Sayfayı açık
+        tutabilirsiniz.
+      </p>
+    </section>
+  );
+}
+export function ButtonProgress({ active }: { active: boolean }) {
+  return active ? (
+    <span className="spinner button-spinner" aria-hidden="true" />
+  ) : null;
 }
