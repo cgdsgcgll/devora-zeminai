@@ -199,3 +199,32 @@ test("actual route guard redirects anonymous and wrong-role users without render
     /MY PROFILE/,
   );
 });
+
+test("guards hide cached private content during bootstrap and reject candidate institution navigation", async () => {
+  for (const session of [
+    { ready: false },
+    { ready: false, user: { role: "candidate" } },
+    { ready: false, user: { role: "institution" } },
+    { ready: true, user: { role: "candidate" } },
+  ]) {
+    const a = await component("auth-guard.tsx", session, "", "/kesif");
+    const html = renderToStaticMarkup(
+      React.createElement(a.exports.AuthGuard, null, "PRIVATE DISCOVERY"),
+    );
+    assert.doesNotMatch(html, /PRIVATE DISCOVERY/);
+    assert.deepEqual(a.redirects, session.ready ? ["/profil"] : []);
+  }
+  const allowed = await component(
+    "auth-guard.tsx",
+    { ready: true, user: { role: "institution" } },
+    "",
+    "/kesif",
+  );
+  assert.match(
+    renderToStaticMarkup(
+      React.createElement(allowed.exports.AuthGuard, null, "OWN DISCOVERY"),
+    ),
+    /OWN DISCOVERY/,
+  );
+  assert.deepEqual(allowed.redirects, []);
+});

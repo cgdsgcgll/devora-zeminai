@@ -17,14 +17,15 @@ def throttle(request, db, email):
     peer=request.client.host if request.client else 'unknown'
     db.execute(delete(AuthThrottle).where(AuthThrottle.expires_at < now))
     insert=pg_insert if db.bind.dialect.name == 'postgresql' else sqlite_insert
-    exceeded=False
     for scope,value,limit in [('ip',peer,settings.auth_ip_attempts),
                               ('email',email.casefold(),settings.auth_email_attempts)]:
         key=hashlib.sha256(f'{scope}:{value}:{window}'.encode()).hexdigest()
         statement=insert(AuthThrottle).values(key=key,attempts=1,expires_at=now+timedelta(seconds=settings.auth_window_seconds*2))
         count=db.scalar(statement.on_conflict_do_update(index_elements=['key'],
             set_={'attempts':AuthThrottle.attempts+1}).returning(AuthThrottle.attempts))
-        exceeded |= count>limit
+        if count > limit:
+            # Persist the rejected attempt, but do not allocate arbitrary email
+            # buckets after the peer has exhausted its budget.
+            db.commit()
+            raise AppError('AUTH_RATE_LIMITED','Çok fazla deneme. Bir süre sonra tekrar deneyin.',429,True)
     db.commit()
-    if exceeded:
-        raise AppError('AUTH_RATE_LIMITED','Çok fazla deneme. Bir süre sonra tekrar deneyin.',429,True)

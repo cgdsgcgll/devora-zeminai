@@ -146,6 +146,16 @@ def test_match_context_and_indirect_private_resources(accounts, db):
     assert ia.get(f'/matches/{mid}/evidence/{eid}').status_code==200
     assert ib.get(f'/matches/{mid}/evidence/{eid}').status_code==404
     assert ia.get(f'/matches/{mid}/evidence/{uuid4()}').status_code==404
+    # A real but unlinked evidence UUID must not be exposed through an owned match.
+    other_project=b.post(f'/candidates/{sb["candidate"]["id"]}/projects',
+        json={'name':'Other repo','source_url':'https://github.com/test/repo'}).json()
+    other_analysis=b.post('/projects/'+other_project['id']+'/analyze').json()
+    other_eid=other_analysis['evidence'][0]['id']
+    assert ia.get(f'/matches/{mid}/evidence/{other_eid}').status_code==404
+    need_run=db.scalar(select(m.AnalysisRun).where(m.AnalysisRun.need_id==__import__('uuid').UUID(need['id'])))
+    assert ia.get(f'/analysis-runs/{need_run.id}').status_code==200
+    assert ib.get(f'/analysis-runs/{need_run.id}').status_code==404
+    assert a.get(f'/analysis-runs/{need_run.id}').status_code==403
 
 def test_every_business_route_requires_authentication(accounts):
     from fastapi.routing import APIRoute

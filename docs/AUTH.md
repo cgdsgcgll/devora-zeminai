@@ -1,6 +1,6 @@
 # Authentication, roles and ownership
 
-Validated locally on 4 October 2026, branch `feat/auth-roles`, based on main `09c6c40`.
+Originally validated locally on 4 October 2026, branch `feat/auth-roles`, based on main `09c6c40`.
 This is a controlled-demo implementation, not a production security certification.
 
 ## Accounts and sessions
@@ -130,7 +130,9 @@ discovery instead of persisting match IDs in browser storage.
 Login/register share atomic DB attempt counters per email and socket peer,
 across workers. Defaults: 10/email and 60/peer in a 900-second fixed window.
 All attempts, including successful requests, count. Expired buckets are cleaned
-during auth requests. Identity keys are hashed; counters contain no plaintext
+during auth requests. Exhausted IP budgets commit the denied attempt and stop
+before allocating an email bucket. This bounds new email buckets per peer/window;
+rotating peers still requires ingress protection. Identity keys are hashed; counters contain no plaintext
 email/password. Tests exercise independent clients sharing the budget.
 
 This is basic abuse protection, not a complete distributed attack defense:
@@ -140,12 +142,13 @@ and ASGI forwarded-peer handling; never trust arbitrary client-forwarded IPs.
 AI/GitHub endpoints still need per-user quotas, concurrency/cost budgets,
 ingress limits, monitoring and alerting before public deployment.
 
-Email verification, password recovery, MFA, account lifecycle/deletion/export,
+Production secret management, expired/revoked session retention and cleanup,
+email verification, password recovery, MFA, account lifecycle/deletion/export,
 explicit discovery participation controls, session/device management, security
 event monitoring, TLS/HSTS deployment review and external security testing remain
 post-hackathon / production follow-up. No fake email success screens or broken links.
 
-## Validation
+## Historical validation — 4 October 2026
 
 - SQLite full suite: 264 tests passed.
 - PostgreSQL 18 full suite: 264 tests passed, including ownership, matching,
@@ -159,7 +162,7 @@ post-hackathon / production follow-up. No fake email success screens or broken l
   with an isolated PostgreSQL demo database and synthetic accounts.
 
 
-### Final QA record
+### Historical QA record — 4 October 2026
 
 - Frontend: lint PASS, 37/37 tests PASS, production build PASS.
 - Backend: compileall PASS, pip check PASS, PostgreSQL alembic check PASS.
@@ -180,3 +183,51 @@ post-hackathon / production follow-up. No fake email success screens or broken l
 The domain regression harness selects test owners with real hashed DB sessions
 so pre-auth functional tests continue to exercise authorization. Security tests
 use ordinary clients with fixed actors and no auth dependency overrides.
+
+## Audit update — 5 October 2026
+
+Status: **NEEDS_FIX** pending current PostgreSQL 18 and browser E2E validation.
+Local PostgreSQL startup failed to bind TCP sockets with `Permission denied`;
+frontend server startup was rejected by the sandbox approval policy. No PostgreSQL
+or browser success is inferred from the prior QA record.
+
+The route matrix above was rechecked against every current backend route.
+Public entries are health, documentation and Origin-protected auth operations;
+`/auth/me` and mixed project/need analysis-run reads are shared authenticated
+operations. All remaining operations require candidate or institution ownership
+as listed. Timeline, talent map and evidence passport are sections of the owned
+living-profile response, not additional public endpoints. Anonymous discovery is
+an institution/own-need view with identity stripping, not anonymous Internet access.
+
+Current verification:
+- SQLite full suite: **300 passed**; frontend: **38 passed**; lint/build PASS.
+- Compileall and pip check PASS; fresh SQLite upgrade head/check PASS; populated
+  pre-auth upgrades, legacy preservation and unsafe-account downgrade rejection PASS
+  on SQLite. PostgreSQL migration and concurrency reruns remain required.
+- Real cookie clients cover candidate/institution isolation, foreign need analysis
+  runs (including failed runs), actual unlinked evidence UUID rejection, inactive
+  and ownerless discovery/match/team exclusion and attempted legacy mutations.
+- Added forced Candidate insertion failure proves rollback of User/session.
+  Two registrations synchronized after their pre-insert lookup produce exactly
+  one account/session and one 409, for each role, using independent connections.
+- Concurrent login/register attempts share an atomic budget; new connections
+  cannot reset it. Expired throttle rows are deleted; exhausted IPs cannot allocate
+  new email buckets. PostgreSQL can run these tests via a dedicated, migrated
+  `TEST_AUTH_CONCURRENCY_URL`; existing rollback-isolated tests use `TEST_DATABASE_URL`.
+- Unique email/token/candidate-owner constraints, session/need foreign keys and
+  restrictive user deletion are exercised. Foreign keys intentionally have no
+  cascading account deletion; no account deletion endpoint is introduced.
+- Password Unicode/whitespace is preserved; email is stripped and casefolded.
+  Argon2id, dummy verification, configured TTL/cookie scope, standard envelopes
+  and exact Origin/Referer wrong-host/port/scheme rejection pass.
+- Live Uvicorn/SQLite HTTP smoke passed with four accounts: cookie login/logout,
+  persisted candidate project/experience and institution need/match, wrong-role,
+  cross-account IDOR and CSRF rejection. This is not browser or PostgreSQL evidence.
+- OpenAPI export and existing types generator produce no drift; repeated export
+  is deterministic. `core_placeholder` is absent from tracked files and Git history.
+- Frontend source and component tests cover bootstrap masking, both role guard
+  directions and centralized 401/logout handling. Browser back/expired-session
+  UX and full candidate/institution persistence journeys still need live rerun.
+
+Dependency audit and remaining deployment risks are recorded in
+[SECURITY_REVIEW.md](SECURITY_REVIEW.md). No production security certification is implied.
