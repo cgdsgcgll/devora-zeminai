@@ -96,7 +96,7 @@ Severity, herkese açık deployment etkisini dikkate alır; yerel demo kapsamı 
 
 | Severity | Finding | Status | Action |
 |---|---|---|---|
-| HIGH | Authentication ve kayıt sahipliği/tenant kontrolü yok; herkes kayıt oluşturabilir ve ID'sini bildiği kayıtları okuyabilir | **RESOLVED — 4 Ekim auth fazı** | Gerçek cookie/ownership negatif testleri; AUTH.md kapsamı |
+| HIGH | Önceki authentication ve kayıt sahipliği kontrolü eksikliği | **RESOLVED — 4 Ekim auth fazı** | Gerçek cookie/ownership negatif testleri; AUTH.md kapsamı |
 | HIGH | Analiz/ihtiyaç çağrıları rate limit veya kotaya tabi değil; ücret, DB büyümesi ve worker tüketimi mümkün | Açık — production blocker | Gateway rate limit, kimliğe bağlı kota, concurrency ve maliyet bütçesi; in-memory limiter eklenmedi |
 | HIGH | Önceki Starlette 0.46.2 advisory riski | **RESOLVED** — doğrulanan zincir FastAPI 0.142.2 / Starlette 1.7.0 | Temiz kurulum, 163 regresyon testi, aynı OpenAPI ve pip-audit doğrulandı; eski ortamlar yeniden kurulmalı/güncellenmeli |
 | MEDIUM | JSON gövdesi parse öncesi sınırsızdı | Düzeltildi | 1 MiB toplam sınır; streamed/header bypass ve sınır testleri |
@@ -172,7 +172,7 @@ Her deployment'ta sürüm/audit kontrolü tekrarlanmalı. Eski paylaşılan venv
 
 ## Production blockers
 
-1. Authentication, authorization ve tenant/kayıt sahipliği kontrolü.
+1. Authentication, authorization ve kayıt sahipliği kontrolü: 4 Ekim auth fazı kapsamında giderildi; sınırlar için [AUTH.md](AUTH.md).
 2. Kimlik bazlı kota, ingress rate limit/body/header/time limit, eşzamanlı analiz
    sınırı ve provider bütçe/uyarıları. Retry/HTTP timeout toplam işi sınırlamaz.
 3. Dağıtımda doğrulanan dependency zincirinin kullanılması ve sürekli audit/regresyon kontrolleri. Bu turdaki Starlette bulgusu RESOLVED; eski venv ile yayın yapılmamalı.
@@ -238,12 +238,12 @@ Gerçek Uvicorn HTTP smoke, yeni venv + izole DB + `rule_based` ile
 `127.0.0.1:8001` üzerinde yapıldı: health 200, candidate/project/need create 201;
 Python/FastAPI/Docker kriterleri, izinli CORS, reddedilen origin ve 1 MiB üstü
 istekte 413 standart envelope/CORS doğrulandı. Canlı Gemini çağrısı yapılmadı.
-`git diff --check` başarılı. Authentication ve rate-limit HIGH bulguları **açık**.
+`git diff --check` başarılı. Bu tarihsel kayıttaki authentication bulgusu 4 Ekim auth fazında giderildi; AI/GitHub rate-limit HIGH bulgusu **açık**.
 
 
 ## Profile evidence genişlemesi — güncel inceleme
 
-Sonuç **SAFE_FOR_CONTROLLED_DEMO**; auth/authorization/IDOR ve rate-limit **HIGH / OPEN**, production blocker olmaya devam eder. Yeni PATCH/DELETE uçları da ownership kontrolü gerektirir. UUID erişim kontrolü değildir. Önceki Starlette HIGH advisory bulgusu RESOLVED kalır; bağımlılıklar düşürülmedi.
+Sonuç **SAFE_FOR_CONTROLLED_DEMO**. Auth/authorization/IDOR bulgusu 4 Ekim auth fazı kapsamında **RESOLVED**; PATCH/DELETE uçlarında rol ve kayıt sahipliği kontrolü uygulanır. AI/GitHub rate-limit **HIGH / OPEN** olarak production blocker kalır. UUID tek başına erişim yetkisi vermez. Önceki Starlette HIGH advisory bulgusu RESOLVED kalır; bağımlılıklar düşürülmedi.
 
 - Beş kategori CRUD: education, certification, hackathon, event, community. Mass assignment extra=forbid; kullanıcı verified, owner ID veya zaman damgası atayamaz. Category PATCH ile değişmez. Metadata alanları kategoriyle sınırlı; participation_type/result bounded enum.
 - Profil URL'leri yalnız credentialsız HTTPS ve standart port; IP/local adlar ve unsafe schemes reddedilir. Backend bu bağlantıları fetch/crawl etmez. Bu yüzden link varlığı içerik doğrulaması değildir; linked olarak gösterilir. Tarayıcıda dış link açılması kullanıcının tercihidir; noopener/noreferrer uygulanır.
@@ -262,7 +262,7 @@ Son backend regresyonu: **204 test SQLite + 204 test temiz PostgreSQL**, compile
 
 ## Living Talent Profile — 2026-10-01
 
-Durum: **SAFE_FOR_CONTROLLED_DEMO**. Auth/authorization/tenant isolation/IDOR **HIGH / OPEN**, rate limiting **HIGH / OPEN** kalır. Yeni living-profile, discovery ve team-coverage uçları da public üretimde erişim kontrolü gerektirir. Kanıt odaklı görünüm kimlik alanlarını yanıttan çıkarır fakat UUID üzerinden açık diğer API'lere erişimi engellemez; anonimlik veya yetkilendirme çözümü değildir. Starlette bulgusu RESOLVED; bağımlılıklar değiştirilmedi.
+Durum: **SAFE_FOR_CONTROLLED_DEMO**. Auth/authorization/IDOR bulgusu 4 Ekim auth fazı kapsamında **RESOLVED**; AI/GitHub rate limiting **HIGH / OPEN** kalır. Living-profile aday sahipliği, discovery ve team-coverage kurum rolü ve need sahipliği kontrolleriyle korunur. Kanıt odaklı görünüm tek başına anonimlik garantisi değildir; UUID diğer API'lere erişim yetkisi vermez. Kapsam ve production ön koşulları için [AUTH.md](AUTH.md). Starlette bulgusu RESOLVED; bağımlılıklar değiştirilmedi.
 
 - Yeni portföy kategori/alt türleri bounded; extra=forbid ve mevcut uzunluk/tarih kuralları korunur. Kullanıcı verified/observed atayamaz. HTTPS linkler server-side fetch edilmez; javascript/data/file/vbscript, credentials, IP/local adlar ve alternatif portlar reddedilir. Yeni SSRF yüzeyi eklenmedi.
 - Timeline/discovery serbest metinleri JSX metin düğümü olarak render eder; unsafe HTML API'si yoktur. Dış bağlantılar yeniden filtrelenir ve noopener/noreferrer kullanır. Sorgular SQLAlchemy bind parametreleriyle çalışır.
