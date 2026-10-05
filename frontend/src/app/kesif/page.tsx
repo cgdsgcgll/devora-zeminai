@@ -111,7 +111,7 @@ function DiscoveryView({
               kapsamını inceleyebilirsiniz.
             </Empty>
           )}
-          <div className="discovery-grid">
+          <div className="discovery-grid content-enter">
             {data.candidates.map((candidate) => (
               <article className="discovery-row" key={candidate.candidate_id}>
                 <h2>{candidate.label}</h2>
@@ -233,7 +233,7 @@ function DiscoveryView({
         </>
       )}
       {team && (
-        <section className="result-section" aria-live="polite">
+        <section className="result-section content-enter" aria-live="polite">
           <h2>Takım Kanıt Kapsamı</h2>
           <p className="lead">
             {team.matched_count} / {team.total_count} kriter

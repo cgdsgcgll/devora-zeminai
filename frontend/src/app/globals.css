@@ -2132,3 +2132,65 @@ summary {
     grid-template-columns: 1fr;
   }
 }
+
+/* Shared entrances: route commits and requests are never held for animation. */
+.page-enter,
+.content-enter,
+.empty {
+  animation: state-reveal var(--duration-normal) var(--ease-out);
+}
+.auth-page {
+  min-block-size: 660px;
+}
+.auth-form-slot {
+  display: flow-root;
+}
+.auth-form-slot[data-registration="true"] {
+  min-block-size: 580px;
+}
+.auth-roles button {
+  transition:
+    color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+.form-feedback {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows var(--duration-normal) var(--ease-out),
+    opacity var(--duration-fast) var(--ease-standard);
+}
+.form-feedback[data-visible="true"] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.form-feedback > div {
+  min-height: 0;
+  overflow: clip;
+}
+.form-feedback p {
+  margin: 0;
+}
+.auth-page form > button {
+  min-block-size: 48px;
+}
+@media (max-width: 600px) {
+  .auth-page {
+    min-block-size: 740px;
+  }
+}
+
+.account-tools[open] > button {
+  animation: state-reveal var(--duration-fast) var(--ease-out);
+}
+@media (max-width: 600px) {
+  .auth-form-slot[data-registration="true"] {
+    min-block-size: 620px;
+  }
+  .nav-open {
+    animation: state-reveal var(--duration-fast) var(--ease-out);
+  }
+}

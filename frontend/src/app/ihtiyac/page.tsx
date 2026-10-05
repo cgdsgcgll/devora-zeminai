@@ -137,7 +137,7 @@ export default function NeedPage() {
         <ProcessingState kind="need" />
       )}
       {s.data.need && (
-        <section className="result-section">
+        <section className="result-section content-enter">
           <div className="section-heading horizontal">
             <div>
               <p className="eyebrow">YAPILANDIRILMIŞ İHTİYAÇ</p>

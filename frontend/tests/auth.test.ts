@@ -130,6 +130,8 @@ async function component(
         }: React.AnchorHTMLAttributes<HTMLAnchorElement>) =>
           React.createElement("a", props, children),
       };
+    if (id === "./use-entrance-motion")
+      return { useEntranceMotion: () => ({ current: null }) };
     if (id === "./session") return { useSession: () => session };
     if (id === "@/lib/auth") return authLogic;
     if (id === "@/lib/api/client") return { api, userError: () => "" };
@@ -227,4 +229,18 @@ test("guards hide cached private content during bootstrap and reject candidate i
     /OWN DISCOVERY/,
   );
   assert.deepEqual(allowed.redirects, []);
+});
+
+test("auth feedback separates the fading visual copy from immediate accessible errors", async () => {
+  const a = await component("auth-form.tsx", { ready: true });
+  const html = renderToStaticMarkup(
+    React.createElement(a.exports.AuthFeedback, { message: "Parola hatalı." }),
+  );
+  assert.match(html, /data-visible="true" aria-hidden="true"/);
+  assert.match(html, /class="sr-only" role="alert">Parola hatalı\./);
+  const empty = renderToStaticMarkup(
+    React.createElement(a.exports.AuthFeedback, { message: "" }),
+  );
+  assert.match(empty, /data-visible="false"/);
+  assert.match(empty, /role="alert"><\/span>/);
 });

@@ -41,7 +41,7 @@ export function MatchResult({ result }: { result: Match }) {
     };
   }, [result, retry]);
   return (
-    <section className="result-section">
+    <section className="result-section content-enter">
       <div className="score-layout">
         <div className="score-card">
           <p className="eyebrow">{scoreLabel}</p>
