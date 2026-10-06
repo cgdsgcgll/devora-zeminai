@@ -2,7 +2,7 @@ from datetime import date, datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import (JSON, Boolean, CheckConstraint, Date, DateTime, Float, ForeignKey, Integer,
-                        ForeignKeyConstraint, String, Text, UniqueConstraint, Uuid)
+                        ForeignKeyConstraint, String, Text, UniqueConstraint, Uuid, Index, text)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from app.schemas.domain import utcnow
@@ -205,6 +205,7 @@ class MatchCriterion(Identity, Base):
     kind: Mapped[str] = mapped_column(String(30), default='technical_skill', server_default='technical_skill')
     # Immutable snapshots allow edits/deletions without rewriting historical results.
     profile_evidence: Mapped[list] = mapped_column(JSON, default=list, server_default='[]')
+    trace_items: Mapped[list | None] = mapped_column(JSON, nullable=True)
     # Freeze labels/priority so historical explanations remain reproducible.
     skill_key: Mapped[str] = mapped_column(String(64))
     skill_label: Mapped[str] = mapped_column(String(200))
@@ -225,3 +226,20 @@ class RateBucket(Base):
     key: Mapped[str] = mapped_column(String(64), primary_key=True)
     attempts: Mapped[int] = mapped_column(Integer)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+
+
+class ProofRequest(Identity, Updated, Base):
+    __tablename__ = 'proof_requests'
+    __table_args__ = (
+        CheckConstraint("status IN ('open', 'submitted', 'closed', 'cancelled')", name='ck_proof_status'),
+        Index('uq_proof_active_criterion', 'match_criterion_id', unique=True,
+              sqlite_where=text("status IN ('open', 'submitted')"),
+              postgresql_where=text("status IN ('open', 'submitted')")),
+    )
+    match_criterion_id: Mapped[UUID] = mapped_column(ForeignKey('match_criteria.id'), index=True)
+    title: Mapped[str] = mapped_column(String(200))
+    instructions: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(20), default='open')
+    submission: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

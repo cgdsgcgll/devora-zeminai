@@ -1,4 +1,7 @@
 "use client";
+import { t, tx } from "../../i18n/index.ts";
+import { useLocale } from "../../i18n/react";
+
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api/client";
@@ -7,6 +10,8 @@ import { useSession } from "@/components/session";
 import { PageHeader, CriterionCard, Notes, Empty } from "@/components/ui";
 import { ProcessingState, ButtonProgress } from "@/components/feedback";
 export default function NeedPage() {
+  useLocale();
+
   const s = useSession();
   const [description, setDescription] = useState("");
   const [role, setRole] = useState(s.data.need?.target_role || "");
@@ -17,7 +22,7 @@ export default function NeedPage() {
     const message = validateNeed(description);
     setError(message || "");
     if (message) return;
-    void s.act("İhtiyaç kriterleri hazırlanıyor…", async () =>
+    void s.act(t("m064"), async () =>
       s.saveNeed(
         await api.createNeed({
           description: description.trim(),
@@ -29,44 +34,36 @@ export default function NeedPage() {
   }
   return (
     <div className="need-page">
-      <PageHeader
-        step="KURUM İHTİYACI"
-        title="Nasıl bir ekip arkadaşı arıyorsunuz?"
-      >
-        İhtiyacı kendi cümlelerinizle anlatın. Gerekli beceriler ve
-        tercihlerinizi açıkça ayırın.
+      <PageHeader step={t("m065")} title={t("m066")}>
+        {t("m067")}
       </PageHeader>
       <div className="need-workspace">
         <section className="panel">
           <div className="section-title">
-            <h2>İhtiyacınız</h2>
+            <h2>{t("m068")}</h2>
             <button
               type="button"
               className="text-button"
               disabled={!!s.busy}
               onClick={() => {
-                setDescription(
-                  "Python ve FastAPI zorunlu; Docker tercih sebebidir.",
-                );
-                setRole("Backend geliştirici");
-                setOutput("Belgelenmiş bir REST API");
+                setDescription(t("needExample"));
+                setRole(t("m069"));
+                setOutput(t("m070"));
               }}
             >
-              Örnekle başla
+              {t("m071")}
             </button>
           </div>
-          <p className="field-help">
-            Örnek metni düzenleyebilirsiniz. Kriterler, gönderdiğiniz
-            açıklamadan hazırlanır.
-          </p>
+          <p className="field-help">{t("m072")}</p>
           <form onSubmit={submit} noValidate>
             {error && (
               <p id="need-error" className="error" role="alert">
-                {error}
+                {tx(error)}
               </p>
             )}
             <label htmlFor="need-description">
-              İhtiyaç açıklaması <span className="required">*</span>
+              {t("m073")}
+              <span className="required">*</span>
             </label>
             <textarea
               id="need-description"
@@ -77,15 +74,15 @@ export default function NeedPage() {
               required
               aria-describedby={error ? "need-error" : undefined}
               aria-invalid={!!error}
-              placeholder="Hangi teknolojiler gerekli? Hangileri tercih sebebi?"
+              placeholder={t("needPlaceholder")}
             />
             <details className="form-details">
               <summary>
-                Rol ve beklenen çıktı{" "}
-                <span className="optional">İsteğe bağlı</span>
+                {t("m074")} <span className="optional">{t("m029")}</span>
               </summary>
               <label htmlFor="role">
-                Hedef rol <span className="optional">İsteğe bağlı</span>
+                {t("m075")}
+                <span className="optional">{t("m029")}</span>
               </label>
               <input
                 id="role"
@@ -94,7 +91,8 @@ export default function NeedPage() {
                 maxLength={200}
               />
               <label htmlFor="output">
-                Beklenen çıktı <span className="optional">İsteğe bağlı</span>
+                {t("m076")}
+                <span className="optional">{t("m029")}</span>
               </label>
               <textarea
                 id="output"
@@ -106,10 +104,7 @@ export default function NeedPage() {
             </details>
             <button className="button" disabled={!s.ready || !!s.busy}>
               <ButtonProgress active={!!s.busy} />
-              {s.busy
-                ? "İhtiyaç yapılandırılıyor…"
-                : "İhtiyacı yapılandır"}{" "}
-              <span aria-hidden="true">↗</span>
+              {s.busy ? t("m077") : t("m078")} <span aria-hidden="true">↗</span>
             </button>
           </form>
           {s.data.need && (
@@ -118,7 +113,7 @@ export default function NeedPage() {
               className="text-button"
               disabled={!!s.busy}
               onClick={() =>
-                void s.act("İhtiyaç bilgileri güncelleniyor…", async () =>
+                void s.act(t("m079"), async () =>
                   s.saveNeed(
                     await api.updateNeed(s.data.need!.id, {
                       target_role: role.trim() || null,
@@ -128,26 +123,23 @@ export default function NeedPage() {
                 )
               }
             >
-              Seçili ihtiyacın rol / çıktı bilgisini güncelle
+              {t("m080")}
             </button>
           )}
         </section>
       </div>
-      {s.busy === "İhtiyaç kriterleri hazırlanıyor…" && (
-        <ProcessingState kind="need" />
-      )}
+      {s.busy === t("m064") && <ProcessingState kind="need" />}
       {s.data.need && (
         <section className="result-section content-enter">
           <div className="section-heading horizontal">
             <div>
-              <p className="eyebrow">YAPILANDIRILMIŞ İHTİYAÇ</p>
-              <h2>Beklentiler netleşti.</h2>
-              <p className="muted">
-                {s.data.need.target_role || "Kurum ihtiyacı"}
-              </p>
+              <p className="eyebrow">{t("m081")}</p>
+              <h2>{t("m082")}</h2>
+              <p className="muted">{s.data.need.target_role || t("m083")}</p>
             </div>
             <Link href="/kesif" className="button secondary">
-              Adayları keşfet <span aria-hidden="true">→</span>
+              {t("m084")}
+              <span aria-hidden="true">→</span>
             </Link>
           </div>
           {s.data.need.criteria.length ? (
@@ -156,8 +148,8 @@ export default function NeedPage() {
                 <section key={priority}>
                   <h3>
                     {priority === "required"
-                      ? "Gerekli kriterler"
-                      : "Tercih edilen kriterler"}
+                      ? t("requiredCriteria")
+                      : t("preferredCriteria")}
                   </h3>
                   {s.data
                     .need!.criteria.filter((c) => c.priority === priority)
@@ -166,17 +158,14 @@ export default function NeedPage() {
                     ))}
                   {!s.data.need!.criteria.some(
                     (c) => c.priority === priority,
-                  ) && <p className="muted">Bu grupta kriter yok.</p>}
+                  ) && <p className="muted">{t("m085")}</p>}
                 </section>
               ))}
             </div>
           ) : (
-            <Empty title="Teknik kriter çıkarılamadı">
-              Açıklamada beceri ve teknoloji adlarını netleştirip yeniden
-              deneyin. Boş kriterlerle eşleşme hesaplanamaz.
-            </Empty>
+            <Empty title={t("m086")}>{t("m087")}</Empty>
           )}
-          <Notes title="Belirsizlikler" items={s.data.need.uncertainties} />
+          <Notes title={t("uncertainties")} items={s.data.need.uncertainties} />
         </section>
       )}
     </div>

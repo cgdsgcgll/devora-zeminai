@@ -2194,3 +2194,105 @@ summary {
     animation: state-reveal var(--duration-fast) var(--ease-out);
   }
 }
+
+/* Evidence tools reuse the existing motion and type scale. */
+.trace-row summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  cursor: pointer;
+}
+.trace-row summary .small {
+  flex-basis: 100%;
+}
+.trace-source {
+  border-top: 1px solid var(--line, #ddd);
+  margin-top: 1rem;
+  padding-top: 1rem;
+  overflow-wrap: anywhere;
+}
+.trace-source blockquote {
+  margin: 1rem 0;
+  padding-left: 1rem;
+  border-left: 2px solid currentColor;
+  white-space: pre-wrap;
+}
+.proof-compose {
+  margin-top: 1rem;
+}
+.proof-compose form,
+.proof-card form {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.proof-card label,
+.proof-compose label {
+  display: grid;
+  gap: 0.4rem;
+}
+.team-builder {
+  position: sticky;
+  top: 1rem;
+  z-index: 3;
+  background: var(--surface, #fff);
+  border: 1px solid var(--line, #ddd);
+  border-radius: 1.2rem;
+  padding: 1.2rem;
+  margin: 1.5rem 0;
+  max-height: 55vh;
+  overflow: auto;
+}
+.team-members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.team-matrix {
+  overflow-x: auto;
+}
+.team-matrix table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.team-matrix th,
+.team-matrix td {
+  padding: 0.65rem;
+  border-bottom: 1px solid var(--line, #ddd);
+  text-align: left;
+  min-width: 6rem;
+}
+.language-switch {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+.language-switch button {
+  min-width: 44px;
+  min-height: 44px;
+  background: transparent;
+  border: 0;
+  padding: 0.4rem;
+  border-radius: 0.4rem;
+  cursor: pointer;
+}
+.language-switch [aria-pressed="true"] {
+  background: #e8edf0;
+  color: #142b3c;
+}
+@media (max-width: 600px) {
+  .team-builder {
+    position: relative;
+    top: 0;
+    max-height: none;
+  }
+  .header-inner {
+    flex-wrap: wrap;
+  }
+}
+
+html[data-locale-pending="true"] body {
+  visibility: hidden;
+}

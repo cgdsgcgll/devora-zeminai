@@ -1,8 +1,13 @@
 "use client";
+import { t, tx } from "../i18n/index.ts";
+import { useLocale } from "../i18n/react";
+
 import { useEffect, useState } from "react";
 import { api, userError, type Model } from "@/lib/api/client";
 
 export function EvidenceGaps({ matchId }: { matchId: string }) {
+  useLocale();
+
   const [response, setResponse] = useState<Model<"GapSummary">>();
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
@@ -25,30 +30,27 @@ export function EvidenceGaps({ matchId }: { matchId: string }) {
   }, [matchId, retry]);
   return (
     <section className="result-section">
-      <h2>Gelişim / Kanıt Boşlukları</h2>
-      <p>
-        Eksik kanıt, eksik beceri anlamına gelmez. Öneriler yalnız mevcut
-        deneyiminizi görünür kılmak içindir.
-      </p>
+      <h2>{t("m266")}</h2>
+      <p>{t("m267")}</p>
       {error && (
         <div role="alert">
-          <p>{error}</p>
+          <p>{tx(error)}</p>
           <button
             className="button secondary"
             onClick={() => setRetry((v) => v + 1)}
           >
-            Yeniden yükle
+            {t("m268")}
           </button>
         </div>
       )}
-      {!response && !error && <p role="status">Kanıt boşlukları yükleniyor…</p>}
+      {!response && !error && <p role="status">{t("m269")}</p>}
       {response?.items
         .filter((item) => item.state !== "strength")
         .map((item) => (
           <article className="criterion missing" key={item.criterion_id}>
             <h3>
               {item.label} ·{" "}
-              {item.priority === "required" ? "Gerekli" : "Tercih edilen"}
+              {item.priority === "required" ? t("m130") : t("m131")}
             </h3>
             <p>{item.explanation}</p>
             <p>{item.next_step}</p>
@@ -56,7 +58,7 @@ export function EvidenceGaps({ matchId }: { matchId: string }) {
         ))}
       {response &&
         response.items.every((item) => item.state === "strength") && (
-          <p>Bu sonuçtaki tüm kriterler için dayanak bulundu.</p>
+          <p>{t("m270")}</p>
         )}
     </section>
   );

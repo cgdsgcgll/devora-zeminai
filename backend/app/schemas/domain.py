@@ -235,7 +235,20 @@ class AnalysisRun(Contract):
     commit_sha: str | None = None
 
 
+class TraceEvidence(Contract):
+    skill_label: str = ''
+    family: str
+    status: Literal['observed', 'declared_only', 'not_found', 'linked', 'verified']
+    strength: Literal['weak', 'medium', 'strong'] | None = None
+    summary: str
+    excerpt: str = ''
+    source_url: str | None = None
+    source_label: str = ''
+
+
 class CriterionMatch(Contract):
+    trace_available: bool = False
+    trace_items: list[TraceEvidence] = Field(default_factory=list)
     kind: CriterionKind = 'technical_skill'
     profile_evidence: list[ProfileEvidenceItem] = Field(default_factory=list)
     criterion_id: UUID
@@ -268,6 +281,8 @@ class MatchCreate(Contract):
 
 
 class MatchResult(Entity, MatchCalculation):
+    anonymous: bool = False
+    candidate_label: str = ""
     candidate_id: UUID
     need_id: UUID
 

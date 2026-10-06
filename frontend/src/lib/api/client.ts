@@ -1,3 +1,5 @@
+"use client";
+import { t } from "../../i18n/index.ts";
 import type { components } from "./schema";
 export type Model<K extends keyof components["schemas"]> =
   components["schemas"][K];
@@ -14,10 +16,17 @@ export type Analysis = Omit<Model<"AnalysisResponse">, "evidence"> & {
 };
 
 export class ApiError extends Error {
+  status?: number;
   code: string;
   retryable: boolean;
-  constructor(code: string, message: string, retryable = false) {
+  constructor(
+    code: string,
+    message: string,
+    retryable = false,
+    status?: number,
+  ) {
     super(message);
+    this.status = status;
     this.code = code;
     this.retryable = retryable;
   }
@@ -37,6 +46,7 @@ export function parseApiError(body: unknown, status: number): ApiError {
         error.code,
         error.message,
         "retryable" in error && error.retryable === true,
+        status,
       );
     }
   }
@@ -44,18 +54,46 @@ export function parseApiError(body: unknown, status: number): ApiError {
     "HTTP_ERROR",
     `Servis isteği tamamlayamadı (HTTP ${status}).`,
     status >= 500,
+    status,
   );
 }
 export function userError(error: unknown): string {
-  if (error instanceof ApiError && error.code === "ANALYSIS_RATE_LIMITED")
-    return "Analiz sınırına ulaştınız. Bir süre sonra tekrar deneyebilirsiniz.";
-  if (error instanceof ApiError && error.code === "OPERATION_RATE_LIMITED")
-    return "İşlem sınırına ulaştınız. Bir süre sonra tekrar deneyebilirsiniz.";
-  if (error instanceof ApiError && error.code === "DATABASE_ERROR")
-    return "Veritabanı bağlantısı hazır değil. Yerel demo servislerini kontrol edin.";
-  return error instanceof ApiError
-    ? error.message
-    : "Beklenmeyen bir sorun oluştu. İşlemi tekrar deneyebilirsiniz.";
+  if (!(error instanceof ApiError)) return t("m416");
+  const codes: Record<string, string> = {
+    UNAUTHENTICATED: t("errorUnauthorized"),
+    UNAUTHORIZED: t("errorUnauthorized"),
+    FORBIDDEN: t("errorForbidden"),
+    CSRF_ORIGIN_REJECTED: t("errorForbidden"),
+    NOT_FOUND: t("errorNotFound"),
+    PROOF_CONFLICT: t("errorConflict"),
+    EMAIL_ALREADY_EXISTS: t("errorConflict"),
+    INVALID_CREDENTIALS: t("errorCredentials"),
+    VALIDATION_ERROR: t("errorValidation"),
+    DISCOVERY_POOL_LIMIT_EXCEEDED: t("errorValidation"),
+    ANALYSIS_RATE_LIMITED: t("m413"),
+    OPERATION_RATE_LIMITED: t("m414"),
+    AUTH_RATE_LIMITED: t("m414"),
+    RATE_LIMITED: t("m414"),
+    DATABASE_ERROR: t("m415"),
+    RATE_LIMIT_UNAVAILABLE: t("m415"),
+    NETWORK_ERROR: t("m417"),
+    INSUFFICIENT_PROJECT_DATA: t("m042"),
+    INVALID_RESPONSE: t("m418"),
+  };
+  if (codes[error.code]) return codes[error.code];
+  const status: Record<number, string> = {
+    401: t("errorUnauthorized"),
+    403: t("errorForbidden"),
+    404: t("errorNotFound"),
+    409: t("errorConflict"),
+    422: t("errorValidation"),
+    429: t("m414"),
+    500: t("m416"),
+    502: t("errorProvider"),
+    503: t("m415"),
+    504: t("errorProvider"),
+  };
+  return status[error.status || 0] || t("m416");
 }
 export type Account = Model<"Account">;
 let onUnauthorized: (() => void) | undefined;
@@ -81,11 +119,7 @@ async function request<T>(
       credentials: "include",
     });
   } catch {
-    throw new ApiError(
-      "NETWORK_ERROR",
-      "Backend’e ulaşılamıyor. Servisin çalıştığını ve bağlantınızı kontrol edin.",
-      true,
-    );
+    throw new ApiError("NETWORK_ERROR", t("m417"), true);
   }
   if (response.ok && response.status === 204) return undefined as T;
   const data: unknown = await response.json().catch(() => null);
@@ -98,19 +132,14 @@ async function request<T>(
       onUnauthorized?.();
     throw parseApiError(data, response.status);
   }
-  if (!data)
-    throw new ApiError(
-      "INVALID_RESPONSE",
-      "Servisten okunabilir bir yanıt alınamadı.",
-    );
+  if (!data) throw new ApiError("INVALID_RESPONSE", t("m418"));
   const hasId = (v: unknown) =>
     !!v && typeof v === "object" && "id" in v && typeof v.id === "string";
   if (path.startsWith("/auth/")) {
     if (typeof data !== "object" || !("user" in data) || !hasId(data.user))
-      throw new ApiError("INVALID_RESPONSE", "Hesap bilgisi okunamadı.");
+      throw new ApiError("INVALID_RESPONSE", t("m419"));
   } else if (Array.isArray(data)) {
-    if (!data.every(hasId))
-      throw new ApiError("INVALID_RESPONSE", "Kayıtlar okunamadı.");
+    if (!data.every(hasId)) throw new ApiError("INVALID_RESPONSE", t("m420"));
   } else if (path.endsWith("/analyze")) {
     if (
       typeof data !== "object" ||
@@ -118,13 +147,10 @@ async function request<T>(
       !Array.isArray(data.evidence) ||
       !data.evidence.every(hasId)
     )
-      throw new ApiError(
-        "INVALID_RESPONSE",
-        "Analiz kanıt kayıtları okunamadı.",
-      );
+      throw new ApiError("INVALID_RESPONSE", t("m421"));
   } else if (path.endsWith("/profile-evidence") && body === undefined) {
     if (!Array.isArray(data) || !data.every(hasId))
-      throw new ApiError("INVALID_RESPONSE", "Profil kayıtları okunamadı.");
+      throw new ApiError("INVALID_RESPONSE", t("m422"));
   } else if (
     /\/(living-profile|discovery|team-coverage|gaps)(\?|$)/.test(path)
   ) {
@@ -146,9 +172,8 @@ async function request<T>(
       typeof (data as Record<string, unknown>)[field] !== "string" ||
       !Array.isArray((data as Record<string, unknown>)[collection])
     )
-      throw new ApiError("INVALID_RESPONSE", "Görünüm verileri okunamadı.");
-  } else if (!hasId(data))
-    throw new ApiError("INVALID_RESPONSE", "Servis kaydının kimliği eksik.");
+      throw new ApiError("INVALID_RESPONSE", t("m423"));
+  } else if (!hasId(data)) throw new ApiError("INVALID_RESPONSE", t("m424"));
   return data as T;
 }
 export const api = {
@@ -199,6 +224,16 @@ export const api = {
   evidence: (id: string) => request<Evidence>(`/evidence/${id}`),
   createNeed: (data: Model<"NeedCreate">) => request<Need>("/needs", data),
   need: (id: string) => request<Need>(`/needs/${id}`),
-  createMatch: (data: Model<"MatchCreate">) => request<Match>("/matches", data),
-  match: (id: string) => request<Match>(`/matches/${id}`),
+  createMatch: (data: Model<"MatchCreate">, anonymous = true) =>
+    request<Match>(`/matches?anonymous=${anonymous}`, data),
+  match: (id: string, anonymous = true) =>
+    request<Match>(`/matches/${id}?anonymous=${anonymous}`),
+  proofRequests: (offset = 0) =>
+    request<Model<"ProofItem">[]>(`/proof-requests?offset=${offset}&limit=20`),
+  createProof: (data: Model<"ProofCreate">) =>
+    request<Model<"ProofItem">>("/proof-requests", data),
+  submitProof: (id: string, data: Model<"ProofSubmit">) =>
+    request<Model<"ProofItem">>(`/proof-requests/${id}/submit`, data),
+  reviewProof: (id: string, status: Model<"ProofReview">["status"]) =>
+    request<Model<"ProofItem">>(`/proof-requests/${id}`, { status }, "PATCH"),
 };

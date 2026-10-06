@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import text, select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import settings
 from app.core import auth
@@ -190,17 +190,23 @@ def get_need(need_id: UUID, db: Session = Depends(get_db), user=Depends(auth.get
 
 
 @router.post('/matches', response_model=s.MatchResult, status_code=201)
-def create_match(data: s.MatchCreate, request: Request, db: Session = Depends(get_db), user=Depends(auth.get_current_user)):
+def create_match(data: s.MatchCreate, request: Request, anonymous: bool = False, db: Session = Depends(get_db), user=Depends(auth.get_current_user)):
     auth.need_record(db, data.need_id, user)
     auth.discoverable(db, data.candidate_id)
     consume(request, db, user, "compute")
-    return workflows.create_match(db, data)
+    from app.services.trace import presentation
+    return presentation(workflows.create_match(db, data), anonymous,
+        "" if anonymous else db.get(m.Candidate, data.candidate_id).name)
 
 
 @router.get('/matches/{match_id}', response_model=s.MatchResult)
-def get_match(match_id: UUID, db: Session = Depends(get_db), user=Depends(auth.get_current_user)):
+def get_match(match_id: UUID, anonymous: bool = False, db: Session = Depends(get_db), user=Depends(auth.get_current_user)):
     auth.match_record(db, match_id, user)
-    return workflows.serialize_match(workflows.get_or_404(db, m.MatchResult, match_id))
+    from app.services.trace import presentation
+    row = db.scalar(select(m.MatchResult).where(m.MatchResult.id == match_id).options(
+        selectinload(m.MatchResult.criteria).selectinload(m.MatchCriterion.evidence)))
+    return presentation(workflows.serialize_match(row), anonymous,
+        "" if anonymous else db.get(m.Candidate, row.candidate_id).name)
 
 
 @router.get('/matches/{match_id}/evidence/{evidence_id}', response_model=s.SkillEvidence)

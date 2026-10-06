@@ -1,4 +1,7 @@
 "use client";
+import { t, tx } from "../../i18n/index.ts";
+import { useLocale } from "../../i18n/react";
+
 import Link from "next/link";
 import { discoveryPreview } from "@/lib/visual-summary";
 import { useRouter } from "next/navigation";
@@ -10,12 +13,15 @@ import { LoadingState } from "@/components/feedback";
 import { sourceLabels, provenanceLabels } from "@/lib/profile";
 
 function Sources({ items }: { items: Model<"EvidenceReference">[] }) {
+  useLocale();
+
   return (
     <ul>
       {items.map((s) => (
         <li key={`${s.family}:${s.status}`}>
           {sourceLabels[s.family] || s.family} ·{" "}
-          {provenanceLabels[s.status] || s.status} · {s.count} kayıt
+          {provenanceLabels[s.status] || s.status} · {s.count}
+          {t("m116")}
         </li>
       ))}
     </ul>
@@ -29,6 +35,8 @@ function DiscoveryView({
   needId: string;
   anonymous: boolean;
 }) {
+  useLocale();
+
   const session = useSession();
   const router = useRouter();
   const [offset, setOffset] = useState(0);
@@ -39,7 +47,30 @@ function DiscoveryView({
     error?: string;
   }>();
   const [selected, setSelected] = useState<string[]>([]);
-  const [team, setTeam] = useState<Model<"TeamCoverage">>();
+  const [teamResponse, setTeamResponse] = useState<{
+    key: string;
+    data?: Model<"TeamCoverage">;
+    error?: string;
+  }>();
+  const selectionKey = selected.slice().sort().join(",");
+  useEffect(() => {
+    let active = true;
+    if (selected.length >= 2)
+      api
+        .team(needId, selected, anonymous)
+        .then((data) => {
+          if (active) setTeamResponse({ key: selectionKey, data });
+        })
+        .catch((e) => {
+          if (active)
+            setTeamResponse({ key: selectionKey, error: userError(e) });
+        });
+    return () => {
+      active = false;
+    };
+  }, [needId, anonymous, selectionKey, selected]);
+  const team =
+    teamResponse?.key === selectionKey ? teamResponse.data : undefined;
   const key = `${offset}:${retry}`;
   useEffect(() => {
     let active = true;
@@ -57,6 +88,10 @@ function DiscoveryView({
   }, [needId, anonymous, offset, key]);
   const data = response?.key === key ? response.data : undefined;
   const error = response?.key === key ? response.error : undefined;
+  const candidateLabel = (id: string, label?: string) =>
+    anonymous
+      ? `${t("m252")} #${id.slice(0, 8)}`
+      : label || "#" + id.slice(0, 8);
   const busy = !!session.busy;
   return (
     <>
@@ -66,55 +101,139 @@ function DiscoveryView({
           disabled={busy || (!data && !error)}
           onClick={() => {
             setRetry((v) => v + 1);
-            setTeam(undefined);
+            setTeamResponse(undefined);
           }}
         >
-          Keşfi yenile
-        </button>
-        <button
-          className="button"
-          disabled={busy || selected.length < 2}
-          onClick={() =>
-            void session.act("Takım kapsamı hesaplanıyor…", async () =>
-              setTeam(await api.team(needId, selected, anonymous)),
-            )
-          }
-        >
-          Takım görünümü ({selected.length}/4)
+          {t("m117")}
         </button>
       </div>
-      <p className="small">
-        Takım için 2–4 aday seçin. Seçim veya sayfa değişince takım sonucu
-        temizlenir. Sonuç güncel kayıtlardan hesaplanır.
-      </p>
+      <section className="team-builder" aria-label={t("m118")}>
+        <h2>
+          {t("m119")}
+          <span className="count">{selected.length}/4</span>
+        </h2>
+        <div className="team-members">
+          {selected.map((id) => (
+            <button
+              className="button secondary"
+              key={id}
+              onClick={() => setSelected((ids) => ids.filter((v) => v !== id))}
+            >
+              {candidateLabel(
+                id,
+                data?.candidates.find((c) => c.candidate_id === id)?.label,
+              )}{" "}
+              × <span className="sr-only">{t("m120")}</span>
+            </button>
+          ))}
+        </div>
+        {selected.length === 0 && <p>{t("m121")}</p>}
+        {selected.length === 1 && <p>{t("m122")}</p>}
+        {selected.length >= 2 && !team && (
+          <p role="status">
+            {(teamResponse?.key === selectionKey && teamResponse.error) ||
+              t("m123")}
+          </p>
+        )}
+        {team && (
+          <div aria-live="polite" className="content-enter">
+            <p>
+              <strong>
+                {team.matched_count}/{team.total_count}
+              </strong>
+              {t("m124")}
+            </p>
+            <p>
+              {t("m125")}
+              {Math.round(team.required_coverage * 100)}
+              {t("m126")}
+              {Math.round(team.preferred_coverage * 100)}%
+            </p>
+            <div
+              className="team-matrix"
+              tabIndex={0}
+              role="region"
+              aria-label={t("m127")}
+            >
+              <table>
+                <caption>{t("m128")}</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">{t("m129")}</th>
+                    {selected.map((id) => (
+                      <th scope="col" key={id}>
+                        {candidateLabel(
+                          id,
+                          data?.candidates.find((c) => c.candidate_id === id)
+                            ?.label,
+                        )}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {team.criteria.map((c) => (
+                    <tr key={c.criterion_id}>
+                      <th scope="row">
+                        {c.label}
+                        <br />
+                        <small>
+                          {c.priority === "required" ? t("m130") : t("m131")}
+                        </small>
+                      </th>
+                      {selected.map((id) => (
+                        <td key={id}>
+                          <span
+                            aria-label={
+                              c.supporters.some((s) => s.candidate_id === id)
+                                ? t("m132")
+                                : t("m133")
+                            }
+                          >
+                            {c.supporters.some((s) => s.candidate_id === id)
+                              ? "✓"
+                              : "—"}
+                          </span>
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p>
+              {t("m134")}
+              {team.criteria
+                .filter((c) => !c.supporters.length)
+                .map((c) => c.label)
+                .join(" · ") || t("none")}
+            </p>
+          </div>
+        )}
+      </section>
       {error && (
         <p className="error" role="alert">
-          {error}
+          {tx(error)}
         </p>
       )}
-      {!data && !error && (
-        <LoadingState label="Adayların kanıt kapsamı yükleniyor…" skeleton />
-      )}
+      {!data && !error && <LoadingState label={t("m135")} skeleton />}
       {data && (
         <>
           <details className="disclosure">
-            <summary>Sıralama nasıl yapılır?</summary>
-            <p className="small">{data.ordering}</p>
+            <summary>{t("m136")}</summary>
+            <p className="small">{t("discoveryOrder")}</p>
           </details>
           {!data.candidates.length && (
-            <Empty
-              title="Henüz gösterilecek aday yok"
-              href="/aday"
-              action="Aday profili oluştur"
-            >
-              Proje veya deneyim kayıtları ekleyerek bu ihtiyaca ilişkin kanıt
-              kapsamını inceleyebilirsiniz.
+            <Empty title={t("m137")} href="/aday" action={t("m138")}>
+              {t("m139")}
             </Empty>
           )}
           <div className="discovery-grid content-enter">
             {data.candidates.map((candidate) => (
               <article className="discovery-row" key={candidate.candidate_id}>
-                <h2>{candidate.label}</h2>
+                <h2>
+                  {candidateLabel(candidate.candidate_id, candidate.label)}
+                </h2>
                 <label className="team-select">
                   <input
                     type="checkbox"
@@ -130,46 +249,42 @@ function DiscoveryView({
                           ? [...ids, candidate.candidate_id]
                           : ids.filter((id) => id !== candidate.candidate_id),
                       );
-                      setTeam(undefined);
+                      setTeamResponse(undefined);
                     }}
                   />{" "}
-                  Takıma seç: {candidate.label}
+                  {t("m140")}
+                  {candidateLabel(candidate.candidate_id, candidate.label)}
                 </label>
                 <p className="discovery-score">
-                  Kanıt Uyumu{" "}
+                  {t("m141")}{" "}
                   <strong>{Number(candidate.score.toFixed(2))}/100</strong>
                 </p>
                 <p>
-                  Gerekli kapsam: %
-                  {Math.round(candidate.required_coverage * 100)} · Tercih
-                  edilen kapsam: %
+                  {t("m142")}
+                  {Math.round(candidate.required_coverage * 100)}
+                  {t("m143")}
                   {Math.round(candidate.preferred_coverage * 100)}
                 </p>
-                <div className="criterion-preview" aria-label="Kriter özeti">
+                <div className="criterion-preview" aria-label={t("m144")}>
                   <p>
-                    <strong>Dayanak bulunan</strong>
+                    <strong>{t("m145")}</strong>
                     {discoveryPreview(candidate.criteria).signals.join(" · ") ||
-                      "Henüz karşılanan kriter yok"}
+                      t("m146")}
                   </p>
                   <p>
-                    <strong>Eksik dayanak</strong>
-                    {discoveryPreview(candidate.criteria).missing} kriter için
-                    henüz yeterli kanıt yok
+                    <strong>{t("m147")}</strong>
+                    {discoveryPreview(candidate.criteria).missing}
+                    {t("m148")}
                   </p>
                 </div>
                 <details>
-                  <summary>Kriterler ve kaynak aileleri</summary>
+                  <summary>{t("m149")}</summary>
                   {candidate.criteria.map((c) => (
                     <section className="criterion" key={c.criterion_id}>
                       <h3>{c.label}</h3>
                       <p>
-                        {c.matched
-                          ? "Dayanak bulundu"
-                          : "Bu kriteri karşılayan yeterli dayanak yok"}{" "}
-                        ·{" "}
-                        {c.priority === "required"
-                          ? "Gerekli"
-                          : "Tercih edilen"}
+                        {c.matched ? t("evidenceFound") : t("m150")} ·{" "}
+                        {c.priority === "required" ? t("m130") : t("m131")}
                       </p>
                       <p className="small">
                         {sourceLabels[c.family] || c.family}
@@ -178,17 +293,20 @@ function DiscoveryView({
                     </section>
                   ))}
                 </details>
-                {!anonymous && (
+                {
                   <div className="profile-actions">
                     <button
                       className="button secondary"
                       disabled={busy}
                       onClick={() =>
-                        void session.act("Eşleşme hesaplanıyor…", async () => {
-                          const match = await api.createMatch({
-                            candidate_id: candidate.candidate_id,
-                            need_id: needId,
-                          });
+                        void session.act(t("m061"), async () => {
+                          const match = await api.createMatch(
+                            {
+                              candidate_id: candidate.candidate_id,
+                              need_id: needId,
+                            },
+                            anonymous,
+                          );
                           session.saveCandidate({
                             id: candidate.candidate_id,
                             name: candidate.label,
@@ -198,10 +316,10 @@ function DiscoveryView({
                         })
                       }
                     >
-                      Eşleşme ve boşluklar
+                      {t("m151")}
                     </button>
                   </div>
-                )}
+                }
               </article>
             ))}
           </div>
@@ -212,10 +330,10 @@ function DiscoveryView({
               onClick={() => {
                 setOffset((v) => Math.max(0, v - 20));
                 setSelected([]);
-                setTeam(undefined);
+                setTeamResponse(undefined);
               }}
             >
-              Önceki adaylar
+              {t("m152")}
             </button>
             <button
               className="button secondary"
@@ -223,78 +341,40 @@ function DiscoveryView({
               onClick={() => {
                 setOffset((v) => v + 20);
                 setSelected([]);
-                setTeam(undefined);
+                setTeamResponse(undefined);
               }}
             >
-              Sonraki adaylar
+              {t("m153")}
             </button>
           </div>
-          <Notes title="Değerlendirmenin sınırları" items={data.limitations} />
+          <Notes title={t("m154")} items={[t("discoveryNote")]} />
         </>
-      )}
-      {team && (
-        <section className="result-section content-enter" aria-live="polite">
-          <h2>Takım Kanıt Kapsamı</h2>
-          <p className="lead">
-            {team.matched_count} / {team.total_count} kriter
-          </p>
-          <p>
-            Gerekli kapsam: %{Math.round(team.required_coverage * 100)} · Tercih
-            edilen kapsam: %{Math.round(team.preferred_coverage * 100)}
-          </p>
-          {team.criteria.map((c) => (
-            <article className="criterion" key={c.criterion_id}>
-              <h3>{c.label}</h3>
-              {!c.supporters.length && (
-                <p>
-                  Seçilen adayların mevcut kayıtlarında bu kriter için kanıt
-                  bulunamadı.
-                </p>
-              )}
-              {c.supporters.map((s) => (
-                <div key={s.candidate_id}>
-                  <strong>{s.label}</strong>
-                  <Sources items={s.sources} />
-                </div>
-              ))}
-            </article>
-          ))}
-          <Notes title="Takım görünümünün sınırları" items={team.limitations} />
-        </section>
       )}
     </>
   );
 }
 
 export default function DiscoveryPage() {
+  useLocale();
+
   const { data, ready, busy } = useSession();
   const [anonymous, setAnonymous] = useState(true);
   return (
     <div className="discovery-page">
-      <PageHeader
-        step="KURUM / ADAY KEŞFİ"
-        title="İhtiyaçla ilgili olanı görün."
-      >
-        Adayları bu ihtiyaca ilişkin kriter kapsamıyla inceleyin. Genel yetenek
-        sıralaması değildir.
+      <PageHeader step={t("m155")} title={t("m156")}>
+        {t("m157")}
       </PageHeader>
       {!ready ? (
-        <p role="status">İhtiyaç yükleniyor…</p>
+        <p role="status">{t("m158")}</p>
       ) : !data.need?.criteria.length ? (
-        <Empty
-          title="Keşif, net bir ihtiyaçla başlar"
-          href="/ihtiyac"
-          action="İhtiyaç tanımla"
-        >
-          Gerekli ve tercih ettiğiniz kriterleri belirtin; ilgili aday
-          dayanaklarını burada inceleyin.
+        <Empty title={t("m159")} href="/ihtiyac" action={t("m160")}>
+          {t("m161")}
         </Empty>
       ) : (
         <>
           <p className="need-brief">
-            <span className="eyebrow">SEÇİLİ İHTİYAÇ</span>{" "}
-            {data.need.description}{" "}
-            <Link href="/ihtiyac">İhtiyacı değiştir →</Link>
+            <span className="eyebrow">{t("m162")}</span> {data.need.description}{" "}
+            <Link href="/ihtiyac">{t("m163")}</Link>
           </p>
           <div className="discovery-controls">
             <label className="team-select">
@@ -304,15 +384,11 @@ export default function DiscoveryPage() {
                 disabled={!!busy}
                 onChange={(e) => setAnonymous(e.target.checked)}
               />{" "}
-              Kanıt odaklı görünüm
+              {t("m058")}
             </label>
             <details className="disclosure">
-              <summary>Kanıt odaklı görünüm neyi değiştirir?</summary>
-              <p>
-                İsimler ve kimlik içerebilen kaynak metinleri gizlenir. Tam
-                anonimlik ya da tarafsızlık garantisi verilmez; kriter kapsamı
-                aynı kalır.
-              </p>
+              <summary>{t("m164")}</summary>
+              <p>{t("m059")}</p>
             </details>
           </div>
           <DiscoveryView

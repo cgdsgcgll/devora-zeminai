@@ -1,3 +1,4 @@
+import * as i18n from "../src/i18n/index.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -28,11 +29,11 @@ test("login validation accepts existing passwords without registration compositi
 test("candidate and institution navigation and protected destinations are distinct", () => {
   assert.deepEqual(
     linksFor("candidate").map((x) => x[0]),
-    ["/profil", "/aday"],
+    ["/profil", "/aday", "/kanit-istekleri"],
   );
   assert.deepEqual(
     linksFor("institution").map((x) => x[0]),
-    ["/ihtiyac", "/kesif", "/eslesme"],
+    ["/ihtiyac", "/kesif", "/eslesme", "/kanit-istekleri"],
   );
   assert.deepEqual(linksFor(), []);
   assert.equal(homeFor("candidate"), "/profil");
@@ -111,6 +112,16 @@ async function component(
   const realRequire = createRequire(import.meta.url);
   const redirects: string[] = [];
   const dependencies = (id: string): unknown => {
+    if (id === "../i18n/index.ts") return i18n;
+    if (id === "../i18n/react")
+      return {
+        useLocale: () =>
+          React.useSyncExternalStore(
+            i18n.subscribeLocale,
+            i18n.getLocale,
+            i18n.getLocale,
+          ),
+      };
     if (id === "react")
       return { ...React, useEffect: (effect: () => void) => effect() };
     if (id === "next/navigation")

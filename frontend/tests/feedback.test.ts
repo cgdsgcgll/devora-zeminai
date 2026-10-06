@@ -1,3 +1,4 @@
+import { resolveI18n } from "./i18n-loader.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -55,7 +56,7 @@ test("feedback components announce status, escape text and provide a dismiss tar
       JSON.stringify(pathToFileURL(require.resolve("react/jsx-runtime")).href),
     );
   const { LoadingState, SuccessNotice } = await import(
-    `data:text/javascript;base64,${Buffer.from(code).toString("base64")}`
+    `data:text/javascript;base64,${Buffer.from(await resolveI18n(code)).toString("base64")}`
   );
   const loading = renderToStaticMarkup(
     createElement(LoadingState, { label: "Profil yükleniyor…" }),

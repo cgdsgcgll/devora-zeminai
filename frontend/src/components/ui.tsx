@@ -1,3 +1,6 @@
+"use client";
+import { t } from "../i18n/index.ts";
+import { useLocale } from "../i18n/react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { Evidence, Model } from "@/lib/api/client";
@@ -21,6 +24,8 @@ export function PageHeader({
   title: string;
   children: ReactNode;
 }) {
+  useLocale();
+
   return (
     <header className="page-header">
       <p className="eyebrow">{step}</p>
@@ -30,9 +35,13 @@ export function PageHeader({
   );
 }
 export function Info({ children }: { children: ReactNode }) {
+  useLocale();
+
   return <div className="callout">{children}</div>;
 }
 export function Notes({ title, items }: { title: string; items?: string[] }) {
+  useLocale();
+
   return items?.length ? (
     <section className="notes">
       <h3>{title}</h3>
@@ -55,6 +64,8 @@ export function Empty({
   href?: string;
   action?: string;
 }) {
+  useLocale();
+
   return (
     <section className="empty">
       <h2>{title}</h2>
@@ -68,6 +79,8 @@ export function Empty({
   );
 }
 export function EvidenceCard({ item }: { item: Evidence }) {
+  useLocale();
+
   const source = safeSource(item.source_url);
   return (
     <article className="evidence-card">
@@ -85,33 +98,36 @@ export function EvidenceCard({ item }: { item: Evidence }) {
       <div className="source">
         {source ? (
           <a href={source} target="_blank" rel="noopener noreferrer">
-            {item.path || "GitHub kaynağı"} <span aria-hidden="true">↗</span>
-            <span className="sr-only"> (yeni sekmede)</span>
+            {item.path || t("m408")} <span aria-hidden="true">↗</span>
+            <span className="sr-only">{t("m235")}</span>
           </a>
         ) : (
-          <span>{item.path || "Kaynak bağlantısı yok"}</span>
+          <span>{item.path || t("m318")}</span>
         )}
       </div>
       <details>
-        <summary>Kaynak alıntısını ve sınırlamaları incele</summary>
-        <pre>{item.excerpt || "Alıntı bulunmuyor."}</pre>
-        <Notes title="Sınırlamalar" items={item.limitations} />
+        <summary>{t("m409")}</summary>
+        <pre>{item.excerpt || t("m410")}</pre>
+        <Notes title={t("m411")} items={item.limitations} />
       </details>
     </article>
   );
 }
 export function CriterionCard({ item }: { item: Model<"NeedCriterion"> }) {
+  useLocale();
+
   return (
     <article className="criterion">
       <div className="card-heading">
         <h3>{item.skill_label}</h3>
         <span className="badge">
-          {item.priority === "required" ? "Gerekli" : "Tercih edilen"}
+          {item.priority === "required" ? t("m130") : t("m131")}
         </span>
       </div>
       <p>{criterionExplanation(item.priority)}</p>
       <p className="meta">
-        Kaynak ailesi: {familyLabels[item.kind || "technical_skill"]}
+        {t("m412")}
+        {familyLabels[item.kind || "technical_skill"]}
       </p>
     </article>
   );

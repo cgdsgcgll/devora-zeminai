@@ -29,6 +29,8 @@ app.add_middleware(RequestTelemetry, config=settings)
 app.include_router(router)
 app.include_router(auth_router)
 app.include_router(health_router)
+from app.api.proof import router as proof_router
+app.include_router(proof_router)
 
 
 @app.exception_handler(AppError)

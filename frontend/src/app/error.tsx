@@ -1,13 +1,16 @@
 "use client";
+import { t } from "../i18n/index.ts";
+import { useLocale } from "../i18n/react";
+
 export default function ErrorPage({ reset }: { reset: () => void }) {
+  useLocale();
+
   return (
     <section className="empty" role="alert">
-      <h1>Sayfa gösterilemedi.</h1>
-      <p>
-        Demo kayıtlarınız backend’de korunur. Sayfayı yeniden deneyebilirsiniz.
-      </p>
+      <h1>{t("m049")}</h1>
+      <p>{t("m050")}</p>
       <button className="button" onClick={reset}>
-        Yeniden dene
+        {t("m051")}
       </button>
     </section>
   );

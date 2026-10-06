@@ -1,74 +1,91 @@
 "use client";
-import { api } from "@/lib/api/client";
+import { t } from "../../i18n/index.ts";
+import { useLocale } from "../../i18n/react";
+
+import { useEffect, useState } from "react";
+import { api, userError, type Match } from "@/lib/api/client";
 import { useSession } from "@/components/session";
 import { Empty, PageHeader } from "@/components/ui";
 import { MatchResult } from "@/components/match-result";
-import { ProcessingState, ButtonProgress } from "@/components/feedback";
 export default function MatchPage() {
+  useLocale();
+
   const s = useSession();
   const { candidate, need, match } = s.data;
+  const [anonymous, setAnonymous] = useState(true);
+  const [response, setResponse] = useState<{
+    key: string;
+    result?: Match;
+    error?: string;
+  }>();
+  const key = `${match?.id}:${anonymous}`;
+  useEffect(() => {
+    let active = true;
+    if (match)
+      api
+        .match(match.id, anonymous)
+        .then((result) => {
+          if (active) setResponse({ key, result });
+        })
+        .catch((e) => {
+          if (active) setResponse({ key, error: userError(e) });
+        });
+    return () => {
+      active = false;
+    };
+  }, [match, key, anonymous]);
+  const result = response?.key === key ? response.result : undefined;
   return (
     <div className="match-page">
-      <PageHeader
-        step="AÇIKLANABİLİR EŞLEŞME"
-        title="Uyumu, dayanaklarıyla görün."
-      >
-        Bir puanla yetinmeyin. Hangi beklentinin hangi kaynakla karşılandığını
-        inceleyin.
+      <PageHeader step={t("m052")} title={t("m053")}>
+        {t("m054")}
       </PageHeader>
-      {!s.ready ? null : !candidate ? (
-        <Empty title="Keşiften bir aday seçin" href="/kesif" action="Keşfe git">
-          Eşleşme için bir aday ve proje analizi veya profil kaydı gerekiyor.
-        </Empty>
-      ) : !need?.criteria.length ? (
-        <Empty
-          title="Kurum kriterleri gerekiyor"
-          href="/ihtiyac"
-          action="İhtiyacı tanımla"
-        >
-          Gerekli ve tercih edilen becerileri belirleyerek değerlendirmeyi
-          başlatın.
+      {!candidate || !need ? (
+        <Empty title={t("m055")} href="/kesif" action={t("m056")}>
+          {t("m057")}
         </Empty>
       ) : (
-        <section className="match-toolbar">
-          <div>
-            <span className="eyebrow">ADAY</span>
-            <strong>{candidate.name}</strong>
+        <>
+          <label className="team-select">
+            <input
+              type="checkbox"
+              checked={anonymous}
+              onChange={(e) => setAnonymous(e.target.checked)}
+            />
+            {t("m058")}
+          </label>
+          <p className="small">{t("m059")}</p>
+          <div className="match-toolbar">
+            <strong>
+              {result?.candidate_label ||
+                (anonymous ? "#" + candidate.id.slice(0, 8) : t("m060"))}
+            </strong>
+            <button
+              className="button secondary"
+              disabled={!!s.busy}
+              onClick={() =>
+                void s.act(t("m061"), async () =>
+                  s.saveMatch(
+                    await api.createMatch(
+                      { candidate_id: candidate.id, need_id: need.id },
+                      anonymous,
+                    ),
+                  ),
+                )
+              }
+            >
+              {t("m062")}
+            </button>
           </div>
-          <span className="connection" aria-hidden="true">
-            ↔
-          </span>
-          <div>
-            <span className="eyebrow">KURUM İHTİYACI</span>
-            <strong>{need.target_role || "Tanımlanan ihtiyaç"}</strong>
-            <span className="small">{need.criteria.length} kriter</span>
-          </div>
-          <button
-            className="button"
-            disabled={!s.ready || !!s.busy}
-            onClick={() =>
-              void s.act("Kanıta dayalı eşleşme hesaplanıyor…", async () =>
-                s.saveMatch(
-                  await api.createMatch({
-                    candidate_id: candidate.id,
-                    need_id: need.id,
-                  }),
-                ),
-              )
-            }
-          >
-            <ButtonProgress active={!!s.busy} />
-            {s.busy
-              ? "Eşleşme hesaplanıyor…"
-              : match
-                ? "Eşleşmeyi yenile"
-                : "Eşleşmeyi hesapla"}{" "}
-            <span aria-hidden="true">↗</span>
-          </button>
-        </section>
+          {response?.key === key && response.error && (
+            <p role="alert">{response.error}</p>
+          )}
+          {match && !result && !response?.error && (
+            <p role="status">{t("m063")}</p>
+          )}
+          {result && <MatchResult result={result} />}
+        </>
       )}
-      {s.busy.includes("eşleşme") && <ProcessingState kind="match" />}
-      {match && <MatchResult key={match.id} result={match} />}
     </div>
   );
 }

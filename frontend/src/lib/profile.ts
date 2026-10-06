@@ -1,30 +1,31 @@
-export const categoryLabels = {
-  portfolio: "Portföy",
-  education: "Eğitim",
-  certification: "Sertifika",
-  hackathon: "Hackathon",
-  event: "Etkinlik",
-  community: "Topluluk",
-} as const;
-export const familyLabels = {
-  technical_skill: "GitHub / teknik kanıt",
-  project_experience: "GitHub / proje kanıtı",
+import { localized } from "../i18n/index.ts";
+export const categoryLabels = localized({
+  portfolio: "m281",
+  education: "m271",
+  certification: "m273",
+  hackathon: "m275",
+  event: "m277",
+  community: "m279",
+} as const);
+export const familyLabels = localized({
+  technical_skill: "m467",
+  project_experience: "m468",
   ...categoryLabels,
-} as const;
-export const verificationLabels = {
-  declared_only: "Yalnızca beyan",
-  linked: "Kaynak bağlantısı mevcut",
-  verified: "Doğrulanmış",
-} as const;
-export const participationLabels = {
-  participant: "Katılımcı",
-  organizer: "Organizatör",
-  speaker: "Konuşmacı",
-  mentor: "Mentor",
-  volunteer: "Gönüllü",
-  member: "Üye",
-  leader: "Topluluk sorumlusu",
-} as const;
+} as const);
+export const verificationLabels = localized({
+  declared_only: "m434",
+  linked: "m469",
+  verified: "m470",
+} as const);
+export const participationLabels = localized({
+  participant: "m471",
+  organizer: "m472",
+  speaker: "m473",
+  mentor: "m474",
+  volunteer: "m475",
+  member: "m476",
+  leader: "m477",
+} as const);
 export function safeProfileSource(value?: string | null): string | undefined {
   if (!value || /[\s\\]/.test(value)) return;
   try {
@@ -46,25 +47,25 @@ export function safeProfileSource(value?: string | null): string | undefined {
   }
 }
 
-export const outputLabels = {
-  web_app: "Canlı web uygulaması",
-  demo: "Ürün demosu",
-  package: "Paket",
-  article: "Teknik makale",
-  service: "Yayınlanmış servis",
-} as const;
-export const provenanceLabels: Record<string, string> = {
+export const outputLabels = localized({
+  web_app: "m478",
+  demo: "m479",
+  package: "m480",
+  article: "m481",
+  service: "m482",
+} as const);
+export const provenanceLabels: Record<string, string> = localized({
   ...verificationLabels,
-  observed: "Gözlemlenen kullanım",
-  not_found: "Kanıt bulunamadı",
-};
-export const sourceLabels: Record<string, string> = {
+  observed: "m433",
+  not_found: "m133",
+});
+export const sourceLabels: Record<string, string> = localized({
   ...familyLabels,
-  project: "Proje",
-  source_file: "Kaynak dosya",
-  dependency_file: "Bağımlılık dosyası",
+  project: "m216",
+  source_file: "m439",
+  dependency_file: "m440",
   repository_language: "Repo dili",
-  readme: "README",
-  project_description: "Proje açıklaması",
-  user_claim: "Kullanıcı beyanı",
-};
+  readme: "m438",
+  project_description: "m381",
+  user_claim: "m442",
+});

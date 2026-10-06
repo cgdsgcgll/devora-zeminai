@@ -1,4 +1,7 @@
 "use client";
+import { t, tx, formatDate, getLocale } from "../../i18n/index.ts";
+import { useLocale } from "../../i18n/react";
+
 import Link from "next/link";
 import { profileHighlights } from "@/lib/visual-summary";
 import { useEffect, useState } from "react";
@@ -14,22 +17,19 @@ import {
   safeProfileSource,
 } from "@/lib/profile";
 
-const sections = [
-  "Zaman Çizelgesi",
-  "Kanıt Pasaportu",
-  "Yetenek Haritası",
-  "Özet",
-];
+const sections = ["m211", "m212", "m213", "m214"];
 
 function ProfileView({ candidateId }: { candidateId: string }) {
+  useLocale();
+
   const { ref: motionRef, transition } = useContentMotion();
   const {
     ref: resultRef,
     transition: transitionResult,
     cancel: cancelResult,
   } = useContentMotion();
-  const [section, setSection] = useState("Zaman Çizelgesi");
-  const [focusedSection, setFocusedSection] = useState("Zaman Çizelgesi");
+  const [section, setSection] = useState("m211");
+  const [focusedSection, setFocusedSection] = useState("m211");
   const [months, setMonths] = useState(0);
   const [retry, setRetry] = useState(0);
   const [response, setResponse] = useState<{
@@ -76,46 +76,44 @@ function ProfileView({ candidateId }: { candidateId: string }) {
     <>
       <div
         className="profile-facts"
-        aria-label="Profil kapsamı"
+        aria-label={t("m215")}
         aria-busy={!data && !error}
       >
         {data
           ? profileHighlights(data.summary).map((f) => (
-              <div key={f.label}>
+              <div key={tx(f.label)}>
                 <strong>{f.count}</strong>
-                <span>{f.label}</span>
+                <span>{tx(f.label)}</span>
               </div>
             ))
-          : ["Proje", "Gözlemlenen teknik kanıt", "Gelişim kaydı"].map(
-              (label) => (
-                <div key={label}>
-                  <strong>
-                    {error ? (
-                      "—"
-                    ) : (
-                      <span className="fact-skeleton" aria-hidden="true" />
-                    )}
-                  </strong>
-                  <span>{label}</span>
-                </div>
-              ),
-            )}
+          : [t("m216"), t("m217"), t("m218")].map((label) => (
+              <div key={tx(label)}>
+                <strong>
+                  {error ? (
+                    "—"
+                  ) : (
+                    <span className="fact-skeleton" aria-hidden="true" />
+                  )}
+                </strong>
+                <span>{tx(label)}</span>
+              </div>
+            ))}
         <p>
-          Genel yetenek puanı değil,
+          {t("m219")}
           <br />
-          hikâyenizin kayıt kapsamı.
+          {t("m220")}
         </p>
       </div>
       <div className="profile-navigation">
         <div
           className="view-switch profile-segments"
           role="tablist"
-          aria-label="Profil bölümleri"
+          aria-label={t("m221")}
         >
           {sections.map((label, index) => (
             <button
               className="button secondary"
-              key={label}
+              key={tx(label)}
               role="tab"
               id={`profile-tab-${index}`}
               aria-selected={section === label}
@@ -145,7 +143,7 @@ function ProfileView({ candidateId }: { candidateId: string }) {
                   void transition(() => setSection(label));
               }}
             >
-              {label}
+              {tx(label)}
             </button>
           ))}
         </div>
@@ -154,7 +152,7 @@ function ProfileView({ candidateId }: { candidateId: string }) {
           disabled={pending}
           onClick={() => setRetry((v) => v + 1)}
         >
-          Kayıtları yenile
+          {t("m222")}
         </button>
       </div>
       <div ref={motionRef} className="motion-viewport profile-content">
@@ -165,16 +163,16 @@ function ProfileView({ candidateId }: { candidateId: string }) {
             aria-labelledby={`profile-tab-${sections.indexOf(section)}`}
             tabIndex={0}
           >
-            {section === "Zaman Çizelgesi" && (
+            {section === "m211" && (
               <div
                 className="view-switch timeline-filters"
                 role="group"
-                aria-label="Zaman aralığı"
+                aria-label={t("m223")}
               >
                 {[
-                  [0, "Tümü"],
-                  [6, "Son 6 ay"],
-                  [12, "Son 12 ay"],
+                  [0, t("m224")],
+                  [6, t("m225")],
+                  [12, t("m226")],
                 ].map(([value, label]) => (
                   <button
                     key={value}
@@ -182,7 +180,7 @@ function ProfileView({ candidateId }: { candidateId: string }) {
                     aria-pressed={months === value}
                     onClick={() => setMonths(Number(value))}
                   >
-                    {label}
+                    {tx(label)}
                   </button>
                 ))}
               </div>
@@ -195,41 +193,37 @@ function ProfileView({ candidateId }: { candidateId: string }) {
               <div className="motion-content">
                 {error && (
                   <p className="error" role="alert">
-                    {error}
+                    {tx(error)}
                   </p>
                 )}
-                {!data && !error && (
-                  <LoadingState label="Profil yükleniyor…" skeleton />
-                )}
+                {!data && !error && <LoadingState label={t("m227")} skeleton />}
                 {data && (
                   <div className="profile-result">
-                    {section === "Özet" && (
+                    {section === "m214" && (
                       <>
-                        <h2 className="sr-only">Profil özeti</h2>
-                        <p className="small">
-                          Kayıt kapsamınız; bir yetenek puanı değil.
-                        </p>
+                        <h2 className="sr-only">{t("m228")}</h2>
+                        <p className="small">{t("m229")}</p>
                         <div className="fact-grid">
                           {data.summary.map((f) => (
-                            <article className="panel" key={f.label}>
+                            <article className="panel" key={tx(f.label)}>
                               <strong className="fact-count">{f.count}</strong>
-                              <p>{f.label}</p>
+                              <p>{tx(f.label)}</p>
                             </article>
                           ))}
                         </div>
                       </>
                     )}
-                    {section === "Yetenek Haritası" && (
+                    {section === "m213" && (
                       <>
-                        <h2>Yetenek Haritası</h2>
+                        <h2>{t("m213")}</h2>
                         <div className="fact-grid">
                           {Object.entries(data.talent_map).map(
                             ([label, facts]) => (
-                              <article className="panel" key={label}>
-                                <h3>{label}</h3>
+                              <article className="panel" key={tx(label)}>
+                                <h3>{tx(label)}</h3>
                                 {facts.map((f) => (
-                                  <p key={f.label}>
-                                    <strong>{f.count}</strong> {f.label}
+                                  <p key={tx(f.label)}>
+                                    <strong>{f.count}</strong> {tx(f.label)}
                                   </p>
                                 ))}
                               </article>
@@ -238,18 +232,17 @@ function ProfileView({ candidateId }: { candidateId: string }) {
                         </div>
                       </>
                     )}
-                    {section === "Zaman Çizelgesi" && (
+                    {section === "m211" && (
                       <>
-                        <h2>Gelişim Zaman Çizelgesi</h2>
+                        <h2>{t("m230")}</h2>
 
                         {!data.timeline.length && (
                           <Empty
-                            title="Zaman çizelgeniz burada başlar"
+                            title={t("m231")}
                             href="/aday#experiences"
-                            action="Deneyim ekle"
+                            action={t("addExperience")}
                           >
-                            Bir deneyim ekleyin; öğrenme ve katkılarınızı zaman
-                            içinde görün.
+                            {t("m232")}
                           </Empty>
                         )}
                         <ol className="talent-timeline">
@@ -260,30 +253,29 @@ function ProfileView({ candidateId }: { candidateId: string }) {
                               <li key={item.id}>
                                 {(i === 0 ||
                                   data.timeline[i - 1].date.slice(0, 7) !==
-                                    month) && <h3>{month}</h3>}
+                                    month) && (
+                                  <h3>{formatDate(month, true)}</h3>
+                                )}
                                 <article className="evidence-card">
                                   <p className="eyebrow">
                                     {sourceLabels[item.category] ||
                                       item.category}{" "}
                                     ·{" "}
-                                    <time dateTime={item.date}>
-                                      {item.date}
+                                    <time dateTime={formatDate(item.date)}>
+                                      {formatDate(item.date)}
                                     </time>
                                   </p>
                                   <h3>{item.title}</h3>
                                   <p>{provenanceLabels[item.status]}</p>
                                   {item.date_basis === "recorded_at" && (
-                                    <p className="small">
-                                      Sisteme eklenme tarihi; deneyimin
-                                      gerçekleşme tarihi belirtilmedi.
-                                    </p>
+                                    <p className="small">{t("m233")}</p>
                                   )}
                                   {item.organization && (
                                     <p>{item.organization}</p>
                                   )}
                                   {item.role && (
                                     <p>
-                                      Rol:{" "}
+                                      {t("m234")}{" "}
                                       {participationLabels[
                                         item.role as keyof typeof participationLabels
                                       ] || item.role}
@@ -295,10 +287,10 @@ function ProfileView({ candidateId }: { candidateId: string }) {
                                       target="_blank"
                                       rel="noopener noreferrer"
                                     >
-                                      Kaynak bağlantısı ↗
+                                      {t("m093")}
                                       <span className="sr-only">
                                         {" "}
-                                        (yeni sekmede)
+                                        {t("m235")}
                                       </span>
                                     </a>
                                   )}
@@ -309,15 +301,10 @@ function ProfileView({ candidateId }: { candidateId: string }) {
                         </ol>
                       </>
                     )}
-                    {section === "Kanıt Pasaportu" && (
+                    {section === "m212" && (
                       <>
-                        <h2>Kanıt Pasaportu</h2>
-                        <p>
-                          Beyan: kullanıcı kaydı. Bağlantı: kaynak adresi var,
-                          içeriği doğrulanmadı. Gözlem: repo verisindeki teknik
-                          dayanak. Doğrulanmış: bağımsız provider doğrulaması;
-                          bu demoda uygulanmadı.
-                        </p>
+                        <h2>{t("m212")}</h2>
+                        <p>{t("m236")}</p>
                         <div className="fact-grid">
                           {data.passport.map((f) => (
                             <article
@@ -326,14 +313,17 @@ function ProfileView({ candidateId }: { candidateId: string }) {
                             >
                               <h3>{sourceLabels[f.family] || f.family}</h3>
                               <p>{provenanceLabels[f.status]}</p>
-                              <strong>{f.count} kayıt</strong>
+                              <strong>
+                                {f.count}
+                                {t("m116")}
+                              </strong>
                             </article>
                           ))}
                         </div>
-                        {!data.passport.length && <p>Henüz kanıt kaydı yok.</p>}
+                        {!data.passport.length && <p>{t("m237")}</p>}
                       </>
                     )}
-                    <Notes title="Verinin sınırları" items={data.limitations} />
+                    <Notes title={t("m238")} items={data.limitations} />
                   </div>
                 )}
               </div>
@@ -346,28 +336,30 @@ function ProfileView({ candidateId }: { candidateId: string }) {
 }
 
 export default function LivingProfilePage() {
+  useLocale();
+
   const { data, ready } = useSession();
   return (
     <>
       {!ready ? (
-        <p role="status">Seçim yükleniyor…</p>
+        <p role="status">{t("m239")}</p>
       ) : data.candidate ? (
         <>
           <header className="profile-masthead">
             <div className="profile-monogram" aria-hidden="true">
-              {data.candidate.name.charAt(0).toLocaleUpperCase("tr")}
+              {data.candidate.name.charAt(0).toLocaleUpperCase(getLocale())}
             </div>
             <div>
               <h1>{data.candidate.name}</h1>
-              <p className="eyebrow">YAŞAYAN YETENEK PROFİLİ</p>
+              <p className="eyebrow">{t("m240")}</p>
               <p className="lead">
-                Ürettikleriniz, öğrendikleriniz ve katkılarınız.
+                {t("m241")}
                 <br />
-                Zaman içinde gelişen profesyonel hikâyeniz.
+                {t("m242")}
               </p>
             </div>
             <Link className="button" href="/aday#experiences">
-              Deneyim ekle
+              {t("m243")}
             </Link>
           </header>
           <ProfileView
@@ -376,13 +368,8 @@ export default function LivingProfilePage() {
           />
         </>
       ) : (
-        <Empty
-          title="Profiliniz için bir başlangıç"
-          href="/aday"
-          action="Profil oluştur"
-        >
-          Projelerinizi ve deneyimlerinizi ekleyin; zaman çizelgeniz ve
-          kaynaklarınız burada bir araya gelsin.
+        <Empty title={t("m244")} href="/aday" action={t("m245")}>
+          {t("m246")}
         </Empty>
       )}
     </>

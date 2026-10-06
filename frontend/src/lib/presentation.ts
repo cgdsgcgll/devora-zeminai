@@ -1,64 +1,57 @@
-export const statusLabels = {
-  observed: "Gözlemlenen kullanım",
-  declared_only: "Yalnızca beyan",
-  not_found: "Kanıt bulunamadı",
-};
-export const strengthLabels = {
-  weak: "Zayıf kanıt",
-  medium: "Orta güçte kanıt",
-  strong: "Güçlü kanıt",
-};
-export const typeLabels = {
-  project_description: "Proje açıklaması",
-  readme: "README",
-  source_file: "Kaynak dosya",
-  dependency_file: "Bağımlılık dosyası",
-  repository_language: "Depo dili",
-  user_claim: "Kullanıcı beyanı",
-};
+"use client";
+import { localized, t, tx, interpolate } from "../i18n/index.ts";
+export const statusLabels = localized({
+  observed: "m433",
+  declared_only: "m434",
+  not_found: "m133",
+});
+export const strengthLabels = localized({
+  weak: "m435",
+  medium: "m436",
+  strong: "m437",
+});
+export const typeLabels = localized({
+  project_description: "m381",
+  readme: "m438",
+  source_file: "m439",
+  dependency_file: "m440",
+  repository_language: "m441",
+  user_claim: "m442",
+});
 export const scoreLabel = "Kanıt Uyumu";
 export function presentationNote(value: string): string {
   const known: Record<string, string> = {
     "Repository-level evidence; individual authorship not verified. Repo bağlantısı adayın kodu yazdığını doğrulamaz.":
-      "Kanıtlar proje düzeyindedir. Proje bağlantısı, kodun aday tarafından yazıldığını doğrulamaz.",
+      t("m444"),
     "Contributor doğrulaması yok; repository kodunun aday tarafından yazıldığı varsayılmaz.":
-      "Katkı sahipliği doğrulanmadı; proje kodunun aday tarafından yazıldığı varsayılmaz.",
+      t("m446"),
   };
-  return known[value] || value;
+  return known[value] || tx(value);
 }
 export function actionSuccess(label: string): string {
   const messages: Record<string, string> = {
-    "Aday oluşturuluyor…":
-      "Aday kaydedildi. Şimdi proje veya deneyim ekleyebilirsiniz.",
-    "Proje oluşturuluyor…":
-      "Proje kaydedildi. Kanıtları incelemek için projeyi analiz edin.",
-    "Proje analiz ediliyor…":
-      "Proje analizi tamamlandı. Beceri sinyalleri ve kanıtlar hazır.",
-    "İhtiyaç kriterleri hazırlanıyor…":
-      "İhtiyaç yapılandırıldı. Eşleşmeden önce kriterleri inceleyebilirsiniz.",
-    "Kanıta dayalı eşleşme hesaplanıyor…":
-      "Eşleşme hesaplandı. Kriterleri ve dayanaklarını aşağıda inceleyebilirsiniz.",
-    "Profil kaydı kaydediliyor…":
-      "Deneyim kaydedildi. Güncel sonuç için eşleşmeyi yeniden hesaplayın.",
-    "Profil kaydı siliniyor…":
-      "Deneyim silindi. Önceki eşleşme kayıtları korundu.",
-    "Takım kapsamı hesaplanıyor…": "Takımın kriter kapsamı hesaplandı.",
+    [tx("Aday oluşturuluyor…")]: t("m447"),
+    [tx("Proje oluşturuluyor…")]: t("m448"),
+    [tx("Proje analiz ediliyor…")]: t("m449"),
+    [tx("İhtiyaç kriterleri hazırlanıyor…")]: t("m450"),
+    [tx("Kanıta dayalı eşleşme hesaplanıyor…")]: t("m452"),
+    [tx("Profil kaydı kaydediliyor…")]: t("m453"),
+    [tx("Profil kaydı siliniyor…")]: t("m454"),
+    [tx("Takım kapsamı hesaplanıyor…")]: t("m455"),
   };
-  return messages[label] || "İşlem tamamlandı. Güncel sonuçlar hazır.";
+  return messages[tx(label)] || t("m456");
 }
 export const technicalScoreExplanation =
   "Yalnızca gözlemlenen teknik kanıtlar teknik kriter kapsamına dahil edilir. README beyanları teknik eşleşme skoruna dahil edilmez.";
 export function evidenceExplanation(status: keyof typeof statusLabels): string {
   return status === "declared_only"
-    ? "Bu kayıt yalnızca beyan niteliğindedir. Teknik eşleşme skoruna dahil edilmez."
+    ? t("m458")
     : status === "observed"
-      ? "Erişilebilen proje verisinde teknik kullanım gözlemlendi. Bu, bireysel uzmanlık veya yazarlık doğrulaması değildir."
-      : "Erişilebilen proje verisinde yeterli teknik kullanım kanıtı bulunamadı.";
+      ? t("m459")
+      : t("m460");
 }
 export function criterionExplanation(priority: string): string {
-  return priority === "required"
-    ? "İhtiyaç metninde gerekli olarak belirtilen kriter."
-    : "İhtiyaç metninde tercih edilen kriter.";
+  return priority === "required" ? t("m461") : t("m462");
 }
 export const scoreExplanation =
   "Bu skor, mevcut kurum ihtiyacı ile erişilebilen proje kanıtlarının uyumunu gösterir.";
@@ -78,9 +71,9 @@ export function safeSource(value: string): string | undefined {
 }
 export function validateName(value: string, label: string): string | undefined {
   return !value.trim()
-    ? `${label} gerekli.`
+    ? interpolate("nameRequired", { name: label })
     : value.trim().length > 200
-      ? `${label} en fazla 200 karakter olabilir.`
+      ? interpolate("nameLong", { name: label })
       : undefined;
 }
 export function validateGithub(value: string): string | undefined {
@@ -94,12 +87,12 @@ export function validateGithub(value: string): string | undefined {
     )
       return;
   } catch {}
-  return "https://github.com/sahip/depo biçiminde herkese açık bir GitHub deposunun adresini girin.";
+  return t("m464");
 }
 export function validateNeed(value: string): string | undefined {
   return !value.trim()
-    ? "İhtiyaç açıklaması gerekli."
+    ? t("m465")
     : value.trim().length > 20000
-      ? "Açıklama en fazla 20000 karakter olabilir."
+      ? t("m466")
       : undefined;
 }

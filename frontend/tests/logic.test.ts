@@ -19,7 +19,7 @@ test("database error gives safe actionable guidance", () => {
         503,
       ),
     ),
-    "Veritabanı bağlantısı hazır değil. Yerel demo servislerini kontrol edin.",
+    "Servis şu anda hazır değil. Bir süre sonra yeniden deneyin.",
   );
 });
 test("backend envelope preserves safe message and retryability", () => {
@@ -45,7 +45,7 @@ test("non-envelope response never displays raw stack or HTML", () => {
   );
 });
 test("evidence labels distinguish claims and strength from proficiency", () => {
-  assert.equal(statusLabels.declared_only, "Yalnızca beyan");
+  assert.equal(statusLabels.declared_only, "Beyan");
   assert.equal(statusLabels.not_found, "Kanıt bulunamadı");
   assert.equal(strengthLabels.strong, "Güçlü kanıt");
 });
