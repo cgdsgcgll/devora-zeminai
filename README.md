@@ -353,4 +353,4 @@ docker-compose.yml         Yerel PostgreSQL
 Candidate/institution auth, ownership ve same-origin HttpOnly session modeli korunur.
 Kalıcı AI/işlem bütçeleri, production config ve health kontrolleri için
 [deployment rehberi](docs/DEPLOYMENT.md) ve [doğrulama kaydı](docs/PRODUCTION_READINESS.md).
-Yerel demo doğrulaması production onayı değildir; gerçek PostgreSQL18 kontrolü bu turda engellidir.
+Yerel demo doğrulaması production onayı değildir. PostgreSQL18 doğrulaması tamamlandı; gerçek HTTPS/ingress/proxy/cookie smoke deployment aşamasında ayrıca yapılacaktır.
