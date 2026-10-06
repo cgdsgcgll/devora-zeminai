@@ -1,7 +1,7 @@
 # Production hardening doğrulaması — 6 Ekim 2026
 
 Branch: `feat/production-hardening`, başlangıç `e9fb6ed`.
-Sonuç: **NEEDS_FIX** — gerçek PostgreSQL18 doğrulaması engelli.
+Sonuç: **READY_FOR_DEPLOYMENT_REVIEW**.
 
 ## Uygulanan ve yerelde doğrulanan
 
@@ -20,6 +20,8 @@ Sonuç: **NEEDS_FIX** — gerçek PostgreSQL18 doğrulaması engelli.
 ## Test kaydı
 
 - Backend SQLite full: **327 passed** (1 Starlette TestClient httpx deprecation uyarısı). PostgreSQL test sonucu olarak sunulmaz.
+- Gerçek PostgreSQL18 full backend suite (manuel doğrulama): **327/327 PASS**;
+  `327 passed, 2 warnings, 31.54s`. Uyarılar test failure değildir; ayrıntılar aşağıdadır.
 - Frontend: **42 passed**; npm run lint ve production HTTPS config ile npm run build geçti.
   Yeni server config için eksik TypeScript declaration build sırasında bulunup düzeltildi.
 - compileall, pip check, SQLite fresh upgrade head ve alembic check geçti.
@@ -48,27 +50,33 @@ Sonuç: **NEEDS_FIX** — gerçek PostgreSQL18 doğrulaması engelli.
   pattern bulgusu yok. Current DB credential taramasında yalnız local/synthetic test
   örnekleri; .env untracked ve ignored, .env.example key alanları boş. Genel sızıntı garantisi değildir.
 
-## PostgreSQL engeli ve zorunlu takip
+## PostgreSQL18 doğrulaması
 
-5432 portunda PostgreSQL18 erişilebilir, repository DATABASE_URL ile authentication/
-connection başarısız. İzole PostgreSQL18 cluster'ı 55446 portuna bind sırasında
-Permission denied aldı. Kullanıcı “Diğer işleri tamamla, PostgreSQL engelini raporla”
-dedi; DB credential değiştirilmedi ve bağlantı yeniden zorlanmadı.
+Manuel olarak gerçek PostgreSQL18 üzerinde tamamlanan doğrulamalar:
 
-Gerçek PG üzerinde fresh + mevcut/legacy upgrade + downgrade, concurrent user/IP
-budget, fail-closed, expiry cleanup, independent connections/restart ve DB-sensitive
-suite çalıştırılmadan deployment review kapısı geçilmiş sayılmaz. Testlere
-TEST_RATE_DATABASE_URL (migration head, izole schema) ve TEST_RATE_MIGRATION_URL
-(yalnız boş, disposable schema) verilebilir. Mevcut auth audit PG fixture'ı korunur.
-SQLite sonucu PostgreSQL kilit/transaction semantiğini kanıtlamaz.
+- Bağlantı başarılı: `SELECT 1 → 1`.
+- İzole schema: `zeminai_test`.
+- `a13_operation_budgets` migration başarıyla head'e ulaştı.
+- Full backend suite: **327/327 PASS** — `327 passed, 2 warnings, 31.54s`.
+- Uyarılar: Starlette TestClient/httpx deprecation ve Windows pytest cache
+  permission. Bunlar test failure değildir.
+- Production rate limiter testi:
+  `tests/test_production.py::test_concurrent_budget_across_connections_and_restart`
+  → **1 passed**. Ayrı DB connection/restart ve concurrent budget bypass
+  senaryosu gerçek PostgreSQL18 üzerinde doğrulandı.
+- Testlerden sonra çalışma ağacı temizdi.
+
+Önceki denemede environment bağlantı/bind kısıtı vardı; daha sonra gerçek
+PostgreSQL18 üzerinde yukarıdaki doğrulamalar tamamlandı. Bu kısıt güncel blocker değildir.
 
 OpenAPI/types mevcut generator ile yenilendi; tekrar export aynı hash verdi.
-Preflight development config için CONFIG_INVALID ve çıkış 1 ile güvenli reddetti;
-production başarılı preflight PG engeli nedeniyle doğrulanamadı. git diff --check geçti.
+Preflight development config için CONFIG_INVALID ve çıkış 1 ile güvenli reddetti.
+Production preflight başarı sonucu bu manuel test kaydında ayrıca bildirilmedi;
+deployment ortamında release adımı olarak çalıştırılmalıdır. git diff --check geçti.
 
 ## Kalan gerçek production işleri
 
-- Yukarıdaki PG18 doğrulaması ve gerçek HTTPS ingress/proxy/cookie smoke.
+- Gerçek HTTPS ingress/proxy/cookie smoke.
 - Secret manager, DB TLS/backups/restore tatbikatı, ingress bağlantı/harcama tavanları.
 - Fixed-window limitler in-flight concurrency veya global provider bütçesi değildir;
   deployment kapasitesi, maliyet alarmı ve provider hesap tavanı ayrıca gerekli.
