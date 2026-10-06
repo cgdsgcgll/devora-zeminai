@@ -151,7 +151,7 @@ def independent_db(tmp_path, monkeypatch):
         m.Base.metadata.create_all(engine)
     else:
         with engine.connect() as connection:
-            assert connection.scalar(text('SELECT version_num FROM alembic_version')) == 'a12_auth_ownership'
+            assert connection.scalar(text('SELECT version_num FROM alembic_version')) == 'a13_operation_budgets'
     def sessions():
         with Session(engine, expire_on_commit=False) as db:
             yield db

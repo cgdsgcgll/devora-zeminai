@@ -218,3 +218,10 @@ class MatchEvidence(Base):
     __tablename__ = 'match_evidence'
     match_criterion_id: Mapped[UUID] = mapped_column(ForeignKey('match_criteria.id'), primary_key=True)
     evidence_id: Mapped[UUID] = mapped_column(ForeignKey('skill_evidence.id'), primary_key=True)
+
+
+class RateBucket(Base):
+    __tablename__ = 'rate_buckets'
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    attempts: Mapped[int] = mapped_column(Integer)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)

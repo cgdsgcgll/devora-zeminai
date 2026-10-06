@@ -12,26 +12,30 @@ from app.api.auth import router as auth_router
 from app.core.errors import AppError
 from app.core.config import settings
 from app.core.request_limits import RequestSizeLimitMiddleware
+from app.api.health import router as health_router
+from app.core.observability import RequestTelemetry, request_id, error_event
+import json
 
 logger = logging.getLogger(__name__)
-app = FastAPI(title='ZeminAI', version='0.1.0')
+docs_enabled = settings.api_docs_enabled if settings.api_docs_enabled is not None else settings.environment != 'production'
+app = FastAPI(title='ZeminAI', version='0.1.0',
+    docs_url='/docs' if docs_enabled else None, redoc_url='/redoc' if docs_enabled else None,
+    openapi_url='/openapi.json' if docs_enabled else None)
 app.add_middleware(RequestSizeLimitMiddleware)
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins,
-                   allow_credentials=True, allow_methods=['GET', 'POST', 'PATCH', 'DELETE'], allow_headers=['Content-Type'])
+                   allow_credentials=True, allow_methods=['GET', 'POST', 'PATCH', 'DELETE'], allow_headers=['Content-Type'],
+                   expose_headers=['X-Request-ID', 'Retry-After'])
+app.add_middleware(RequestTelemetry, config=settings)
 app.include_router(router)
 app.include_router(auth_router)
-
-
-@app.middleware('http')
-async def private_response_cache(request: Request, call_next):
-    response = await call_next(request)
-    response.headers['Cache-Control'] = 'no-store'
-    return response
+app.include_router(health_router)
 
 
 @app.exception_handler(AppError)
 async def app_error(request: Request, exc: AppError):
-    return JSONResponse(exc.body(), status_code=exc.status)
+    logger.warning(json.dumps({'event':'application_error', 'request_id':request_id.get(),
+        'code':exc.code, 'status':exc.status}))
+    return JSONResponse(exc.body(), status_code=exc.status, headers=exc.headers)
 
 
 @app.exception_handler(RequestValidationError)
@@ -45,7 +49,7 @@ async def validation_error(request: Request, exc: RequestValidationError):
 
 @app.exception_handler(SQLAlchemyError)
 async def database_error(request: Request, exc: SQLAlchemyError):
-    logger.error('Database operation failed: %s', type(exc).__name__)
+    error_event(exc)
     return JSONResponse(AppError('DATABASE_ERROR', 'Veritabanı işlemi tamamlanamadı.', 503, True).body(), status_code=503)
 
 
@@ -56,5 +60,5 @@ async def http_error(request: Request, exc: HTTPException):
 
 @app.exception_handler(Exception)
 async def unexpected_error(request: Request, exc: Exception):
-    logger.error('Unexpected error: %s', type(exc).__name__)
+    error_event(exc)
     return JSONResponse(AppError('INTERNAL_ERROR', 'İşlem tamamlanamadı.', 500).body(), status_code=500)

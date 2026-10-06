@@ -161,7 +161,7 @@ def test_every_business_route_requires_authentication(accounts):
     from fastapi.routing import APIRoute
     client,_=accounts()
     client.cookies.clear()
-    public={'/health','/auth/register','/auth/login','/auth/logout'}
+    public={'/health','/health/live','/health/ready','/auth/register','/auth/login','/auth/logout'}
     checked=[]
     for template, operations in app.openapi()['paths'].items():
         if template in public: continue
