@@ -346,3 +346,11 @@ docker-compose.yml         Yerel PostgreSQL
 - **Çağdaş** — AI, matching ve teknik koordinasyon.
 - **Yiğit Alp Ünal** — Backend, veritabanı ve entegrasyon.
 - **Azra Gülbahar** — Ürün, UX, veri ve kalite.
+
+
+### Deployment ve hardening
+
+Candidate/institution auth, ownership ve same-origin HttpOnly session modeli korunur.
+Kalıcı AI/işlem bütçeleri, production config ve health kontrolleri için
+[deployment rehberi](docs/DEPLOYMENT.md) ve [doğrulama kaydı](docs/PRODUCTION_READINESS.md).
+Yerel demo doğrulaması production onayı değildir. PostgreSQL18 doğrulaması tamamlandı; gerçek HTTPS/ingress/proxy/cookie smoke deployment aşamasında ayrıca yapılacaktır.

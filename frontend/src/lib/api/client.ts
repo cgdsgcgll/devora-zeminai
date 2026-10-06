@@ -47,6 +47,10 @@ export function parseApiError(body: unknown, status: number): ApiError {
   );
 }
 export function userError(error: unknown): string {
+  if (error instanceof ApiError && error.code === "ANALYSIS_RATE_LIMITED")
+    return "Analiz sınırına ulaştınız. Bir süre sonra tekrar deneyebilirsiniz.";
+  if (error instanceof ApiError && error.code === "OPERATION_RATE_LIMITED")
+    return "İşlem sınırına ulaştınız. Bir süre sonra tekrar deneyebilirsiniz.";
   if (error instanceof ApiError && error.code === "DATABASE_ERROR")
     return "Veritabanı bağlantısı hazır değil. Yerel demo servislerini kontrol edin.";
   return error instanceof ApiError

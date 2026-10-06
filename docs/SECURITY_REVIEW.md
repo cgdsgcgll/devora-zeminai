@@ -1,5 +1,38 @@
 # ZeminAI MVP güvenlik değerlendirmesi
 
+## 6 Ekim 2026 — Production hardening
+
+Güncel sonuç **READY_FOR_DEPLOYMENT_REVIEW**. SQLite/browser kontrollerine ek olarak
+manuel gerçek PostgreSQL18 doğrulaması tamamlandı. Detaylı sonuç
+[PRODUCTION_READINESS.md](PRODUCTION_READINESS.md), işletim modeli
+[DEPLOYMENT.md](DEPLOYMENT.md). Aşağıdaki tarihli notlar tarihsel kanıttır.
+
+Gerçek PostgreSQL18 bağlantısı başarılı: `SELECT 1 → 1`. İzole `zeminai_test`
+schema'sında `a13_operation_budgets` migration head'e ulaştı. Full backend suite:
+**327 passed, 2 warnings, 31.54s**. Starlette TestClient/httpx deprecation ve Windows
+pytest cache permission uyarıları test failure değildir. Manuel testlerden sonra
+çalışma ağacı temizdi.
+
+AI/expensive endpoint **request-rate koruması eksikliği uygulama kapsamında giderildi**:
+DB-backed atomic user/IP fixed-window limiter gerçek PostgreSQL18 üzerinde doğrulandı.
+Project/need analysis, discovery/team/match, expiry cleanup, 429/Retry-After ve
+fail-closed DB hatası kapsamı korunur.
+`tests/test_production.py::test_concurrent_budget_across_connections_and_restart`
+gerçek PostgreSQL18 üzerinde **1 passed**: concurrent budget bypass testi ve
+process restart / independent connection persistence senaryosu geçti.
+Bu limiter in-flight concurrency limiti, global provider spend cap veya ingress/global
+abuse budget değildir; provider tarafı maliyet alarmı ayrıca gerekir.
+
+Auth/ownership/CSRF mevcut ve regresyonları korundu; auth yok/IDOR açık şeklindeki
+eski ön-auth bulgular güncel durumu anlatmaz. Production config fail-fast, readiness,
+request IDs, metadata-only logs, host/HTTPS headers ve same-origin cookie proxy
+rehberi mevcut. Gerçek HTTPS ingress/proxy/cookie smoke, secret management,
+DB TLS/backups/restore, monitoring/alerting, email verification/password recovery,
+session/device lifecycle, dependency advisory takibi ve provider spend/global
+concurrency sınırları açık production işleridir. npm production audit 0; dev braces
+5 HIGH kayıt, venv pip25.0.1 için 12 advisory kaydı açık; uygulama Python paketlerinde
+bulgu yok. Bu sonuç tüm risklerin kapatıldığı anlamına gelmez.
+
 ## 5 Ekim 2026 — Merge öncesi kapsamlı auth audit
 
 Branch `feat/auth-roles`. Güncel sonuç **NEEDS_FIX**: aşağıdaki kod/test

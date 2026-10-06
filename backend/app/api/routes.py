@@ -1,13 +1,14 @@
 from datetime import date
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import text, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core import auth
+from app.core.rate_limits import consume
 from app.core.errors import AppError
 from app.db.session import get_db
 from app.models import domain as m
@@ -21,7 +22,7 @@ from app.services import profile, living
 from app.schemas import living as living_schema
 from fastapi import Response
 
-router = APIRouter(dependencies=[Depends(auth.check_origin)], responses={status: {'model': s.ErrorResponse} for status in [400, 401, 403, 404, 409, 422, 500, 502, 503, 504]})
+router = APIRouter(dependencies=[Depends(auth.check_origin)], responses={status: {'model': s.ErrorResponse} for status in [400, 401, 403, 404, 409, 422, 429, 500, 502, 503, 504]})
 
 
 @router.get('/candidates/{candidate_id}/living-profile', response_model=living_schema.LivingProfile)
@@ -31,15 +32,17 @@ def living_profile(candidate_id: UUID, since: date | None = None, db: Session = 
 
 
 @router.get('/needs/{need_id}/discovery', response_model=living_schema.Discovery)
-def discover(need_id: UUID, anonymous: bool = True, offset: int = Query(0, ge=0, le=100000),
+def discover(need_id: UUID, request: Request, anonymous: bool = True, offset: int = Query(0, ge=0, le=100000),
              limit: int = Query(20, ge=1, le=50), db: Session = Depends(get_db), user=Depends(auth.get_current_user)):
     auth.need_record(db, need_id, user)
+    consume(request, db, user, "compute")
     return living.discovery(db, need_id, anonymous, offset, limit)
 
 
 @router.post('/needs/{need_id}/team-coverage', response_model=living_schema.TeamCoverage)
-def team_coverage(need_id: UUID, data: living_schema.TeamCreate, db: Session = Depends(get_db), user=Depends(auth.get_current_user)):
+def team_coverage(need_id: UUID, request: Request, data: living_schema.TeamCreate, db: Session = Depends(get_db), user=Depends(auth.get_current_user)):
     auth.need_record(db, need_id, user)
+    consume(request, db, user, "compute")
     return living.team(db, need_id, data)
 
 
@@ -143,10 +146,11 @@ def get_project(project_id: UUID, db: Session = Depends(get_db), user=Depends(au
 
 
 @router.post('/projects/{project_id}/analyze', response_model=s.AnalysisResponse, status_code=201)
-def analyze_project(project_id: UUID, db: Session = Depends(get_db),
+def analyze_project(project_id: UUID, request: Request, db: Session = Depends(get_db),
                     provider: GitHubProvider = Depends(get_github),
                     analyzer: SkillAnalyzer = Depends(get_skill_analyzer), user=Depends(auth.get_current_user)):
     auth.project_record(db, project_id, user)
+    consume(request, db, user, "ai")
     return workflows.analyze_project(db, project_id, provider, analyzer)
 
 
@@ -172,9 +176,10 @@ def get_analysis_run(run_id: UUID, db: Session = Depends(get_db), user=Depends(a
 
 
 @router.post('/needs', response_model=s.OrganizationNeed, status_code=201)
-def create_need(data: s.NeedCreate, db: Session = Depends(get_db),
+def create_need(data: s.NeedCreate, request: Request, db: Session = Depends(get_db),
                 analyzer: NeedAnalyzer = Depends(get_need_analyzer), user=Depends(auth.get_current_user)):
     auth.require_role(user, 'institution')
+    consume(request, db, user, "compute" if data.criteria else "ai")
     return workflows.create_need(db, data, analyzer, owner_user_id=user.id)
 
 
@@ -185,9 +190,10 @@ def get_need(need_id: UUID, db: Session = Depends(get_db), user=Depends(auth.get
 
 
 @router.post('/matches', response_model=s.MatchResult, status_code=201)
-def create_match(data: s.MatchCreate, db: Session = Depends(get_db), user=Depends(auth.get_current_user)):
+def create_match(data: s.MatchCreate, request: Request, db: Session = Depends(get_db), user=Depends(auth.get_current_user)):
     auth.need_record(db, data.need_id, user)
     auth.discoverable(db, data.candidate_id)
+    consume(request, db, user, "compute")
     return workflows.create_match(db, data)
 
 
