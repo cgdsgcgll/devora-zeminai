@@ -112,10 +112,11 @@ def analyze_project(db: Session, project_id: UUID, provider: GitHubProvider,
 def serialize_match(row: m.MatchResult) -> s.MatchResult:
     details = [s.CriterionMatch(criterion_id=c.criterion_id, skill_key=c.skill_key,
         kind=c.kind, profile_evidence=c.profile_evidence,
+        trace_available=c.trace_items is not None, trace_items=c.trace_items or [],
         skill_label=c.skill_label, priority=c.priority, matched=c.matched,
         evidence_ids=[e.evidence_id for e in c.evidence], explanation=c.explanation) for c in row.criteria]
     fields = {name: getattr(row, name) for name in s.MatchResult.model_fields
-              if name not in {'matched_criteria', 'unmatched_criteria'}}
+              if name not in {'matched_criteria', 'unmatched_criteria', 'anonymous', 'candidate_label'}}
     return s.MatchResult(**fields, matched_criteria=[c for c in details if c.matched],
                          unmatched_criteria=[c for c in details if not c.matched])
 
@@ -129,12 +130,14 @@ def create_match(db: Session, data: s.MatchCreate) -> s.MatchResult:
     if not material.runs and not material.profiles:
         raise AppError('INSUFFICIENT_PROJECT_DATA', 'Önce en az bir proje için /projects/{id}/analyze çalıştırın.', 409)
     result = calculate_for_need(need, material)
-    row = m.MatchResult(**data.model_dump(), **result.model_dump(exclude={'matched_criteria', 'unmatched_criteria'}))
+    row = m.MatchResult(**data.model_dump(), **result.model_dump(exclude={'matched_criteria', 'unmatched_criteria', 'anonymous', 'candidate_label'}))
     db.add(row)
     db.flush()
     for criterion in result.matched_criteria + result.unmatched_criteria:
-        item = m.MatchCriterion(match_id=row.id, **criterion.model_dump(exclude={'evidence_ids', 'profile_evidence'}),
+        item = m.MatchCriterion(match_id=row.id, **criterion.model_dump(exclude={'evidence_ids', 'profile_evidence', 'trace_items', 'trace_available'}),
             profile_evidence=[p.model_dump(mode='json') for p in criterion.profile_evidence])
+        from app.services.trace import freeze_items
+        item.trace_items = freeze_items(criterion, material)
         item.evidence = [m.MatchEvidence(evidence_id=eid) for eid in criterion.evidence_ids]
         db.add(item)
     db.commit()
