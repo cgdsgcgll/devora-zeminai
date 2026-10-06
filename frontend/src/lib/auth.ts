@@ -1,3 +1,5 @@
+"use client";
+import { t } from "../i18n/index.ts";
 export type Role = "candidate" | "institution";
 export function homeFor(role: Role) {
   return role === "candidate" ? "/profil" : "/ihtiyac";
@@ -5,14 +7,16 @@ export function homeFor(role: Role) {
 export function linksFor(role?: Role) {
   return role === "candidate"
     ? [
-        ["/profil", "Profil"],
-        ["/aday", "Projelerim"],
+        ["/profil", t("m425")],
+        ["/aday", t("m426")],
+        ["/kanit-istekleri", t("m298")],
       ]
     : role === "institution"
       ? [
-          ["/ihtiyac", "İhtiyaçlar"],
-          ["/kesif", "Keşif"],
-          ["/eslesme", "Eşleşme"],
+          ["/ihtiyac", t("m427")],
+          ["/kesif", t("m428")],
+          ["/eslesme", t("m185")],
+          ["/kanit-istekleri", t("m298")],
         ]
       : [];
 }
@@ -21,13 +25,10 @@ export function routeRole(path: string): Role | undefined {
   if (["/ihtiyac", "/kesif", "/eslesme"].includes(path)) return "institution";
 }
 export function authValidation(email: string, password: string, name?: string) {
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
-    return "Geçerli bir e-posta adresi girin.";
-  if (!password || password.length > 128)
-    return "Parola 1–128 karakter olmalı.";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return t("m429");
+  if (!password || password.length > 128) return t("m430");
   if (name !== undefined && (!name.trim() || name.trim().length > 200))
-    return "Ad 1–200 karakter olmalı.";
-  if (name !== undefined && password.length < 12)
-    return "En az 12 karakterli bir parola kullanın.";
+    return t("m431");
+  if (name !== undefined && password.length < 12) return t("m432");
   return "";
 }

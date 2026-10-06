@@ -1,3 +1,6 @@
+"use client";
+import { t, interpolate, formatDate } from "../i18n/index.ts";
+import { useLocale } from "../i18n/react";
 import type { ProfileEvidence } from "../lib/api/client";
 import {
   categoryLabels,
@@ -8,6 +11,8 @@ import {
 } from "../lib/profile";
 
 export function ProfileCard({ item }: { item: ProfileEvidence }) {
+  useLocale();
+
   const source = safeProfileSource(item.source_url);
   const meta = item.metadata_json;
   return (
@@ -24,31 +29,35 @@ export function ProfileCard({ item }: { item: ProfileEvidence }) {
       {item.organization && (
         <p className="profile-organization">{item.organization}</p>
       )}
-      {item.role && <p className="meta">Rol: {item.role}</p>}
+      {item.role && (
+        <p className="meta">
+          {t("m234")}
+          {item.role}
+        </p>
+      )}
       {(item.started_at || item.ended_at) && (
         <p className="meta">
-          {item.started_at || "Başlangıç belirtilmedi"} →{" "}
-          {item.ended_at ||
-            (meta?.status === "ongoing"
-              ? "Devam ediyor"
-              : "Bitiş belirtilmedi")}
+          {(item.started_at && formatDate(item.started_at)) || t("m322")} →{" "}
+          {(item.ended_at && formatDate(item.ended_at)) ||
+            (meta?.status === "ongoing" ? t("ongoing") : t("m323"))}
         </p>
       )}
       {meta?.output_type && <p>{outputLabels[meta.output_type]}</p>}
       {meta?.program && <p>{meta.program}</p>}
       {meta?.focus && (
         <p className="meta">
-          Alan: {meta.focus === "technology" ? "Teknoloji" : "Diğer"}
+          {t("m324")}
+          {meta.focus === "technology" ? t("technology") : t("m325")}
         </p>
       )}
       {meta?.education_type && (
         <p className="meta">
           {
             {
-              degree: "Diploma programı",
-              course: "Kurs",
+              degree: t("m326"),
+              course: t("course"),
               bootcamp: "Bootcamp",
-              other: "Diğer",
+              other: t("m325"),
             }[meta.education_type]
           }
         </p>
@@ -57,36 +66,53 @@ export function ProfileCard({ item }: { item: ProfileEvidence }) {
         <p className="meta">
           {
             {
-              ongoing: "Devam ediyor",
-              completed: "Tamamlandı",
-              left: "Ayrıldı",
+              ongoing: t("ongoing"),
+              completed: t("m327"),
+              left: t("m328"),
             }[meta.status]
           }
-          {meta.student_year ? ` · ${meta.student_year}. sınıf` : ""}
+          {meta.student_year
+            ? " · " + interpolate("year", { year: meta.student_year })
+            : ""}
         </p>
       )}
       {meta?.credential_id && (
-        <p className="meta break">Credential ID: {meta.credential_id}</p>
+        <p className="meta break">
+          {t("m329")}
+          {meta.credential_id}
+        </p>
       )}
       {meta?.issued_at && (
         <p className="meta">
-          Veriliş: {meta.issued_at}
-          {meta.expires_at ? ` · Geçerlilik sonu: ${meta.expires_at}` : ""}
+          {t("m330")}
+          {formatDate(meta.issued_at)}
+          {meta.expires_at
+            ? " · " +
+              interpolate("expires", { date: formatDate(meta.expires_at) })
+            : ""}
         </p>
       )}
-      {meta?.project_name && <p>Proje: {meta.project_name}</p>}
+      {meta?.project_name && (
+        <p>
+          {t("m331")}
+          {meta.project_name}
+        </p>
+      )}
       {meta?.result && (
         <p className="meta">
           {
-            { participant: "Katıldı", finalist: "Finalist", winner: "Kazandı" }[
-              meta.result
-            ]
+            {
+              participant: t("m332"),
+              finalist: t("finalist"),
+              winner: t("m333"),
+            }[meta.result]
           }
         </p>
       )}
       {meta?.participation_type && (
         <p className="meta">
-          Katılım: {participationLabels[meta.participation_type]}
+          {t("m334")}
+          {participationLabels[meta.participation_type]}
         </p>
       )}
       {meta?.responsibility && <p>{meta.responsibility}</p>}
@@ -96,19 +122,19 @@ export function ProfileCard({ item }: { item: ProfileEvidence }) {
       <div className="source">
         {source ? (
           <a href={source} target="_blank" rel="noopener noreferrer">
-            {item.source_label || "Kaynak bağlantısı"} ↗
-            <span className="sr-only"> (yeni sekmede)</span>
+            {item.source_label || t("m099")} ↗
+            <span className="sr-only">{t("m235")}</span>
           </a>
         ) : (
-          <span>Kaynak bağlantısı yok</span>
+          <span>{t("m318")}</span>
         )}
       </div>
       <p className="small">
         {item.verification_status === "linked"
-          ? "Bağlantı kullanıcı tarafından eklendi; içeriği bağımsız doğrulanmadı."
+          ? t("m335")
           : item.verification_status === "declared_only"
-            ? "Kullanıcı beyanı. Bağımsız doğrulama bulunmuyor."
-            : "Provider tarafından doğrulanmış kayıt."}
+            ? t("m336")
+            : t("m337")}
       </p>
     </article>
   );

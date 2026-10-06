@@ -1,4 +1,7 @@
 "use client";
+import { t } from "../../i18n/index.ts";
+import { useLocale } from "../../i18n/react";
+
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api/client";
@@ -9,6 +12,8 @@ import { ProcessingState, ButtonProgress } from "@/components/feedback";
 import { ProfilePanel } from "@/components/profile-panel";
 
 export default function CandidatePage() {
+  useLocale();
+
   const s = useSession();
   const { candidate, project, run, evidence } = s.data;
   const [name, setName] = useState("");
@@ -20,20 +25,20 @@ export default function CandidatePage() {
   const disabled = !s.ready || !!s.busy;
   function candidateSubmit(e: FormEvent) {
     e.preventDefault();
-    const error = validateName(name, "Aday adı");
+    const error = validateName(name, t("m000"));
     setValidation(error || "");
     if (error) return;
-    void s.act("Aday oluşturuluyor…", async () =>
+    void s.act(t("m001"), async () =>
       s.saveCandidate(await api.createCandidate({ name: name.trim() })),
     );
   }
   function projectSubmit(e: FormEvent) {
     e.preventDefault();
     const error =
-      validateName(projectName, "Proje adı") || validateGithub(url.trim());
+      validateName(projectName, t("m002")) || validateGithub(url.trim());
     setValidation(error || "");
     if (error || !candidate) return;
-    void s.act("Proje oluşturuluyor…", async () =>
+    void s.act(t("m003"), async () =>
       s.saveProject(
         await api.createProject(candidate.id, {
           name: projectName.trim(),
@@ -47,26 +52,19 @@ export default function CandidatePage() {
   return (
     <div className="candidate-flow">
       <PageHeader
-        step="SİZİN HİKÂYENİZ"
-        title={
-          candidate
-            ? "Profilinize yeni bir dayanak."
-            : "Bir başlangıç. Sizinle."
-        }
+        step={t("m004")}
+        title={candidate ? t("newEvidence") : t("m005")}
       >
-        Projelerinizi, öğrendiklerinizi ve katkılarınızı dayanaklarıyla bir
-        araya getirin.
+        {t("m006")}
       </PageHeader>
-      <nav className="journey-nav" aria-label="Profilinizi zenginleştirin">
-        <p className="small">
-          İstediğiniz bölümden devam edin. Tüm alanları tamamlamanız gerekmez.
-        </p>
+      <nav className="journey-nav" aria-label={t("m007")}>
+        <p className="small">{t("m008")}</p>
         <ol>
           {[
-            ["basics", "Temel profil"],
-            ["projects", "Projeleriniz"],
-            ["technical", "Teknik kanıtlar"],
-            ["experiences", "Deneyimler"],
+            ["basics", t("m009")],
+            ["projects", t("m010")],
+            ["technical", t("m011")],
+            ["experiences", t("m012")],
           ].map(([id, label], index) => (
             <li key={id}>
               <a href={`#${id}`}>
@@ -78,16 +76,14 @@ export default function CandidatePage() {
         </ol>
       </nav>
       {candidate && (
-        <nav className="action-bar" aria-label="Profil işlemleri">
+        <nav className="action-bar" aria-label={t("m013")}>
           <a className="button" href="#experiences">
-            + Deneyim ekle
+            {t("m014")}
           </a>
           <Link className="button secondary" href="/profil">
-            Yaşayan profili görüntüle →
+            {t("m015")}
           </Link>
-          <span className="small">
-            Hackathon, eğitim, sertifika ve daha fazlası
-          </span>
+          <span className="small">{t("m016")}</span>
         </nav>
       )}
 
@@ -102,18 +98,17 @@ export default function CandidatePage() {
         aria-labelledby="basics-title"
       >
         <div className="section-heading">
-          <p className="eyebrow">01 — TEMEL PROFİL</p>
-          <h2 id="basics-title">Sizinle başlar.</h2>
-          <p className="muted">
-            Projelerinizin ve deneyimlerinizin bir araya geleceği profil.
-          </p>
+          <p className="eyebrow">{t("m017")}</p>
+          <h2 id="basics-title">{t("m018")}</h2>
+          <p className="muted">{t("m019")}</p>
         </div>
         {candidate ? (
           <p className="saved-name">{candidate.name}</p>
         ) : (
           <form onSubmit={candidateSubmit} noValidate>
             <label htmlFor="candidate-name">
-              Aday adı <span className="required">*</span>
+              {t("m000")}
+              <span className="required">*</span>
             </label>
             <input
               id="candidate-name"
@@ -122,14 +117,12 @@ export default function CandidatePage() {
               maxLength={200}
               required
               autoComplete="name"
-              aria-invalid={!!validation && !!validateName(name, "Aday adı")}
+              aria-invalid={!!validation && !!validateName(name, t("m000"))}
               aria-describedby={validation ? "form-error" : undefined}
             />
             <button className="button" disabled={disabled}>
               <ButtonProgress active={!!s.busy} />
-              {s.busy === "Aday oluşturuluyor…"
-                ? "Oluşturuluyor…"
-                : "Profilimi oluştur"}
+              {s.busy === t("m001") ? t("m020") : t("m021")}
             </button>
           </form>
         )}
@@ -140,12 +133,9 @@ export default function CandidatePage() {
         aria-labelledby="projects-title"
       >
         <div className="section-heading">
-          <p className="eyebrow">02 — PROJELERİNİZ</p>
-          <h2 id="projects-title">Ürettiklerinize yer açın.</h2>
-          <p className="muted">
-            Herkese açık bir GitHub projesini ekleyin; teknik dayanaklarını
-            inceleyin.
-          </p>
+          <p className="eyebrow">{t("m022")}</p>
+          <h2 id="projects-title">{t("m023")}</h2>
+          <p className="muted">{t("m024")}</p>
         </div>
         {project ? (
           <>
@@ -156,35 +146,34 @@ export default function CandidatePage() {
               className="button"
               disabled={disabled}
               onClick={() =>
-                void s.act("Proje analiz ediliyor…", async () => {
+                void s.act(t("m025"), async () => {
                   const result = await api.analyze(project.id);
                   s.saveAnalysis(result.run, result.evidence);
                 })
               }
             >
-              <ButtonProgress active={s.busy === "Proje analiz ediliyor…"} />
-              {s.busy === "Proje analiz ediliyor…"
-                ? "Analiz ediliyor…"
+              <ButtonProgress active={s.busy === t("analyzingProject")} />
+              {s.busy === t("analyzingProject")
+                ? t("m026")
                 : run
-                  ? "Projeyi yeniden analiz et"
-                  : "Projeyi analiz et"}{" "}
+                  ? t("analyzeAgain")
+                  : t("analyzeProject")}{" "}
               <span aria-hidden="true">↗</span>
             </button>
           </>
         ) : !candidate ? (
-          <p className="muted">
-            Proje eklemek için önce aday bilgisini kaydedin.
-          </p>
+          <p className="muted">{t("m027")}</p>
         ) : (
           <form onSubmit={projectSubmit} noValidate>
             <label htmlFor="project-name">
-              Proje adı <span className="required">*</span>
+              {t("m002")}
+              <span className="required">*</span>
             </label>
             <input
               id="project-name"
               value={projectName}
               aria-invalid={
-                !!validation && !!validateName(projectName, "Proje adı")
+                !!validation && !!validateName(projectName, t("m002"))
               }
               aria-describedby={validation ? "form-error" : undefined}
               onChange={(e) => setProjectName(e.target.value)}
@@ -192,7 +181,8 @@ export default function CandidatePage() {
               required
             />
             <label htmlFor="project-description">
-              Kısa açıklama <span className="optional">İsteğe bağlı</span>
+              {t("m028")}
+              <span className="optional">{t("m029")}</span>
             </label>
             <textarea
               id="project-description"
@@ -202,8 +192,7 @@ export default function CandidatePage() {
               rows={3}
             />
             <label htmlFor="github-url">
-              Herkese açık GitHub deposunun adresi{" "}
-              <span className="required">*</span>
+              {t("m030")} <span className="required">*</span>
             </label>
             <input
               id="github-url"
@@ -219,13 +208,11 @@ export default function CandidatePage() {
               }
             />
             <p id="github-help" className="field-help">
-              Yalnızca herkese açık GitHub depoları analiz edilebilir.
+              {t("m031")}
             </p>
             <button className="button" disabled={disabled}>
               <ButtonProgress active={!!s.busy} />
-              {s.busy === "Proje oluşturuluyor…"
-                ? "Kaydediliyor…"
-                : "Projeyi kaydet"}
+              {s.busy === t("m003") ? t("m032") : t("saveProject")}
             </button>
           </form>
         )}
@@ -236,41 +223,39 @@ export default function CandidatePage() {
         aria-labelledby="technical-title"
       >
         <div className="section-heading">
-          <p className="eyebrow">03 — TEKNİK KANITLAR</p>
-          <h2 id="technical-title">Kullanımın dayanağını görün.</h2>
-          <p className="muted">
-            Proje analizindeki gözlemler ve beyanlar, kaynaklarıyla birlikte.
-          </p>
+          <p className="eyebrow">{t("m033")}</p>
+          <h2 id="technical-title">{t("m034")}</h2>
+          <p className="muted">{t("m035")}</p>
         </div>
-        {s.busy === "Proje analiz ediliyor…" && (
-          <ProcessingState kind="project" />
-        )}
-        <p className="method-note">
-          README’de bir teknolojinin geçmesi, gözlemlenen kullanım değildir.
-          Kaynak dosyalar, bağımlılıklar ve deponun dil bilgisi birlikte
-          incelenir. Kanıt gücü, beceri seviyesi değildir.
-        </p>
+        {s.busy === t("analyzingProject") && <ProcessingState kind="project" />}
+        <p className="method-note">{t("m036")}</p>
         {run ? (
           <>
             <div className="section-heading horizontal">
               <p className="muted">
-                {evidence.length} kanıt kaydı · {run.provider || "Analiz"}
+                {evidence.length}
+                {t("m037")}
+                {run.provider || t("analysis")}
                 {run.model && ` / ${run.model}`}
               </p>
               <Link className="button secondary" href="/ihtiyac">
-                Kurum ihtiyacına geç <span aria-hidden="true">→</span>
+                {t("m038")}
+                <span aria-hidden="true">→</span>
               </Link>
             </div>
             {evidence.length ? (
               <>
                 <div className="evidence-filter">
-                  <label htmlFor="skill-filter">Beceriye göre incele</label>
+                  <label htmlFor="skill-filter">{t("m039")}</label>
                   <select
                     id="skill-filter"
                     value={skillFilter}
                     onChange={(e) => setSkillFilter(e.target.value)}
                   >
-                    <option value="">Tüm kanıtlar ({evidence.length})</option>
+                    <option value="">
+                      {t("m040")}
+                      {evidence.length})
+                    </option>
                     {[
                       ...new Map(
                         evidence.map((e) => [e.skill_key, e.skill_label]),
@@ -293,19 +278,13 @@ export default function CandidatePage() {
                 </div>
               </>
             ) : (
-              <Empty title="Bu projede kanıt bulunamadı">
-                Bu sonuç, adayın beceriye sahip olmadığı anlamına gelmez.
-                İncelenen depo içeriği sınırlıdır.
-              </Empty>
+              <Empty title={t("m041")}>{t("m042")}</Empty>
             )}
-            <Notes title="Analiz sınırlamaları" items={run.limitations} />
-            <Notes title="Belirsizlikler" items={run.uncertainties} />
+            <Notes title={t("m043")} items={run.limitations} />
+            <Notes title={t("uncertainties")} items={run.uncertainties} />
           </>
         ) : (
-          <p className="muted">
-            Projenizi analiz ettiğinizde kaynaklarla desteklenen kayıtlar burada
-            görünecek. Deneyim eklemek için analiz yapmanız gerekmez.
-          </p>
+          <p className="muted">{t("m044")}</p>
         )}
       </section>
       {candidate ? (
@@ -313,15 +292,12 @@ export default function CandidatePage() {
       ) : (
         <section className="candidate-section" id="experiences">
           <div className="section-heading">
-            <p className="eyebrow">04 — GELİŞİM VE DENEYİMLER</p>
-            <h2>Gelişim ve Deneyim</h2>
-            <p className="muted">
-              Eğitim, sertifika, hackathon ve katkılarınız. Kaydetmek için önce
-              temel profilinizi oluşturun.
-            </p>
+            <p className="eyebrow">{t("m045")}</p>
+            <h2>{t("m046")}</h2>
+            <p className="muted">{t("m047")}</p>
           </div>
           <a className="button secondary" href="#basics">
-            Temel profile dön
+            {t("m048")}
           </a>
         </section>
       )}

@@ -1,4 +1,7 @@
 "use client";
+import { t, tx } from "../i18n/index.ts";
+import { useLocale } from "../i18n/react";
+
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -8,6 +11,8 @@ import { useSession } from "./session";
 import { LoadingState } from "./feedback";
 import { useEntranceMotion } from "./use-entrance-motion";
 export function AuthForm({ register = false }: { register?: boolean }) {
+  useLocale();
+
   const session = useSession();
   const router = useRouter();
   const [chosenRole, setRole] = useState<Role>();
@@ -30,18 +35,16 @@ export function AuthForm({ register = false }: { register?: boolean }) {
   }, [session.ready, session.user, router]);
 
   if (!session.ready || session.user)
-    return <LoadingState label="Hesabınız kontrol ediliyor…" skeleton />;
+    return <LoadingState label={t("m247")} skeleton />;
   return (
     <section className="auth-page">
-      <p className="eyebrow">ZEMİNAI HESABINIZ</p>
-      <h1>
-        {register ? "ZeminAI’yi nasıl kullanacaksınız?" : "Tekrar hoş geldiniz"}
-      </h1>
+      <p className="eyebrow">{t("m248")}</p>
+      <h1>{register ? t("m249") : t("m250")}</h1>
       {register && (
         <div
           className="auth-roles category-picker"
           role="group"
-          aria-label="Hesap türü"
+          aria-label={t("m251")}
         >
           {(["candidate", "institution"] as const).map((value) => (
             <button
@@ -52,12 +55,8 @@ export function AuthForm({ register = false }: { register?: boolean }) {
               disabled={busy}
               onClick={() => setRole(value)}
             >
-              <strong>{value === "candidate" ? "Aday" : "Kurum"}</strong>
-              <span>
-                {value === "candidate"
-                  ? "Ürettiklerimi ve gelişimimi görünür kılmak istiyorum."
-                  : "İhtiyacıma uygun kanıtları olan adayları keşfetmek istiyorum."}
-              </span>
+              <strong>{value === "candidate" ? t("m252") : t("m253")}</strong>
+              <span>{value === "candidate" ? t("m254") : t("m255")}</span>
             </button>
           ))}
         </div>
@@ -102,7 +101,7 @@ export function AuthForm({ register = false }: { register?: boolean }) {
             >
               {register && (
                 <label>
-                  {role === "institution" ? "Kurum adı" : "Adınız"}
+                  {role === "institution" ? t("m256") : t("m257")}
                   <input
                     autoComplete="name"
                     value={name}
@@ -114,7 +113,7 @@ export function AuthForm({ register = false }: { register?: boolean }) {
                 </label>
               )}
               <label>
-                E-posta
+                {t("m258")}
                 <input
                   type="email"
                   autoComplete="email"
@@ -126,7 +125,7 @@ export function AuthForm({ register = false }: { register?: boolean }) {
                 />
               </label>
               <label>
-                Parola
+                {t("m259")}
                 <input
                   type="password"
                   autoComplete={register ? "new-password" : "current-password"}
@@ -138,18 +137,10 @@ export function AuthForm({ register = false }: { register?: boolean }) {
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </label>
-              {register && (
-                <p className="small">
-                  12–128 karakter. Uzun bir parola cümlesi kullanabilirsiniz.
-                </p>
-              )}
-              <AuthFeedback message={error} />
+              {register && <p className="small">{t("m260")}</p>}
+              <AuthFeedback message={tx(error)} />
               <button className="button" disabled={busy}>
-                {busy
-                  ? "İşlem sürüyor…"
-                  : register
-                    ? "Hesap oluştur"
-                    : "Giriş yap"}
+                {busy ? t("m261") : register ? t("m262") : t("m263")}
               </button>
             </form>
           )}
@@ -157,9 +148,9 @@ export function AuthForm({ register = false }: { register?: boolean }) {
       </div>
       <p className="auth-switch">
         {register ? (
-          <Link href="/giris">Hesabınız var mı? Giriş yapın</Link>
+          <Link href="/giris">{t("m264")}</Link>
         ) : (
-          <Link href="/kayit">Hesabınız yok mu? Kayıt olun</Link>
+          <Link href="/kayit">{t("m265")}</Link>
         )}
       </p>
     </section>
@@ -168,6 +159,8 @@ export function AuthForm({ register = false }: { register?: boolean }) {
 
 /** Retain only the visual copy during collapse; assistive state updates immediately. */
 export function AuthFeedback({ message }: { message: string }) {
+  useLocale();
+
   const [previous, setPrevious] = useState(message);
   if (message && message !== previous) setPrevious(message);
   return (

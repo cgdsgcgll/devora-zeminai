@@ -1,3 +1,4 @@
+import { resolveI18n } from "./i18n-loader.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -39,7 +40,7 @@ test("actual evidence and criterion cards show Turkish explanations and preserve
     );
   }
   const { EvidenceCard, CriterionCard } = await import(
-    `data:text/javascript;base64,${Buffer.from(code).toString("base64")}`
+    `data:text/javascript;base64,${Buffer.from(await resolveI18n(code)).toString("base64")}`
   );
   const html = renderToStaticMarkup(
     createElement(EvidenceCard, {
@@ -60,7 +61,7 @@ test("actual evidence and criterion cards show Turkish explanations and preserve
     html.split("<details>")[0],
     /Teknik eşleşme skoruna dahil edilmez/,
   );
-  assert.match(html, /Yalnızca beyan/);
+  assert.match(html, /Beyan/);
   assert.match(html, /Original OSPF source text/);
   assert.doesNotMatch(html, /is explicitly mentioned/);
   const criterion = renderToStaticMarkup(
@@ -78,7 +79,7 @@ test("actual evidence and criterion cards show Turkish explanations and preserve
 });
 
 test("technical declaration is visibly excluded while observed usage stays distinct", () => {
-  assert.equal(statusLabels.declared_only, "Yalnızca beyan");
+  assert.equal(statusLabels.declared_only, "Beyan");
   assert.equal(verificationLabels.declared_only, statusLabels.declared_only);
   assert.equal(provenanceLabels.observed, statusLabels.observed);
   assert.match(

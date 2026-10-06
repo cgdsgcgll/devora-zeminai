@@ -1,4 +1,8 @@
 "use client";
+import { LanguageSwitch } from "../i18n/react";
+import { t, tx } from "../i18n/index.ts";
+import { useLocale } from "../i18n/react";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -7,6 +11,8 @@ import { SuccessNotice } from "./feedback";
 
 import { linksFor } from "@/lib/auth";
 export function AppHeader() {
+  useLocale();
+
   const path = usePathname();
   const { busy, ready, user, logout, act } = useSession();
   const links = linksFor(user?.role);
@@ -22,8 +28,9 @@ export function AppHeader() {
       }}
     >
       <div className="header-inner">
-        <Link href="/" className="brand" aria-label="ZeminAI ana sayfa">
-          Zemin<span>AI</span>
+        <Link href="/" className="brand" aria-label={t("brandHome")}>
+          {t("m399")}
+          <span>{t("m400")}</span>
         </Link>
         <button
           className="menu-toggle text-button"
@@ -31,7 +38,7 @@ export function AppHeader() {
           aria-controls="main-navigation"
           onClick={() => setMenuOpen(!menuOpen)}
         >
-          {menuOpen ? "Menüyü kapat" : "Menü"}{" "}
+          {menuOpen ? t("m401") : t("m402")}{" "}
           <svg
             width="20"
             height="20"
@@ -47,7 +54,7 @@ export function AppHeader() {
         <nav
           id="main-navigation"
           className={menuOpen ? "nav-open" : ""}
-          aria-label="Ana navigasyon"
+          aria-label={t("mainNavigation")}
         >
           {links.map(([href, label]) => (
             <Link
@@ -60,6 +67,7 @@ export function AppHeader() {
             </Link>
           ))}
         </nav>
+        <LanguageSwitch />
         {ready && (
           <Link
             className="button header-cta"
@@ -73,24 +81,25 @@ export function AppHeader() {
             }
           >
             {!user
-              ? "Giriş yap"
+              ? t("m263")
               : user.role === "candidate"
-                ? "Deneyim ekle"
-                : "Yeni ihtiyaç"}
+                ? t("addExperience")
+                : t("m403")}
           </Link>
         )}
       </div>
       {ready && user && (
         <details className="account-tools">
           <summary>
-            {user.display_name} · {user.role === "candidate" ? "Aday" : "Kurum"}
+            {user.display_name} ·{" "}
+            {user.role === "candidate" ? t("m252") : t("m253")}
           </summary>
           <button
             className="text-button"
             disabled={!!busy}
-            onClick={() => void act("Çıkış yapılıyor…", logout)}
+            onClick={() => void act(t("m404"), logout)}
           >
-            Çıkış yap
+            {t("m405")}
           </button>
         </details>
       )}
@@ -98,6 +107,8 @@ export function AppHeader() {
   );
 }
 export function SessionStatus() {
+  useLocale();
+
   const { ready, busy, error, restore, success, dismissSuccess } = useSession();
   const errorRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -113,7 +124,7 @@ export function SessionStatus() {
         >
           <span className="spinner" aria-hidden="true" />
           <div>
-            <strong>{busy || "Hesabınız yükleniyor…"}</strong>
+            <strong>{tx(busy) || t("m406")}</strong>
           </div>
         </div>
       )}
@@ -124,11 +135,11 @@ export function SessionStatus() {
       )}
       {error && (
         <div className="error" role="alert" ref={errorRef} tabIndex={-1}>
-          <strong>İşlem tamamlanamadı</strong>
-          <p>{error}</p>
-          {error.startsWith("Önceki") && (
+          <strong>{t("m407")}</strong>
+          <p>{tx(error)}</p>
+          {error.startsWith(t("m114")) && (
             <button className="button secondary" onClick={() => void restore()}>
-              Yeniden dene
+              {t("m051")}
             </button>
           )}
         </div>

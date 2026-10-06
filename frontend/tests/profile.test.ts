@@ -1,3 +1,4 @@
+import { resolveI18n } from "./i18n-loader.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -52,7 +53,7 @@ test("profile card renders hostile text as text, with honest source status", asy
       JSON.stringify(new URL("../src/lib/profile.ts", import.meta.url).href),
     );
   const { ProfileCard } = await import(
-    `data:text/javascript;base64,${Buffer.from(code).toString("base64")}`
+    `data:text/javascript;base64,${Buffer.from(await resolveI18n(code)).toString("base64")}`
   );
   const item = {
     category: "hackathon",

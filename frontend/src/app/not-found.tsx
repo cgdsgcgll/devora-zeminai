@@ -1,12 +1,17 @@
+"use client";
+import { t } from "../i18n/index.ts";
+import { useLocale } from "../i18n/react";
 import Link from "next/link";
 export default function NotFound() {
+  useLocale();
+
   return (
     <section className="empty">
       <p className="eyebrow">404</p>
-      <h1>Bu sayfa bulunamadı.</h1>
-      <p>Demo akışına ana sayfadan devam edebilirsiniz.</p>
+      <h1>{t("m170")}</h1>
+      <p>{t("m171")}</p>
       <Link className="button" href="/">
-        Ana sayfaya dön
+        {t("m172")}
       </Link>
     </section>
   );

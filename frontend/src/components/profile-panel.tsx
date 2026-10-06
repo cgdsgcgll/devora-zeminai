@@ -1,4 +1,7 @@
 "use client";
+import { t, tx } from "../i18n/index.ts";
+import { useLocale } from "../i18n/react";
+
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
@@ -35,6 +38,8 @@ function Field({
   max?: number;
   required?: boolean;
 }) {
+  useLocale();
+
   return (
     <div>
       <label htmlFor={`profile-${name}`}>
@@ -56,6 +61,8 @@ function Field({
 }
 
 export function ProfilePanel({ candidateId }: { candidateId: string }) {
+  useLocale();
+
   const session = useSession();
   const { ref: motionRef, transition } = useContentMotion();
   const [items, setItems] = useState<ProfileEvidence[]>([]);
@@ -143,11 +150,7 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
     const value = (key: string) => String(form.get(key) || "").trim();
     const source = value("source_url");
     if (!value("title") || (source && !safeProfileSource(source))) {
-      setValidation(
-        !value("title")
-          ? "Başlık gerekli."
-          : "Kaynak için kimlik bilgisi içermeyen, herkese açık bir HTTPS adresi kullanın.",
-      );
+      setValidation(!value("title") ? t("m338") : t("m339"));
       return;
     }
     const metadata: Record<string, string | number> = {};
@@ -182,7 +185,7 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
     setError("");
     setValidation("");
     setNotice("");
-    void session.act("Profil kaydı kaydediliyor…", async () => {
+    void session.act(t("m340"), async () => {
       const { category: _category, ...patch } = data;
       void _category;
       const saved = editing
@@ -194,9 +197,7 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
           : [...current, saved],
       );
       await closeForm();
-      setNotice(
-        "Profil kaydı kaydedildi. Güncel karşılaştırma için eşleşmeyi yeniden hesaplayın.",
-      );
+      setNotice(t("m341"));
     });
   }
   const meta = editing?.metadata_json;
@@ -207,25 +208,21 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
       aria-labelledby="profile-section-title"
     >
       <div className="section-heading">
-        <p className="eyebrow">04 — GELİŞİM VE DENEYİMLER</p>
-        <h2 id="profile-section-title">Gelişim ve Deneyim</h2>
-        <p className="muted">
-          Ne öğrendiniz, nerelerde katkı verdiniz? Eğitim, sertifika ve
-          deneyimlerinizi kaynaklarıyla ekleyin. Bunlar teknik beceri kanıtının
-          yerini almaz.
-        </p>
+        <p className="eyebrow">{t("m045")}</p>
+        <h2 id="profile-section-title">{t("m046")}</h2>
+        <p className="muted">{t("m342")}</p>
       </div>
       {notice && (
         <div>
           <SuccessNotice message={notice} onDismiss={() => setNotice("")} />
           <Link className="button secondary" href="/profil">
-            Güncel profilimi gör →
+            {t("m343")}
           </Link>
         </div>
       )}
       {error && (
         <div className="error" role="alert">
-          <p>{error}</p>
+          <p>{tx(error)}</p>
           <button
             className="button secondary"
             disabled={disabled}
@@ -234,7 +231,7 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
               setRetry((v) => v + 1);
             }}
           >
-            Kayıtları yeniden yükle
+            {t("m344")}
           </button>
         </div>
       )}
@@ -256,13 +253,11 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
                 tabIndex={-1}
                 className={stage === "choose" ? "studio-title" : "sr-only"}
               >
-                Deneyim ekle
+                {t("m243")}
               </h3>
               {stage === "choose" ? (
                 <>
-                  <p className="muted">
-                    Bir kategori seçin. Ayrıntıları bir sonraki adımda ekleyin.
-                  </p>
+                  <p className="muted">{t("m345")}</p>
                   <ExperienceChooser
                     disabled={disabled}
                     onChoose={chooseCategory}
@@ -278,22 +273,15 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
                       void closeForm();
                     }}
                   >
-                    ← Kategorilere dön
+                    {t("m346")}
                   </button>
                   <h3 ref={formHeading} tabIndex={-1} className="studio-title">
                     {editing
-                      ? "Kaydı düzenle"
+                      ? t("m347")
                       : `${categoryLabels[category]} deneyiminiz`}
                   </h3>
-                  <p className="muted">
-                    Yıldızlı alan zorunlu. Diğer ayrıntıları isterseniz ekleyin.
-                  </p>
-                  {editing && (
-                    <p className="callout">
-                      Mevcut kaydı düzenliyorsunuz. Kategori değişmez; yeni bir
-                      tür eklemek için önce vazgeçin.
-                    </p>
-                  )}
+                  <p className="muted">{t("m348")}</p>
+                  {editing && <p className="callout">{t("m349")}</p>}
                   <form
                     key={`${formVersion}-${editing?.id || "new"}-${category}`}
                     onSubmit={submit}
@@ -308,14 +296,14 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
                         name="title"
                         label={
                           category === "education"
-                            ? "Eğitim başlığı"
+                            ? t("m350")
                             : category === "certification"
-                              ? "Sertifika adı"
+                              ? t("m351")
                               : category === "hackathon"
-                                ? "Hackathon adı"
+                                ? t("m352")
                                 : category === "portfolio"
-                                  ? "Portföy başlığı"
-                                  : "Etkinlik / topluluk adı"
+                                  ? t("m353")
+                                  : t("m354")
                         }
                         value={editing?.title}
                         required
@@ -323,9 +311,7 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
                       <Field
                         name="organization"
                         label={
-                          category === "certification"
-                            ? "Sağlayıcı"
-                            : "Kurum / organizatör"
+                          category === "certification" ? t("m355") : t("m356")
                         }
                         value={editing?.organization}
                       />
@@ -334,25 +320,21 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
                         open={editing ? true : undefined}
                       >
                         <summary>
-                          Deneyim ayrıntıları{" "}
-                          <span className="optional">İsteğe bağlı</span>
+                          {t("m357")}{" "}
+                          <span className="optional">{t("m029")}</span>
                         </summary>
-                        <p className="small">
-                          Eğitim durumu, katılım, rol ve tarihler. İlgili
-                          ihtiyaçlarla karşılaştırmada bu bilgiler
-                          kullanılabilir.
-                        </p>
+                        <p className="small">{t("m358")}</p>
                         {category === "portfolio" && (
                           <div>
                             <label htmlFor="profile-output_type">
-                              Üretim çıktısı türü
+                              {t("m359")}
                             </label>
                             <select
                               id="profile-output_type"
                               name="output_type"
                               defaultValue={meta?.output_type || ""}
                             >
-                              <option value="">Belirtilmedi</option>
+                              <option value="">{t("m360")}</option>
                               {Object.entries(outputLabels).map(
                                 ([key, label]) => (
                                   <option value={key} key={key}>
@@ -361,74 +343,67 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
                                 ),
                               )}
                             </select>
-                            <p className="small">
-                              Bağlantı olarak saklanır; dış sayfa indirilmez ve
-                              gözlemlenmiş kanıt sayılmaz.
-                            </p>
+                            <p className="small">{t("m361")}</p>
                           </div>
                         )}
                         {category === "education" && (
                           <>
                             <Field
                               name="program"
-                              label="Program / bölüm"
+                              label={t("m362")}
                               value={meta?.program}
                             />
                             <label htmlFor="profile-education_type">
-                              Eğitim türü
+                              {t("m363")}
                             </label>
                             <select
                               id="profile-education_type"
                               name="education_type"
                               defaultValue={meta?.education_type || ""}
                             >
-                              <option value="">Belirtilmedi</option>
-                              <option value="degree">Diploma programı</option>
-                              <option value="course">Kurs</option>
-                              <option value="bootcamp">Bootcamp</option>
-                              <option value="other">Diğer</option>
+                              <option value="">{t("m360")}</option>
+                              <option value="degree">{t("m326")}</option>
+                              <option value="course">{t("m364")}</option>
+                              <option value="bootcamp">{t("m365")}</option>
+                              <option value="other">{t("m325")}</option>
                             </select>
-                            <label htmlFor="profile-status">
-                              Eğitim durumu
-                            </label>
+                            <label htmlFor="profile-status">{t("m366")}</label>
                             <select
                               id="profile-status"
                               name="status"
                               defaultValue={meta?.status || ""}
                             >
-                              <option value="">Belirtilmedi</option>
-                              <option value="ongoing">Devam ediyor</option>
-                              <option value="completed">Tamamlandı</option>
-                              <option value="left">Ayrıldı</option>
+                              <option value="">{t("m360")}</option>
+                              <option value="ongoing">{t("m367")}</option>
+                              <option value="completed">{t("m327")}</option>
+                              <option value="left">{t("m328")}</option>
                             </select>
                             <Field
                               name="student_year"
-                              label="Sınıf (isteğe bağlı, 1–6)"
+                              label={t("m368")}
                               type="number"
                               value={meta?.student_year}
                             />
-                            <p className="field-help">
-                              Okul prestiji ve GPA puanlama faktörü değildir.
-                            </p>
+                            <p className="field-help">{t("m369")}</p>
                           </>
                         )}
                         {category === "certification" && (
                           <>
                             <Field
                               name="issued_at"
-                              label="Veriliş tarihi"
+                              label={t("m370")}
                               type="date"
                               value={meta?.issued_at}
                             />
                             <Field
                               name="expires_at"
-                              label="Geçerlilik sonu (isteğe bağlı)"
+                              label={t("m371")}
                               type="date"
                               value={meta?.expires_at}
                             />
                             <Field
                               name="credential_id"
-                              label="Belge numarası (isteğe bağlı)"
+                              label={t("m372")}
                               value={meta?.credential_id}
                             />
                           </>
@@ -437,19 +412,19 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
                           <>
                             <Field
                               name="project_name"
-                              label="Proje adı"
+                              label={t("m002")}
                               value={meta?.project_name}
                             />
-                            <label htmlFor="profile-result">Sonuç</label>
+                            <label htmlFor="profile-result">{t("m373")}</label>
                             <select
                               id="profile-result"
                               name="result"
                               defaultValue={meta?.result || ""}
                             >
-                              <option value="">Belirtilmedi</option>
-                              <option value="participant">Katıldı</option>
-                              <option value="finalist">Finalist</option>
-                              <option value="winner">Kazandı</option>
+                              <option value="">{t("m360")}</option>
+                              <option value="participant">{t("m332")}</option>
+                              <option value="finalist">{t("m374")}</option>
+                              <option value="winner">{t("m333")}</option>
                             </select>
                           </>
                         )}
@@ -458,28 +433,30 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
                             {category === "community" && (
                               <>
                                 <label htmlFor="profile-focus">
-                                  Topluluk alanı
+                                  {t("m375")}
                                 </label>
                                 <select
                                   id="profile-focus"
                                   name="focus"
                                   defaultValue={meta?.focus || ""}
                                 >
-                                  <option value="">Belirtilmedi</option>
-                                  <option value="technology">Teknoloji</option>
-                                  <option value="other">Diğer</option>
+                                  <option value="">{t("m360")}</option>
+                                  <option value="technology">
+                                    {t("m376")}
+                                  </option>
+                                  <option value="other">{t("m325")}</option>
                                 </select>
                               </>
                             )}
                             <label htmlFor="profile-participation_type">
-                              Katılım türü
+                              {t("m377")}
                             </label>
                             <select
                               id="profile-participation_type"
                               name="participation_type"
                               defaultValue={meta?.participation_type || ""}
                             >
-                              <option value="">Belirtilmedi</option>
+                              <option value="">{t("m360")}</option>
                               {Object.entries(participationLabels).map(
                                 ([key, label]) => (
                                   <option key={key} value={key}>
@@ -490,7 +467,7 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
                             </select>
                             <Field
                               name="responsibility"
-                              label="Sorumluluk"
+                              label={t("responsibility")}
                               max={1000}
                               value={meta?.responsibility}
                             />
@@ -498,27 +475,25 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
                         )}
                         <Field
                           name="role"
-                          label="Rol (isteğe bağlı)"
+                          label={t("m378")}
                           value={editing?.role}
                         />
                         <div className="profile-dates">
                           <Field
                             name="started_at"
-                            label="Başlangıç / tarih"
+                            label={t("m379")}
                             type="date"
                             value={editing?.started_at}
                           />
                           <Field
                             name="ended_at"
-                            label="Bitiş (isteğe bağlı)"
+                            label={t("m380")}
                             type="date"
                             value={editing?.ended_at}
                           />
                         </div>
                         <label htmlFor="profile-description">
-                          {category === "hackathon"
-                            ? "Proje açıklaması"
-                            : "Açıklama"}
+                          {category === "hackathon" ? t("m381") : t("m382")}
                         </label>
                         <textarea
                           id="profile-description"
@@ -530,32 +505,25 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
                       </details>
                       <Field
                         name="source_url"
-                        label="Kaynak bağlantısı (isteğe bağlı, HTTPS)"
+                        label={t("m383")}
                         type="url"
                         max={2000}
                         value={editing?.source_url}
                       />
                       <Field
                         name="source_label"
-                        label="Kaynak etiketi (isteğe bağlı)"
+                        label={t("m384")}
                         value={editing?.source_label}
                       />
-                      <p className="field-help">
-                        Bağlantı eklemek doğrulama değildir. Linkler otomatik
-                        ziyaret edilmez.
-                      </p>
+                      <p className="field-help">{t("m385")}</p>
                       <div className="profile-actions">
                         <button className="button">
-                          <ButtonProgress
-                            active={
-                              session.busy === "Profil kaydı kaydediliyor…"
-                            }
-                          />
-                          {session.busy === "Profil kaydı kaydediliyor…"
-                            ? "Kaydediliyor…"
+                          <ButtonProgress active={session.busy === t("m340")} />
+                          {session.busy === t("m340")
+                            ? t("m032")
                             : editing
-                              ? "Değişiklikleri kaydet"
-                              : "Deneyimi kaydet"}
+                              ? t("m386")
+                              : t("saveExperience")}
                         </button>
                         {editing && (
                           <button
@@ -565,7 +533,7 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
                               void closeForm();
                             }}
                           >
-                            Vazgeç
+                            {t("m387")}
                           </button>
                         )}
                       </div>
@@ -576,23 +544,18 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
             </div>
           </div>
         </section>
-        <section
-          className="profile-timeline"
-          aria-label="Kaydedilen deneyimler"
-        >
+        <section className="profile-timeline" aria-label={t("savedExperience")}>
           <h3>
-            Profil kayıtları <span className="count">{items.length}</span>
+            {t("m388")}
+            <span className="count">{items.length}</span>
           </h3>
           {loading ? (
-            <LoadingState label="Profil kayıtları yükleniyor…" skeleton />
+            <LoadingState label={t("m389")} skeleton />
           ) : (
             !items.length && (
               <div className="empty">
-                <h3>Deneyimlerinize yer açın.</h3>
-                <p>
-                  Eğitim, hackathon veya topluluk katkınızı ekleyin.
-                  Kayıtlarınız yaşayan profilinizde bir araya gelsin.
-                </p>
+                <h3>{t("m390")}</h3>
+                <p>{t("m391")}</p>
                 <button
                   type="button"
                   className="button secondary"
@@ -601,7 +564,7 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
                     chooseCategory("hackathon");
                   }}
                 >
-                  Hackathon ekle →
+                  {t("m392")}
                 </button>
               </div>
             )
@@ -617,53 +580,50 @@ export function ProfilePanel({ candidateId }: { candidateId: string }) {
                     chooseCategory(item.category, item);
                   }}
                 >
-                  Düzenle<span className="sr-only">: {item.title}</span>
+                  {t("m393")}
+                  <span className="sr-only">: {item.title}</span>
                 </button>
                 <button
                   className="button danger"
                   disabled={disabled}
                   onClick={() => setConfirmDelete(item.id)}
                 >
-                  Sil<span className="sr-only">: {item.title}</span>
+                  {t("m394")}
+                  <span className="sr-only">: {item.title}</span>
                 </button>
               </div>
               {confirmDelete === item.id && (
                 <div className="callout">
                   <p>
-                    “{item.title}” profilinizden silinsin mi? Önceki
-                    eşleşmelerdeki kayıt kopyası korunur.
+                    “{item.title}
+                    {t("m395")}
                   </p>
                   <div className="profile-actions">
                     <button
                       className="button danger"
                       disabled={disabled}
                       onClick={() =>
-                        void session.act(
-                          "Profil kaydı siliniyor…",
-                          async () => {
-                            await api.deleteProfile(item.id);
-                            setItems((current) =>
-                              current.filter((p) => p.id !== item.id),
-                            );
-                            setConfirmDelete("");
-                            if (editing?.id === item.id) resetForm();
-                            setNotice(
-                              "Kayıt silindi. Güncel karşılaştırma için eşleşmeyi yeniden hesaplayın.",
-                            );
-                          },
-                        )
+                        void session.act(t("m396"), async () => {
+                          await api.deleteProfile(item.id);
+                          setItems((current) =>
+                            current.filter((p) => p.id !== item.id),
+                          );
+                          setConfirmDelete("");
+                          if (editing?.id === item.id) resetForm();
+                          setNotice(t("m397"));
+                        })
                       }
                     >
-                      {session.busy === "Profil kaydı siliniyor…"
-                        ? "Siliniyor…"
-                        : "Silmeyi onayla"}
+                      {session.busy === t("m396")
+                        ? t("m398")
+                        : t("confirmDelete")}
                     </button>
                     <button
                       className="button secondary"
                       disabled={disabled}
                       onClick={() => setConfirmDelete("")}
                     >
-                      Vazgeç
+                      {t("m387")}
                     </button>
                   </div>
                 </div>

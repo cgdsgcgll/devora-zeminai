@@ -1,17 +1,19 @@
+"use client";
+import { t, tx } from "../i18n/index.ts";
 import type { Model } from "./api/client";
 import { categoryLabels } from "./profile.ts";
 /** Display-only counts. Never infer a proficiency or a score from record totals. */
 export function profileHighlights(summary: Model<"LivingProfile">["summary"]) {
   const find = (label: string) =>
-    summary.find((item) => item.label === label)?.count ?? 0;
+    summary.find((item) => tx(item.label) === label)?.count ?? 0;
   return [
-    { label: "Proje", count: find("Proje") },
+    { label: t("m216"), count: find(t("m216")) },
     {
-      label: "Gözlemlenen teknik kanıt",
-      count: find("Gözlemlenen teknik kanıt"),
+      label: t("m217"),
+      count: find(t("m217")),
     },
     {
-      label: "Gelişim kaydı",
+      label: t("m218"),
       count: Object.values(categoryLabels).reduce(
         (total, label) => total + find(label),
         0,

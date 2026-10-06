@@ -1,4 +1,7 @@
 "use client";
+
+import { useLocale } from "../i18n/react";
+
 import {
   createContext,
   useCallback,
@@ -51,6 +54,8 @@ type Session = {
 };
 const Context = createContext<Session | null>(null);
 export function SessionProvider({ children }: { children: ReactNode }) {
+  useLocale();
+
   const [user, setUser] = useState<Account>();
   const [data, setData] = useState<Data>(empty);
   const [ready, setReady] = useState(false);

@@ -1,3 +1,4 @@
+import { resolveI18n } from "./i18n-loader.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -29,7 +30,7 @@ async function component(name: string) {
       JSON.stringify(pathToFileURL(require.resolve("react/jsx-runtime")).href),
     );
   return import(
-    `data:text/javascript;base64,${Buffer.from(code).toString("base64")}`
+    `data:text/javascript;base64,${Buffer.from(await resolveI18n(code)).toString("base64")}`
   );
 }
 
@@ -72,13 +73,18 @@ test("discovery preview caps signals without mutating or reordering server crite
 test("experience starts with six labeled categories and forwards the chosen category", async () => {
   const { ExperienceChooser } = await component("experience-chooser");
   let selected = "";
-  const element = ExperienceChooser({
-    disabled: false,
-    onChoose: (value: string) => {
-      selected = value;
-    },
-  });
-  const buttons = element.props.children[1];
+  let element: ReturnType<typeof ExperienceChooser>;
+  function Capture() {
+    element = ExperienceChooser({
+      disabled: false,
+      onChoose: (value: string) => {
+        selected = value;
+      },
+    });
+    return element;
+  }
+  renderToStaticMarkup(createElement(Capture));
+  const buttons = element!.props.children[1];
   assert.equal(buttons.length, 6);
   buttons
     .find((button: { key: string }) => button.key === "hackathon")

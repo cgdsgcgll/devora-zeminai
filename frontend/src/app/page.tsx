@@ -1,58 +1,39 @@
+"use client";
+import { t } from "../i18n/index.ts";
+import { useLocale } from "../i18n/react";
 import Link from "next/link";
 export default function Home() {
+  useLocale();
+
   return (
     <>
       <section className="landing-hero">
-        <p className="eyebrow">Kanıta dayalı yetenek profili</p>
+        <p className="eyebrow">{t("m173")}</p>
         <h1>
-          Ne ürettiğinizi,
-          <br className="desktop-break" /> ne öğrendiğinizi ve nerelerde katkı
-          verdiğinizi <span>görünür kılın.</span>
+          {t("m174")} <br className="desktop-break" />
+          <span>{t("m175")}</span>
         </h1>
-        <p className="lead">
-          Profesyonel hikâyenizi projeleriniz ve deneyimlerinizle anlatın.
-          <br className="desktop-break" /> İhtiyaçlarla ilişkiniz,
-          dayanaklarıyla anlaşılsın.
-        </p>
+        <p className="lead">{t("m176")}</p>
         <div className="hero-actions">
           <Link className="button" href="/kayit?role=candidate">
-            Aday olarak başla
+            {t("m177")}
           </Link>
           <Link className="button secondary" href="/kayit?role=institution">
-            Kurum olarak başla
+            {t("m178")}
           </Link>
         </div>
       </section>
       <section className="story-section" aria-labelledby="story-title">
         <div className="section-heading">
-          <p className="eyebrow">NASIL ÇALIŞIR?</p>
-          <h2 id="story-title">Bir sonuç. Açık bir dayanak.</h2>
-          <p className="muted">
-            Deneyiminizden ihtiyaca uzanan, izlenebilir bir bağ.
-          </p>
+          <p className="eyebrow">{t("m179")}</p>
+          <h2 id="story-title">{t("m180")}</h2>
+          <p className="muted">{t("m181")}</p>
         </div>
         <ol className="evidence-story">
           {[
-            [
-              "Beyan",
-              "Hikâyenizi anlatın.",
-              "Projelerinizi, eğitiminizi ve katkılarınızı bir araya getirin.",
-            ],
-            [
-              "Kanıt",
-              "Kaynağını görün.",
-              "Bir bağlantı, bir beyan ve gözlemlenen kullanım ayrı gösterilir.",
-            ],
-            [
-              "İhtiyaç",
-              "Beklentiyi netleştirin.",
-              "Gerekli ve tercih edilen kriterleri kendi cümlelerinizle tanımlayın.",
-            ],
-            [
-              "Açıklanabilir eşleşme",
-              "İlişkiyi inceleyin.",
-              "Hangi kriterin hangi kaynakla desteklendiğini görün.",
-            ],
+            [t("m182"), t("m183"), t("m184")],
+            [t("m185"), t("m186"), t("m187")],
+            [t("m188"), t("m189"), t("m190")],
           ].map(([label, title, body], i) => (
             <li key={label}>
               <span className="story-index">0{i + 1}</span>
@@ -65,60 +46,51 @@ export default function Home() {
       </section>
       <section className="evidence-feature" aria-labelledby="evidence-title">
         <div>
-          <p className="eyebrow">AYRINTI FARK YARATIR</p>
+          <p className="eyebrow">{t("m191")}</p>
           <h2 id="evidence-title">
-            Bir teknoloji adı.
+            {t("m192")}
             <br />
-            İki farklı dayanak.
+            {t("m193")}
           </h2>
-          <p className="lead">
-            Bir README’de yazanla kaynak dosyasında gözlemlenen aynı şey
-            değildir. ZeminAI bu ayrımı görünür tutar.
-          </p>
-          <p className="small">
-            Aşağıdaki örnek kavramsaldır; bir adaya ait analiz sonucu değildir.
-          </p>
+          <p className="lead">{t("m194")}</p>
+          <p className="small">{t("m195")}</p>
         </div>
         <div className="evidence-example">
-          <p className="example-caption">ÖRNEK / PYTHON</p>
+          <p className="example-caption">{t("m196")}</p>
           <div>
             <span className="evidence-marker" aria-hidden="true" />
             <div>
-              <h3>“Python kullanıyorum.”</h3>
-              <p>Proje açıklaması · Yalnızca beyan</p>
+              <h3>{t("m197")}</h3>
+              <p>{t("m198")}</p>
             </div>
           </div>
           <div>
             <span className="evidence-marker filled" aria-hidden="true" />
             <div>
-              <h3>Kaynakta Python kullanımı</h3>
-              <p>Kaynak dosyası · Gözlemlenen kullanım</p>
+              <h3>{t("m199")}</h3>
+              <p>{t("m200")}</p>
             </div>
           </div>
-          <p className="small">Kanıt gücü, beceri seviyesi değildir.</p>
+          <p className="small">{t("m201")}</p>
         </div>
       </section>
-      <section className="entry-paths" aria-label="Başlangıç yolları">
+      <section className="entry-paths" aria-label={t("m202")}>
         <article>
-          <p className="eyebrow">ADAYLAR İÇİN</p>
-          <h2>Hikâyenize yer açın.</h2>
-          <p>
-            Projeler, eğitim, hackathonlar ve topluluk katkıları. Zaman içinde
-            gelişen tek bir profil.
-          </p>
+          <p className="eyebrow">{t("m203")}</p>
+          <h2>{t("m204")}</h2>
+          <p>{t("m205")}</p>
           <Link href="/kayit?role=candidate">
-            Profilimi oluşturmaya başla <span aria-hidden="true">→</span>
+            {t("m206")}
+            <span aria-hidden="true">→</span>
           </Link>
         </article>
         <article>
-          <p className="eyebrow">KURUMLAR İÇİN</p>
-          <h2>İhtiyaçtan başlayın.</h2>
-          <p>
-            Genel yargılar yerine, belirli bir ihtiyaç için hangi dayanakların
-            bulunduğunu inceleyin.
-          </p>
+          <p className="eyebrow">{t("m207")}</p>
+          <h2>{t("m208")}</h2>
+          <p>{t("m209")}</p>
           <Link href="/kayit?role=institution">
-            İhtiyacımı tanımla <span aria-hidden="true">→</span>
+            {t("m210")}
+            <span aria-hidden="true">→</span>
           </Link>
         </article>
       </section>
