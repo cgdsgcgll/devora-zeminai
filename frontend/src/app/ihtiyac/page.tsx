@@ -9,8 +9,8 @@ import { ProcessingState, ButtonProgress } from "@/components/feedback";
 export default function NeedPage() {
   const s = useSession();
   const [description, setDescription] = useState("");
-  const [role, setRole] = useState("");
-  const [output, setOutput] = useState("");
+  const [role, setRole] = useState(s.data.need?.target_role || "");
+  const [output, setOutput] = useState(s.data.need?.expected_output || "");
   const [error, setError] = useState("");
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -112,13 +112,32 @@ export default function NeedPage() {
               <span aria-hidden="true">↗</span>
             </button>
           </form>
+          {s.data.need && (
+            <button
+              type="button"
+              className="text-button"
+              disabled={!!s.busy}
+              onClick={() =>
+                void s.act("İhtiyaç bilgileri güncelleniyor…", async () =>
+                  s.saveNeed(
+                    await api.updateNeed(s.data.need!.id, {
+                      target_role: role.trim() || null,
+                      expected_output: output.trim() || null,
+                    }),
+                  ),
+                )
+              }
+            >
+              Seçili ihtiyacın rol / çıktı bilgisini güncelle
+            </button>
+          )}
         </section>
       </div>
       {s.busy === "İhtiyaç kriterleri hazırlanıyor…" && (
         <ProcessingState kind="need" />
       )}
       {s.data.need && (
-        <section className="result-section">
+        <section className="result-section content-enter">
           <div className="section-heading horizontal">
             <div>
               <p className="eyebrow">YAPILANDIRILMIŞ İHTİYAÇ</p>
@@ -127,8 +146,8 @@ export default function NeedPage() {
                 {s.data.need.target_role || "Kurum ihtiyacı"}
               </p>
             </div>
-            <Link href="/eslesme" className="button secondary">
-              Eşleşmeye geç <span aria-hidden="true">→</span>
+            <Link href="/kesif" className="button secondary">
+              Adayları keşfet <span aria-hidden="true">→</span>
             </Link>
           </div>
           {s.data.need.criteria.length ? (

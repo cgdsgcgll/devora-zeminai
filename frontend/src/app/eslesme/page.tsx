@@ -17,11 +17,7 @@ export default function MatchPage() {
         inceleyin.
       </PageHeader>
       {!s.ready ? null : !candidate ? (
-        <Empty
-          title="Önce aday profilini hazırlayın"
-          href="/aday"
-          action="Aday & Projeye git"
-        >
+        <Empty title="Keşiften bir aday seçin" href="/kesif" action="Keşfe git">
           Eşleşme için bir aday ve proje analizi veya profil kaydı gerekiyor.
         </Empty>
       ) : !need?.criteria.length ? (

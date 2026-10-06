@@ -4,7 +4,7 @@ os.environ['DATABASE_URL'] = 'sqlite://'
 os.environ['LLM_PROVIDER'] = 'rule_based'
 
 import pytest
-from fastapi.testclient import TestClient
+from domain_client import DomainClient
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
@@ -40,6 +40,6 @@ def db():
 @pytest.fixture
 def client(db):
     app.dependency_overrides[get_db] = lambda: db
-    with TestClient(app, raise_server_exceptions=False) as client:
+    with DomainClient(app, db=db, raise_server_exceptions=False) as client:
         yield client
     app.dependency_overrides.clear()

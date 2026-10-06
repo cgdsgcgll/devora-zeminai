@@ -282,7 +282,7 @@ export default function CandidatePage() {
                     ))}
                   </select>
                 </div>
-                <div className="evidence-grid">
+                <div className="evidence-grid content-enter">
                   {evidence
                     .filter(
                       (item) => !skillFilter || item.skill_key === skillFilter,

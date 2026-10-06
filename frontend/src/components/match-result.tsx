@@ -20,7 +20,7 @@ export function MatchResult({ result }: { result: Match }) {
     let active = true;
     Promise.all(
       [...new Set(result.matched_criteria.flatMap((c) => c.evidence_ids))].map(
-        api.evidence,
+        (id) => api.matchEvidence(result.id, id),
       ),
     )
       .then((items) => {
@@ -41,7 +41,7 @@ export function MatchResult({ result }: { result: Match }) {
     };
   }, [result, retry]);
   return (
-    <section className="result-section">
+    <section className="result-section content-enter">
       <div className="score-layout">
         <div className="score-card">
           <p className="eyebrow">{scoreLabel}</p>

@@ -8,6 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from starlette.exceptions import HTTPException
 
 from app.api.routes import router
+from app.api.auth import router as auth_router
 from app.core.errors import AppError
 from app.core.config import settings
 from app.core.request_limits import RequestSizeLimitMiddleware
@@ -16,8 +17,16 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title='ZeminAI', version='0.1.0')
 app.add_middleware(RequestSizeLimitMiddleware)
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins,
-                   allow_methods=['GET', 'POST', 'PATCH', 'DELETE'], allow_headers=['Content-Type'])
+                   allow_credentials=True, allow_methods=['GET', 'POST', 'PATCH', 'DELETE'], allow_headers=['Content-Type'])
 app.include_router(router)
+app.include_router(auth_router)
+
+
+@app.middleware('http')
+async def private_response_cache(request: Request, call_next):
+    response = await call_next(request)
+    response.headers['Cache-Control'] = 'no-store'
+    return response
 
 
 @app.exception_handler(AppError)

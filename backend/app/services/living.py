@@ -100,7 +100,7 @@ def need_and_views(db, need_id, candidates, anonymous):
 
 def discovery(db, need_id, anonymous=True, offset=0, limit=20):
     # Never rank a silently truncated pool. Score all candidates or fail explicitly.
-    candidates = db.scalars(select(m.Candidate).order_by(m.Candidate.id).limit(DISCOVERY_MAX_CANDIDATES + 1)).all()
+    candidates = db.scalars(select(m.Candidate).join(m.User, m.Candidate.owner_user_id == m.User.id).where(m.User.is_active.is_(True), m.User.role == 'candidate').order_by(m.Candidate.id).limit(DISCOVERY_MAX_CANDIDATES + 1)).all()
     if len(candidates) > DISCOVERY_MAX_CANDIDATES:
         raise AppError('DISCOVERY_POOL_LIMIT_EXCEEDED',
             f'Keşif en fazla {DISCOVERY_MAX_CANDIDATES} adaylık tam havuzu destekler; eksik sıralama döndürülmedi.',
@@ -112,11 +112,11 @@ def discovery(db, need_id, anonymous=True, offset=0, limit=20):
         ordering='Bu ihtiyaca ilişkin tüm adaylar önce Kanıt Uyumu, gerekli kapsam ve tercih edilen kapsam azalan sırayla; eşitlikte kayıt kimliği artan sırayla sıralanır. Sayfalama bundan sonra uygulanır.',
         limitations=[AUTHORSHIP, 'Bu bir genel aday sıralaması değildir. 80/20 kriter kapsamı formülü korunur; kayıt sayısı bonus vermez.',
             f'Tam keşif havuzu en fazla {DISCOVERY_MAX_CANDIDATES} adaydır. Sınır aşılırsa sonuç yerine hata döner. Sayfalar ayrı isteklerde güncel veriden hesaplanır; veri değişirse sıra değişebilir.',
-            'Kanıt odaklı görünüm kimlik alanlarını ve kaynak serbest metinlerini çıkarır; tam anonimleştirme veya erişim kontrolü değildir. UUID ile diğer açık API’lere erişim mümkündür.'])
+            'Kanıt odaklı görünüm kimlik alanlarını ve kaynak serbest metinlerini çıkarır; tam anonimleştirme veya erişim kontrolü değildir. Yalnız yetkili kurumun kendi ihtiyacı bağlamında sunulur; özel aday API’leri sahiplik kontrolü altındadır.'])
 
 
 def team(db, need_id, data):
-    candidates = db.scalars(select(m.Candidate).where(m.Candidate.id.in_(data.candidate_ids)).order_by(m.Candidate.id)).all()
+    candidates = db.scalars(select(m.Candidate).join(m.User, m.Candidate.owner_user_id == m.User.id).where(m.User.is_active.is_(True), m.User.role == 'candidate').where(m.Candidate.id.in_(data.candidate_ids)).order_by(m.Candidate.id)).all()
     if len(candidates) != len(data.candidate_ids):
         raise AppError('NOT_FOUND', 'Seçilen adaylardan biri bulunamadı.', 404)
     need, views = need_and_views(db, need_id, candidates, data.anonymous)

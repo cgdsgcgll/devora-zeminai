@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import (JSON, Boolean, CheckConstraint, Date, DateTime, Float, ForeignKey,
+from sqlalchemy import (JSON, Boolean, CheckConstraint, Date, DateTime, Float, ForeignKey, Integer,
                         ForeignKeyConstraint, String, Text, UniqueConstraint, Uuid)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -24,8 +24,35 @@ class Updated(Created):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
 
 
+class User(Identity, Updated, Base):
+    __tablename__ = 'users'
+    __table_args__ = (CheckConstraint("role IN ('candidate', 'institution')", name='ck_user_role'),)
+    email: Mapped[str] = mapped_column(String(254))
+    normalized_email: Mapped[str] = mapped_column(String(254), unique=True, index=True)
+    password_hash: Mapped[str] = mapped_column(String(500))
+    role: Mapped[str] = mapped_column(String(20))
+    display_name: Mapped[str] = mapped_column(String(200))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class UserSession(Identity, Created, Base):
+    __tablename__ = 'user_sessions'
+    user_id: Mapped[UUID] = mapped_column(ForeignKey('users.id'), index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class AuthThrottle(Base):
+    __tablename__ = 'auth_throttles'
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    attempts: Mapped[int] = mapped_column(Integer)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+
+
 class Candidate(Identity, Updated, Base):
     __tablename__ = 'candidates'
+    owner_user_id: Mapped[UUID | None] = mapped_column(ForeignKey('users.id'), unique=True, index=True)
     name: Mapped[str] = mapped_column(String(200))
     projects: Mapped[list['Project']] = relationship(back_populates='candidate')
 
@@ -80,6 +107,7 @@ class RepositorySnapshot(Identity, Base):
 
 class OrganizationNeed(Identity, Updated, Base):
     __tablename__ = 'organization_needs'
+    owner_user_id: Mapped[UUID | None] = mapped_column(ForeignKey('users.id'), index=True)
     description: Mapped[str] = mapped_column(Text)
     target_role: Mapped[str | None] = mapped_column(String(200))
     expected_output: Mapped[str | None] = mapped_column(Text)

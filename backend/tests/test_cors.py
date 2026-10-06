@@ -33,8 +33,8 @@ def test_cors_configuration_rejects_non_origin_values(origin):
         Settings(_env_file=None, cors_origins=[origin])
 
 
-def test_explicit_deployment_origin_and_no_credentials(client):
+def test_explicit_deployment_origin_and_credentials(client):
     assert Settings(_env_file=None, cors_origins=['https://demo.example.com']).cors_origins == ['https://demo.example.com']
     response = client.options('/needs', headers={'Origin': 'http://localhost:3000',
         'Access-Control-Request-Method': 'POST'})
-    assert 'access-control-allow-credentials' not in response.headers
+    assert response.headers['access-control-allow-credentials'] == 'true'

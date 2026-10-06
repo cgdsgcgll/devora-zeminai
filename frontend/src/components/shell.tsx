@@ -5,15 +5,11 @@ import { useEffect, useRef, useState } from "react";
 import { useSession } from "./session";
 import { SuccessNotice } from "./feedback";
 
-const links = [
-  ["/profil", "Profil"],
-  ["/ihtiyac", "İhtiyaç"],
-  ["/kesif", "Keşif"],
-];
+import { linksFor } from "@/lib/auth";
 export function AppHeader() {
   const path = usePathname();
-  const { busy, ready, reset, data } = useSession();
-  const [confirmReset, setConfirmReset] = useState(false);
+  const { busy, ready, user, logout, act } = useSession();
+  const links = linksFor(user?.role);
   const [menuOpen, setMenuOpen] = useState(false);
   return (
     <header
@@ -57,88 +53,52 @@ export function AppHeader() {
             <Link
               key={href}
               href={href}
-              aria-current={
-                path === href || (href === "/profil" && path === "/aday")
-                  ? "page"
-                  : undefined
-              }
+              aria-current={path === href ? "page" : undefined}
               onClick={() => setMenuOpen(false)}
             >
               {label}
             </Link>
           ))}
         </nav>
-        <Link
-          className="button header-cta"
-          onClick={() => setMenuOpen(false)}
-          href={
-            path === "/ihtiyac" || path === "/kesif"
-              ? "/eslesme"
-              : data.candidate
-                ? "/aday#experiences"
-                : "/aday"
-          }
-        >
-          {path === "/ihtiyac" || path === "/kesif"
-            ? "Uyumu incele"
-            : data.candidate
-              ? "Deneyim ekle"
-              : "Başlayın"}
-        </Link>
+        {ready && (
+          <Link
+            className="button header-cta"
+            onClick={() => setMenuOpen(false)}
+            href={
+              !user
+                ? "/giris"
+                : user.role === "candidate"
+                  ? "/aday#experiences"
+                  : "/ihtiyac"
+            }
+          >
+            {!user
+              ? "Giriş yap"
+              : user.role === "candidate"
+                ? "Deneyim ekle"
+                : "Yeni ihtiyaç"}
+          </Link>
+        )}
       </div>
-      <details className="demo-tools">
-        <summary>Demo oturumu</summary>
-        <button
-          className="text-button"
-          disabled={!!busy || !ready}
-          onClick={() => setConfirmReset(true)}
-        >
-          Demoyu sıfırla
-        </button>
-      </details>
-      {confirmReset && (
-        <div
-          className="reset-confirm callout"
-          role="region"
-          aria-label="Demo sıfırlama onayı"
-        >
-          <p>
-            Bu tarayıcıdaki demo seçimi temizlensin mi? Kaydedilmiş veriler
-            silinmez.
-          </p>
-          <div className="profile-actions">
-            <button
-              className="button"
-              disabled={!!busy || !ready}
-              onClick={() => {
-                reset();
-                setConfirmReset(false);
-              }}
-            >
-              Sıfırlamayı Onayla
-            </button>
-            <button
-              className="button secondary"
-              onClick={() => setConfirmReset(false)}
-            >
-              Vazgeç
-            </button>
-          </div>
-        </div>
+      {ready && user && (
+        <details className="account-tools">
+          <summary>
+            {user.display_name} · {user.role === "candidate" ? "Aday" : "Kurum"}
+          </summary>
+          <button
+            className="text-button"
+            disabled={!!busy}
+            onClick={() => void act("Çıkış yapılıyor…", logout)}
+          >
+            Çıkış yap
+          </button>
+        </details>
       )}
     </header>
   );
 }
 export function SessionStatus() {
-  const {
-    ready,
-    busy,
-    error,
-    restore,
-    storageWarning,
-    success,
-    dismissSuccess,
-  } = useSession();
+  const { ready, busy, error, restore, success, dismissSuccess } = useSession();
   const errorRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (error) errorRef.current?.focus();
@@ -153,7 +113,7 @@ export function SessionStatus() {
         >
           <span className="spinner" aria-hidden="true" />
           <div>
-            <strong>{busy || "Demo yükleniyor…"}</strong>
+            <strong>{busy || "Hesabınız yükleniyor…"}</strong>
           </div>
         </div>
       )}
@@ -168,16 +128,10 @@ export function SessionStatus() {
           <p>{error}</p>
           {error.startsWith("Önceki") && (
             <button className="button secondary" onClick={() => void restore()}>
-              Demoyu yeniden yükle
+              Yeniden dene
             </button>
           )}
         </div>
-      )}
-      {storageWarning && (
-        <p className="callout">
-          Tarayıcı depolamasına erişilemedi. Sayfa yenilenirse demo seçimi
-          korunamayabilir.
-        </p>
       )}
     </>
   );

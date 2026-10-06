@@ -9,7 +9,7 @@ Node.js 22.13+ ve npm gerekir. Önce ana README’deki backend kurulumunu tamaml
 `frontend/` içinde `.env.example` dosyasını `.env.local` adıyla kopyalayın (PowerShell: `Copy-Item .env.example .env.local`; Linux/macOS: `cp .env.example .env.local`).
 
 ```env
-NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
+API_BACKEND_URL=http://127.0.0.1:8000
 ```
 
 ```bash
@@ -25,7 +25,9 @@ Backend `CORS_ORIGINS` JSON listesi varsayılan olarak `http://localhost:3000` v
 
 | Route | İşlev |
 |---|---|
-| `/` | Projenin yaklaşımı ve demo başlangıcı |
+| `/` | Projenin yaklaşımı ve hesap başlangıcı |
+| `/giris` | Cookie oturumu ile giriş |
+| `/kayit` | Aday/kurum hesabı oluşturma |
 | `/aday` | Aday/proje oluşturma, public GitHub analizi ve kaynaklı evidence |
 | `/ihtiyac` | İhtiyaç oluşturma, required/preferred kriterler |
 | `/eslesme` | Gerçek eşleşme, kapsam, matched/unmatched kriterler ve evidence |
@@ -37,7 +39,7 @@ Candidate ve project adımları ayrı kaydedilir; proje isteği hata verirse ada
 - `openapi.json`: FastAPI uygulamasından dışa aktarılan sözleşme.
 - `src/lib/api/schema.d.ts`: `openapi-typescript` tarafından üretilen tipler; elle düzenlenmez.
 - `src/lib/api/client.ts`: API çağrıları, backend error envelope ve ağ hataları.
-- `src/components/session.tsx`: Demo oturumu ve ID’lerden backend kayıtlarını yeniden yükleme.
+- `src/components/session.tsx`: Cookie hesabı bootstrap, rol ve sahip olunan DB kayıtlarını yeniden yükleme.
 - `src/components/`: Ortak shell, kanıt/kriter kartları ve eşleşme sunumu.
 - `src/app/`: Route’lar, genel CSS, 404 ve hata sayfası.
 
@@ -51,13 +53,9 @@ npm run types:generate
 
 Pydantic’in varsayılan UUID alanları OpenAPI’de optional görünür. Persist edilmiş yanıtlarda ID varlığı API client’ta kontrol edilir ve tipler buna göre daraltılır.
 
-## Oturum ve güven sınırları
+## Oturum
 
-Yalnız candidate/project/need/match/run/evidence ID’leri localStorage’da saklanır; açıklamalar, kaynak dosyaları ve API key’ler saklanmaz. Refresh tamamlanan kayıtları backend’den tekrar okur. “Demoyu sıfırla” yalnız tarayıcı seçimini temizler, backend verisini silmez. Bu bir giriş veya yetkilendirme mekanizması değildir.
-
-Uzun analiz sırasında sayfayı yenilemeyin: backend bir job/progress API sağlamaz. Yanıt gelmeden bağlantı kesilirse oluşmuş analizi otomatik bulma veya tekrar isteği tekilleştirme garantisi yoktur. Kalıcı backend veritabanı değişirse eski ID’ler yüklenemeyebilir; arayüz yeniden yükleme/yeni demo seçenekleri sunar.
-
-Kaynak linkleri yalnız HTTPS GitHub URL’leri için açılır ve `noopener noreferrer` kullanır. Model metni React’in metin render mekanizmasıyla gösterilir; HTML olarak çalıştırılmaz. Kanıt gücü beceri seviyesi, eşleşme skoru işe alınma ihtimali olarak sunulmaz.
+HttpOnly cookie `/api` proxy’si üzerinden gönderilir. SessionProvider `/auth/me` ile hesabı yükler; token veya demo ID’leri tarayıcı depolamasında tutulmaz. Reload/login sonrasında kendi son proje/ihtiyaç kaydı API’den yüklenir. `/giris` ve `/kayit` hesap akışlarıdır.
 
 ## Kalite kontrolleri
 
@@ -72,7 +70,7 @@ npm run start -- --hostname 127.0.0.1
 
 Backend CORS ve güvenlik testleri dahil 163 pytest testi geçmektedir. Canlı Gemini backend smoke testi daha önce ekip tarafından doğrulandı; bu frontend ortamında key/model bulunmadığı için canlı Gemini E2E ayrıca blokludur. Tarayıcı kontrollerinin ayrıntıları [doğrulama kaydında](../docs/FRONTEND_VALIDATION.md) bulunur.
 
-Authentication, çok kullanıcılı oturum yönetimi, deployment ve background jobs bu MVP kapsamında değildir.
+Cookie authentication ve aday/kurum ownership uygulanır. Deployment hardening ve background jobs sonraki fazdır. [AUTH](../docs/AUTH.md).
 
 ## Demo sunumu ve güvenlik
 
@@ -85,4 +83,4 @@ sayfa işaretlerini korur. Mobil aksiyonlar hover gerektirmez.
 Yanıtlarda nosniff, referrer/permissions policy ve iframe koruması vardır.
 Bu başlıklar backend yetkilendirmesi sağlamaz. API yalnız kontrollü yerel demo
 verisiyle kullanılmalıdır; [güvenlik raporundaki](../docs/SECURITY_REVIEW.md)
-auth, quota ve dependency engelleri public deployment öncesi çözülmelidir.
+AI quota ve deployment riskleri public deployment öncesi çözülmelidir.

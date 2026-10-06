@@ -75,7 +75,7 @@ def test_profile_migration_preserves_legacy_project_evidence(tmp_path, monkeypat
     tables = [m.Candidate.__table__, m.Project.__table__, m.RepositorySnapshot.__table__, m.SkillEvidence.__table__]
     def saved():
         with engine.connect() as connection:
-            return [connection.execute(select(table)).mappings().all() for table in tables]
+            return [connection.execute(select(*[c for c in table.c if c.name != "owner_user_id"])).mappings().all() for table in tables]
     before = saved()
     command.upgrade(config, 'head')
     command.check(config)

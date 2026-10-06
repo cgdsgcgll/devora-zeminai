@@ -56,6 +56,12 @@ class CandidateCreate(Contract):
     name: Name
 
 
+class NeedDetailsPatch(Contract):
+    """Editable presentation details; scoring criteria remain immutable."""
+    target_role: str | None = Field(default=None, max_length=200)
+    expected_output: str | None = Field(default=None, max_length=20000)
+
+
 class Candidate(Entity, CandidateCreate):
     updated_at: datetime
 

@@ -2082,3 +2082,115 @@ summary {
     scroll-behavior: auto !important;
   }
 }
+
+.auth-page {
+  max-width: 640px;
+  margin: var(--s12) auto;
+}
+.auth-page h1 {
+  font-size: clamp(32px, 5vw, 48px);
+}
+.auth-page form {
+  display: grid;
+  gap: var(--s6);
+  margin-top: var(--s8);
+}
+.auth-roles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s4);
+  margin-top: var(--s8);
+}
+.auth-roles button {
+  white-space: normal;
+  text-align: left;
+  padding: var(--s6);
+  display: grid;
+  gap: var(--s3);
+}
+.auth-roles [aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--surface);
+}
+.auth-switch {
+  margin-top: var(--s6);
+}
+.account-tools {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--s6);
+  text-align: right;
+  font-size: 13px;
+}
+.account-tools summary {
+  min-height: 44px;
+  padding: 12px 0;
+  cursor: pointer;
+}
+@media (max-width: 600px) {
+  .auth-roles {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Shared entrances: route commits and requests are never held for animation. */
+.page-enter,
+.content-enter,
+.empty {
+  animation: state-reveal var(--duration-normal) var(--ease-out);
+}
+.auth-page {
+  min-block-size: 660px;
+}
+.auth-form-slot {
+  display: flow-root;
+}
+.auth-form-slot[data-registration="true"] {
+  min-block-size: 580px;
+}
+.auth-roles button {
+  transition:
+    color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+.form-feedback {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows var(--duration-normal) var(--ease-out),
+    opacity var(--duration-fast) var(--ease-standard);
+}
+.form-feedback[data-visible="true"] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.form-feedback > div {
+  min-height: 0;
+  overflow: clip;
+}
+.form-feedback p {
+  margin: 0;
+}
+.auth-page form > button {
+  min-block-size: 48px;
+}
+@media (max-width: 600px) {
+  .auth-page {
+    min-block-size: 740px;
+  }
+}
+
+.account-tools[open] > button {
+  animation: state-reveal var(--duration-fast) var(--ease-out);
+}
+@media (max-width: 600px) {
+  .auth-form-slot[data-registration="true"] {
+    min-block-size: 620px;
+  }
+  .nav-open {
+    animation: state-reveal var(--duration-fast) var(--ease-out);
+  }
+}
