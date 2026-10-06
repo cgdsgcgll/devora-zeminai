@@ -1,5 +1,25 @@
 # ZeminAI MVP güvenlik değerlendirmesi
 
+## 6 Ekim 2026 — Production hardening
+
+Güncel sonuç **NEEDS_FIX**: uygulama korumaları ve SQLite/browser doğrulaması
+ilerledi; gerçek PostgreSQL18 doğrulaması bağlantı/bind engeli nedeniyle tamamlanmadı.
+Detaylı sonuç [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md), işletim modeli
+[DEPLOYMENT.md](DEPLOYMENT.md). Aşağıdaki tarihli notlar tarihsel kanıttır.
+
+AI/expensive endpoint **request-rate koruması eksikliği uygulama kapsamında giderildi**:
+DB-backed atomic user/IP fixed windows; project/need analysis, discovery/team/match,
+expiry cleanup, 429/Retry-After ve fail-closed DB hatası. PG concurrency doğrulaması
+bekliyor; bulgunun dağıtılmış production doğrulaması kapatılmış sayılmaz. In-flight
+concurrency, toplam maliyet ve ingress bütçeleri ayrı açık operasyonel sınırlardır.
+
+Auth/ownership/CSRF mevcut ve regresyonları korundu; auth yok/IDOR açık şeklindeki
+eski ön-auth bulgular güncel durumu anlatmaz. Production config fail-fast, readiness,
+request IDs, metadata-only logs, host/HTTPS headers ve same-origin cookie proxy
+rehberi eklendi. Email verification/recovery, session retention, monitoring ve gerçek
+HTTPS deployment kontrolleri açık. npm production audit 0; dev braces 5 HIGH kayıt,
+venv pip25.0.1 için 12 advisory kaydı açık; uygulama Python paketlerinde bulgu yok.
+
 ## 5 Ekim 2026 — Merge öncesi kapsamlı auth audit
 
 Branch `feat/auth-roles`. Güncel sonuç **NEEDS_FIX**: aşağıdaki kod/test
