@@ -274,7 +274,15 @@ Gemini anahtarı [Google AI Studio](https://aistudio.google.com/apikey) üzerind
 
 ## Testler ve Doğrulama
 
-**225 backend testi SQLite üzerinde geçti; discovery regresyonları ayrıca 20 test ile PostgreSQL üzerinde doğrulandı. Önceki fazda tam PostgreSQL suite 220 testle geçmişti.** Frontend lint, TypeScript production build ve 13 test başarılı. Gerçek kart bileşeninde HTML/script kaçışı, HTTPS URL kontrolü ve PATCH/DELETE sözleşmesi test edildi. PostgreSQL upgrade/check/downgrade/upgrade döngüsünde eski aday/proje/snapshot ve 27 teknik kanıt korundu.
+**6 Ekim 2026 güncel doğrulama özeti:**
+
+- Backend SQLite: **346 PASS**.
+- Backend gerçek PostgreSQL18: **346/346 PASS** (manuel doğrulama; 38.93s).
+- `a14_proof_requests` migration: gerçek PostgreSQL18 üzerinde **head PASS**.
+- Frontend: **47 PASS**; `npm audit --omit=dev`: **0 açık**.
+- `lint`, `build`, `compileall`, `pip check` ve `alembic check` geçti.
+
+PostgreSQL18 çalışmasındaki Starlette TestClient/httpx deprecation ve Windows pytest cache permission uyarıları test failure değildir. Gerçek HTTPS ingress/proxy/cookie smoke deployment aşamasında hâlâ açıktır. [Ayrıntılı doğrulama kaydı](docs/PROOF_REQUESTS.md#6-ekim-2026-doğrulama-kaydı).
 
 Kapsam: matching sınır durumları, API oluşturma/okuma akışları, GitHub HTTP mock’ları, evidence semantiği, provider timeout/429/5xx hataları, Gemini istek sözleşmesi, structured output doğrulaması, metadata ve migration upgrade/downgrade ile eski kayıtların korunması. Testler gerçek API anahtarı veya internet gerektirmez. Starlette TestClient’ın httpx kullanımına ilişkin deprecation uyarısı testleri başarısız kılmaz.
 
