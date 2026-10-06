@@ -30,9 +30,12 @@ Backend `CORS_ORIGINS` JSON listesi varsayılan olarak `http://localhost:3000` v
 | `/kayit` | Aday/kurum hesabı oluşturma |
 | `/aday` | Aday/proje oluşturma, public GitHub analizi ve kaynaklı evidence |
 | `/ihtiyac` | İhtiyaç oluşturma, required/preferred kriterler |
-| `/eslesme` | Gerçek eşleşme, kapsam, matched/unmatched kriterler ve evidence |
+| `/eslesme` | Dondurulmuş Evidence Trace, kanıt odaklı inceleme ve kanıt isteği |
+| `/profil` | Yaşayan profil, zaman çizelgesi ve kanıt pasaportu |
+| `/kesif` | Need kapsamındaki keşif ve 2–4 adayla takım matrisi |
+| `/kanit-istekleri` | Role ve sahipliğe göre özel gelen kutusu |
 
-Candidate ve project adımları ayrı kaydedilir; proje isteği hata verirse aday yeniden oluşturulmaz. İhtiyaçtaki “Demo verisini doldur” yalnız sentetik input doldurur. Form submit’leri gerçek endpoint’lere gider. İşlemler sırasında tekrar submit engellenir; sahte yüzde veya aşama ilerlemesi gösterilmez.
+Candidate ve project adımları ayrı kaydedilir; proje isteği hata verirse aday yeniden oluşturulmaz. İhtiyaçtaki “Örnekle başla” yalnız sentetik input doldurur. Form submit’leri gerçek endpoint’lere gider. İşlemler sırasında tekrar submit engellenir; sahte yüzde veya aşama ilerlemesi gösterilmez.
 
 ## Sözleşme ve kod düzeni
 
@@ -68,9 +71,9 @@ npm run start -- --hostname 127.0.0.1
 
 `npm test` Node’un yerleşik test runner’ıyla API hata ayrıştırma, label semantiği, form validation ve güvenli kaynak linklerini sınar. Ağ veya canlı AI gerekmez. `npm run format` kaynak dosyalarını Prettier ile biçimlendirir.
 
-Backend CORS ve güvenlik testleri dahil 163 pytest testi geçmektedir. Canlı Gemini backend smoke testi daha önce ekip tarafından doğrulandı; bu frontend ortamında key/model bulunmadığı için canlı Gemini E2E ayrıca blokludur. Tarayıcı kontrollerinin ayrıntıları [doğrulama kaydında](../docs/FRONTEND_VALIDATION.md) bulunur.
+Bu turda backend 346, frontend 47 test geçti. Backend CORS, auth/ownership ve production-hardening regresyonları korunur. Canlı Gemini backend smoke testi daha önce ekip tarafından doğrulandı; bu frontend ortamında key/model bulunmadığı için canlı Gemini E2E ayrıca blokludur. Tarayıcı kontrollerinin ayrıntıları [doğrulama kaydında](../docs/FRONTEND_VALIDATION.md) bulunur.
 
-Cookie authentication ve aday/kurum ownership uygulanır. Deployment hardening ve background jobs sonraki fazdır. [AUTH](../docs/AUTH.md).
+Cookie authentication ve aday/kurum ownership uygulanır. Deployment hardening mevcuttur; gerçek HTTPS ingress/cookie smoke ve operasyonel sınırlar için [deployment kaydına](../docs/PRODUCTION_READINESS.md) bakın. [AUTH](../docs/AUTH.md).
 
 ## Demo sunumu ve güvenlik
 
@@ -84,3 +87,11 @@ Yanıtlarda nosniff, referrer/permissions policy ve iframe koruması vardır.
 Bu başlıklar backend yetkilendirmesi sağlamaz. API yalnız kontrollü yerel demo
 verisiyle kullanılmalıdır; [güvenlik raporundaki](../docs/SECURITY_REVIEW.md)
 AI quota ve deployment riskleri public deployment öncesi çözülmelidir.
+
+## TR / EN ve kanıt araçları
+
+`src/i18n/tr.ts` ana anahtar sözleşmesidir; `en.ts` aynı anahtarları TypeScript ile zorunlu tutar. Varsayılan TR, `zeminai.locale` tercihi localStorage'da saklanır. `useSyncExternalStore` ile seçili dil tüm istemci bileşenlerine yayılır; `html.lang` güncellenir. Dil kütüphanesi veya yeni dependency yoktur. İngilizce tercihi olan tarayıcıda ilk Türkçe görünüm hydration tamamlanana kadar gizlenir; storage kullanılamıyorsa TR çalışır. Bu MVP JavaScript gerektirir; sunucu tarafında locale routing/SEO uygulanmaz.
+
+`t(key)` statik arayüz metinleri içindir. `tx` yalnız sabit eski arayüz etiketleri ve bilinen sistem notlarını eşler; kullanıcı başlığı, açıklaması, alıntısı veya kurum notuna uygulanmaz. Hatalar backend mesajından değil `error.code`/HTTP durumundan çevrilir. Bilinmeyen hata güvenli genel mesaj verir; 403/404/409/422/429/503 oturumu silmez.
+
+Kanıt zinciri tek match yanıtından okunur; kriter başına evidence HTTP isteği yoktur. Kör yanıt kaynak metni/URL'yi sunucuda çıkarır. Team seçimi 2–4 aday için mevcut union coverage endpoint'ini çağırır, eski yanıtlar seçim anahtarıyla gizlenir. Gönderim formu proje/profil/HTTPS kaynaklarından yalnız birini bağlar. [İş akışı ve test kaydı](../docs/PROOF_REQUESTS.md).

@@ -55,6 +55,14 @@ Snapshot, incelenen dosyaları ve commit referansını saklar. Eşleşme sonucu 
 
 `/eslesme` kanıt boşluklarını dondurulmuş sonuçtan açıklar; “kanıt bulunamadı” hiçbir zaman “beceri yok” anlamına gelmez. Yeni görünümler AI veya GitHub çağrısı yapmaz. [Sözleşme, sınırlar ve gelecek kapsamı](docs/LIVING_PROFILE.md).
 
+## Kanıttan sonraki adım
+
+Arayüz TR/EN arasında geçer; başlıktaki dil tercihi bu tarayıcıda saklanır. Kullanıcı açıklamaları, proje alıntıları ve kurum notları yazıldıkları dilde kalır. Dil seçimi matching sonucunu değiştirmez.
+
+**Evidence Trace**, her kriterin kaynak türünü, kanıt durumunu ve dayanağını eşleşmenin oluşturulduğu anda dondurur. Eski eşleşmeler yeniden hesaplanmaz; bu alanı olmayan eski kayıtlar bunu açıkça belirtir. Discovery ve match ekranlarındaki **Kanıt odaklı inceleme**, kimlik içerebilen alanları sunucuda çıkarır. Yetkili kurum ayrıntıları açabilir; bu tam anonimleştirme değildir.
+
+**Takım oluşturucu**, 2–4 adayın mevcut kriter kapsamını anında bir matriste gösterir. Yeni bir başarı puanı veya AI değerlendirmesi üretmez. **Kanıt İsteği**, karşılanmayan bir kriter için adayın mevcut proje, profil kaydı veya HTTPS bağlantısı paylaşmasını sağlar. Gönderim ve isteği kapatma, beceri doğrulaması değildir; eski skoru değiştirmez. [İş akışı, API ve doğrulamalar](docs/PROOF_REQUESTS.md).
+
 ## Mimari
 
 Tek backend içinde modüler bir yapı kullanılır; ayrı mikroservisler yoktur.
