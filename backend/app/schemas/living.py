@@ -120,3 +120,37 @@ class TeamCoverage(ProfileContract):
     total_count: int
     criteria: list[TeamCriterion]
     limitations: list[str]
+
+
+class TeamComplementCreate(TeamCreate):
+    candidate_ids: list[UUID] = Field(min_length=2, max_length=3)
+
+
+class TeamComplementCriterion(ProfileContract):
+    criterion_id: UUID
+    label: str
+    priority: Literal['required', 'preferred']
+
+
+class TeamComplementSupport(TeamComplementCriterion):
+    sources: list[EvidenceReference]
+
+
+class TeamComplementCandidate(ProfileContract):
+    candidate_id: UUID
+    label: str
+    closes_required_count: int
+    closes_preferred_count: int
+    closes: list[TeamComplementSupport]
+    resulting_required_coverage: float
+    resulting_preferred_coverage: float
+    resulting_matched_count: int
+
+
+class TeamComplements(ProfileContract):
+    need_id: UUID
+    anonymous: bool
+    uncovered_criteria: list[TeamComplementCriterion]
+    candidates: list[TeamComplementCandidate]
+    ordering: str
+    limitations: list[str]

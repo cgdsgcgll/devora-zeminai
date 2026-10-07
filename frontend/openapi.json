@@ -486,6 +486,156 @@
         }
       }
     },
+    "/needs/{need_id}/team-complements": {
+      "post": {
+        "summary": "Team Complements",
+        "operationId": "team_complements_needs__need_id__team_complements_post",
+        "parameters": [
+          {
+            "name": "need_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Need Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeamComplementCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamComplements"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "504": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Gateway Timeout"
+          }
+        }
+      }
+    },
     "/matches/{match_id}/gaps": {
       "get": {
         "summary": "Match Gaps",
@@ -7527,6 +7677,199 @@
           "status"
         ],
         "title": "Submission"
+      },
+      "TeamComplementCandidate": {
+        "properties": {
+          "candidate_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Candidate Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "closes_required_count": {
+            "type": "integer",
+            "title": "Closes Required Count"
+          },
+          "closes_preferred_count": {
+            "type": "integer",
+            "title": "Closes Preferred Count"
+          },
+          "closes": {
+            "items": {
+              "$ref": "#/components/schemas/TeamComplementSupport"
+            },
+            "type": "array",
+            "title": "Closes"
+          },
+          "resulting_required_coverage": {
+            "type": "number",
+            "title": "Resulting Required Coverage"
+          },
+          "resulting_preferred_coverage": {
+            "type": "number",
+            "title": "Resulting Preferred Coverage"
+          },
+          "resulting_matched_count": {
+            "type": "integer",
+            "title": "Resulting Matched Count"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "candidate_id",
+          "label",
+          "closes_required_count",
+          "closes_preferred_count",
+          "closes",
+          "resulting_required_coverage",
+          "resulting_preferred_coverage",
+          "resulting_matched_count"
+        ],
+        "title": "TeamComplementCandidate"
+      },
+      "TeamComplementCreate": {
+        "properties": {
+          "candidate_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "maxItems": 3,
+            "minItems": 2,
+            "title": "Candidate Ids"
+          },
+          "anonymous": {
+            "type": "boolean",
+            "title": "Anonymous",
+            "default": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "candidate_ids"
+        ],
+        "title": "TeamComplementCreate"
+      },
+      "TeamComplementCriterion": {
+        "properties": {
+          "criterion_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Criterion Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "required",
+              "preferred"
+            ],
+            "title": "Priority"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "criterion_id",
+          "label",
+          "priority"
+        ],
+        "title": "TeamComplementCriterion"
+      },
+      "TeamComplementSupport": {
+        "properties": {
+          "criterion_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Criterion Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "required",
+              "preferred"
+            ],
+            "title": "Priority"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceReference"
+            },
+            "type": "array",
+            "title": "Sources"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "criterion_id",
+          "label",
+          "priority",
+          "sources"
+        ],
+        "title": "TeamComplementSupport"
+      },
+      "TeamComplements": {
+        "properties": {
+          "need_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Need Id"
+          },
+          "anonymous": {
+            "type": "boolean",
+            "title": "Anonymous"
+          },
+          "uncovered_criteria": {
+            "items": {
+              "$ref": "#/components/schemas/TeamComplementCriterion"
+            },
+            "type": "array",
+            "title": "Uncovered Criteria"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/TeamComplementCandidate"
+            },
+            "type": "array",
+            "title": "Candidates"
+          },
+          "ordering": {
+            "type": "string",
+            "title": "Ordering"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Limitations"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "need_id",
+          "anonymous",
+          "uncovered_criteria",
+          "candidates",
+          "ordering",
+          "limitations"
+        ],
+        "title": "TeamComplements"
       },
       "TeamCoverage": {
         "properties": {

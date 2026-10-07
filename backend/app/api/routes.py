@@ -46,6 +46,14 @@ def team_coverage(need_id: UUID, request: Request, data: living_schema.TeamCreat
     return living.team(db, need_id, data)
 
 
+@router.post('/needs/{need_id}/team-complements', response_model=living_schema.TeamComplements)
+def team_complements(need_id: UUID, request: Request, data: living_schema.TeamComplementCreate,
+                     db: Session = Depends(get_db), user=Depends(auth.get_current_user)):
+    auth.need_record(db, need_id, user)
+    consume(request, db, user, "compute")
+    return living.team_complements(db, need_id, data)
+
+
 @router.get('/matches/{match_id}/gaps', response_model=living_schema.GapSummary)
 def match_gaps(match_id: UUID, db: Session = Depends(get_db), user=Depends(auth.get_current_user)):
     auth.match_record(db, match_id, user)

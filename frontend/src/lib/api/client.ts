@@ -1,5 +1,6 @@
 "use client";
 import { t } from "../../i18n/index.ts";
+import { validComplements } from "./team-complements.ts";
 import type { components } from "./schema";
 export type Model<K extends keyof components["schemas"]> =
   components["schemas"][K];
@@ -121,7 +122,11 @@ async function request<T>(
   } catch {
     throw new ApiError("NETWORK_ERROR", t("m417"), true);
   }
-  if (response.ok && response.status === 204) return undefined as T;
+  if (response.ok && response.status === 204) {
+    if (path.endsWith("/team-complements"))
+      throw new ApiError("INVALID_RESPONSE", t("m423"));
+    return undefined as T;
+  }
   const data: unknown = await response.json().catch(() => null);
   if (!response.ok) {
     if (
@@ -135,7 +140,16 @@ async function request<T>(
   if (!data) throw new ApiError("INVALID_RESPONSE", t("m418"));
   const hasId = (v: unknown) =>
     !!v && typeof v === "object" && "id" in v && typeof v.id === "string";
-  if (path.startsWith("/auth/")) {
+  if (path.endsWith("/team-complements")) {
+    if (
+      !validComplements(
+        data,
+        path.split("/")[2],
+        (body as { anonymous: boolean }).anonymous,
+      )
+    )
+      throw new ApiError("INVALID_RESPONSE", t("m423"));
+  } else if (path.startsWith("/auth/")) {
     if (typeof data !== "object" || !("user" in data) || !hasId(data.user))
       throw new ApiError("INVALID_RESPONSE", t("m419"));
   } else if (Array.isArray(data)) {
@@ -201,6 +215,11 @@ export const api = {
     ),
   team: (id: string, candidate_ids: string[], anonymous = true) =>
     request<Model<"TeamCoverage">>(`/needs/${id}/team-coverage`, {
+      candidate_ids,
+      anonymous,
+    }),
+  teamComplements: (id: string, candidate_ids: string[], anonymous = true) =>
+    request<Model<"TeamComplements">>(`/needs/${id}/team-complements`, {
       candidate_ids,
       anonymous,
     }),

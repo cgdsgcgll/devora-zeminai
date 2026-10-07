@@ -73,3 +73,27 @@ GitHub hesabını aday kimliğine doğrulanmış biçimde bağlayan auth akış�
 Provider-backed verification, doğrulanmış GitHub kimliğine bağlı bounded attribution, continuous sync, authenticated endorsements, gelişmiş takım optimizasyonu ve tam collaboration lifecycle. `Match → Contact/Interview → Collaboration → Project → Output` gelecekte yetkilendirilmiş bir süreç olabilir; bu sürümde sahte endorsement, reviewed/contacted alanı veya CRM yoktur.
 
 Auth/ownership kontrolleri ve IDOR negatif testleri uygulanmıştır; AI rate limiting/kota **HIGH / OPEN production blocker** kalır. [Auth sözleşmesi](AUTH.md). Profil, keşif ve takım uçları da erişim kontrolü olmadan public üretime açılmamalıdır. Kontroller ve çalıştırılan komutlar [güvenlik incelemesinde](SECURITY_REVIEW.md).
+
+
+### Team complements (7 Ekim 2026)
+
+`POST /needs/{need_id}/team-complements`, `TeamComplementCreate`: 2–3 farklı,
+aktif aday kimliği ve `anonymous` (varsayılan true). Yalnız kurumun kendi ihtiyacı;
+Origin/Referer kontrolü ve DB-backed `compute` bütçesi uygulanır.
+`TeamCoverage` değişmez. Tam aktif discovery havuzu (en fazla 100 aday) toplu
+olarak yüklenir; sınır aşılırsa 422 döner, kısmi öneri üretilmez.
+Seçili takımın criterion union kapsamı çıkarılır. Yalnız açık kriterlerden en az
+birini mevcut matcher ile karşılayan, seçilmemiş adaylar döner.
+Sıra: `closes_required_count DESC, closes_preferred_count DESC, candidate_id ASC`.
+`resulting_*` alanları tek aday eklenmesinin gerçek union kapsamını gösterir.
+Genel skor tie-break olarak kullanılmaz. Sonuç/seçim saklanmaz; AI veya URL fetch yoktur.
+Teknik `declared_only` kanıt sayılmaz; açıkça istenen profil deneyimi kriterlerinin
+mevcut beyan/bağlantı semantiği korunur. Repository kanıtı bireysel yazarlık doğrulamaz.
+Anonim yanıt ad/kaynak serbest metni/URL taşımaz; kanıt referansları family/status/count'tur.
+Frontend yalnız kullanıcı isteğiyle çağırır; takım/need/anonim görünüm değişimi eski
+sonucu kaldırır. Dört kişilik takım ve tam kapsam durumunda aksiyon gösterilmez.
+
+Eşleşmedeki “Nasıl hesaplandı?” açıklaması kayıtlı kriter sayılarını ve sunucu
+coverage değerlerini gösterir; `result.score` authoritative kalır. 80/20 veya tek
+öncelik grubunda %100 ağırlık açıklanır; strength puan katsayısı değildir.
+Frozen trace yeniden hesaplanmaz; tarihsel kayıt olduğu açıkça gösterilir.
