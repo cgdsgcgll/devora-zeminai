@@ -98,13 +98,18 @@ def need_and_views(db, need_id, candidates, anonymous):
     return need, [candidate_view(c, calculate_for_need(need, materials[c.id]), materials[c.id], anonymous) for c in candidates]
 
 
-def discovery(db, need_id, anonymous=True, offset=0, limit=20):
+def discovery_pool(db):
     # Never rank a silently truncated pool. Score all candidates or fail explicitly.
     candidates = db.scalars(select(m.Candidate).join(m.User, m.Candidate.owner_user_id == m.User.id).where(m.User.is_active.is_(True), m.User.role == 'candidate').order_by(m.Candidate.id).limit(DISCOVERY_MAX_CANDIDATES + 1)).all()
     if len(candidates) > DISCOVERY_MAX_CANDIDATES:
         raise AppError('DISCOVERY_POOL_LIMIT_EXCEEDED',
             f'Keşif en fazla {DISCOVERY_MAX_CANDIDATES} adaylık tam havuzu destekler; eksik sıralama döndürülmedi.',
             422, details={'max_candidates': DISCOVERY_MAX_CANDIDATES})
+    return candidates
+
+
+def discovery(db, need_id, anonymous=True, offset=0, limit=20):
+    candidates = discovery_pool(db)
     _, views = need_and_views(db, need_id, candidates, anonymous)
     views.sort(key=lambda v: (-v.score, -v.required_coverage, -v.preferred_coverage, str(v.candidate_id)))
     return s.Discovery(need_id=need_id, anonymous=anonymous, offset=offset, limit=limit,
@@ -132,3 +137,44 @@ def team(db, need_id, data):
     return s.TeamCoverage(need_id=need_id, required_coverage=coverage('required'), preferred_coverage=coverage('preferred'),
         matched_count=sum(bool(c.supporters) for c in criteria), total_count=len(criteria), criteria=criteria,
         limitations=[AUTHORSHIP, 'Elle seçilen adayların güncel kriter kapsamı birleşimidir. Takım başarısı tahmini değildir; otomatik takım seçimi yapılmaz. Sonuç saklanmaz.'])
+
+
+def team_complements(db, need_id, data):
+    """Read-only marginal criterion coverage over the same bounded discovery pool."""
+    candidates = discovery_pool(db)
+    selected = set(data.candidate_ids)
+    if not selected.issubset({c.id for c in candidates}):
+        raise AppError('NOT_FOUND', 'Seçilen adaylardan biri bulunamadı.', 404)
+    need, views = need_and_views(db, need_id, candidates, data.anonymous)
+    covered = {c.criterion_id for v in views if v.candidate_id in selected
+               for c in v.criteria if c.matched}
+    criteria = sorted(need.criteria, key=lambda c: str(c.id))
+    uncovered = [s.TeamComplementCriterion(criterion_id=c.id, label=c.skill_label, priority=c.priority)
+                 for c in criteria if c.id not in covered]
+    required = {c.id for c in criteria if c.priority == 'required'}
+    preferred = {c.id for c in criteria if c.priority == 'preferred'}
+    suggestions = []
+    for view in views:
+        if view.candidate_id in selected:
+            continue
+        closes = sorted([s.TeamComplementSupport(criterion_id=c.criterion_id, label=c.label,
+            priority=c.priority, sources=c.sources) for c in view.criteria
+            if c.matched and c.criterion_id not in covered], key=lambda c: str(c.criterion_id))
+        if not closes:
+            continue
+        combined = covered | {c.criterion_id for c in closes}
+        suggestions.append(s.TeamComplementCandidate(candidate_id=view.candidate_id, label=view.label,
+            closes_required_count=sum(c.priority == 'required' for c in closes),
+            closes_preferred_count=sum(c.priority == 'preferred' for c in closes), closes=closes,
+            resulting_required_coverage=len(combined & required) / len(required) if required else 0,
+            resulting_preferred_coverage=len(combined & preferred) / len(preferred) if preferred else 0,
+            resulting_matched_count=len(combined)))
+    suggestions.sort(key=lambda c: (-c.closes_required_count, -c.closes_preferred_count, str(c.candidate_id)))
+    return s.TeamComplements(need_id=need_id, anonymous=data.anonymous,
+        uncovered_criteria=uncovered, candidates=suggestions,
+        ordering='closes_required_count DESC, closes_preferred_count DESC, candidate_id ASC',
+        limitations=[AUTHORSHIP,
+            'Need-specific evidence coverage only: observed technical evidence and explicitly requested profile records under the existing matcher. Profile declarations are not independent verification.',
+            'Not a general candidate ranking, personality/team-fit inference or team-success prediction.',
+            'Computed from the selected team and current evidence. No automatic selection; results are not persisted.',
+            f'Full active discovery pool capped at {DISCOVERY_MAX_CANDIDATES}; exceeding it fails closed without partial results.'])

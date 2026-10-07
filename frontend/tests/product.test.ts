@@ -34,6 +34,7 @@ function load(
   const mod = { exports: {} };
   const dependencies = (id: string): unknown => {
     if (id.includes("i18n/index")) return i18n;
+    if (id.includes("i18n/react")) return { useLocale: () => i18n.getLocale() };
     if (id === "next/link")
       return {
         __esModule: true,
@@ -245,6 +246,141 @@ test("client sends explicit blind flag, team sizes and proof lifecycle payloads"
     });
     await api.reviewProof("p", "closed");
     assert.equal(calls.at(-1)?.options?.method, "PATCH");
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test("match explanation displays priority counts and server coverage without rescoring", () => {
+  const { MatchCalculation, MatchResult } = load("components/match-result.tsx");
+  for (const locale of ["tr", "en"] as const) {
+    i18n.setLocale(locale);
+    for (const priorities of [
+      ["required", "preferred"],
+      ["required"],
+      ["preferred"],
+    ]) {
+      const result = {
+        id: "m",
+        score: 17,
+        required_coverage: 0.75,
+        preferred_coverage: 0.5,
+        matched_criteria: priorities.map((priority, i) => ({
+          criterion_id: String(i),
+          skill_label: "Python",
+          priority,
+          matched: true,
+          trace_available: true,
+          trace_items: [
+            { family: "source_file", status: "observed", strength: "weak" },
+          ],
+        })),
+        unmatched_criteria: [
+          {
+            criterion_id: "u",
+            skill_label: "Docker",
+            priority: priorities[0],
+            matched: false,
+            kind: "technical_skill",
+            trace_available: true,
+            trace_items: [{ family: "readme", status: "declared_only" }],
+          },
+        ],
+      };
+      const html = renderToStaticMarkup(
+        React.createElement(MatchCalculation, { result }),
+      );
+      const decimal = locale === "tr" ? "," : ".";
+      const formula =
+        priorities.length === 2
+          ? `100 × (0${decimal}8 × 0${decimal}75 + 0${decimal}2 × 0${decimal}5)`
+          : `100 × 0${decimal}${priorities[0] === "required" ? "75" : "5"}`;
+      assert.ok(html.includes(formula));
+      assert.ok(html.includes("17")); // authoritative server score, deliberately not locally recomputed
+      assert.ok(html.includes(" / "));
+      const trace = renderToStaticMarkup(
+        React.createElement(MatchResult, { result }),
+      );
+      assert.ok(trace.includes(i18n.t("frozenTrace")));
+      assert.ok(trace.includes(i18n.t("countedEvidence")));
+      assert.ok(trace.includes(i18n.t("uncountedDeclaration")));
+    }
+  }
+  i18n.setLocale("tr");
+});
+
+test("team complement client rejects malformed and wrong-context success payloads", async () => {
+  const original = globalThis.fetch;
+  const valid = {
+    need_id: "need",
+    anonymous: true,
+    uncovered_criteria: [
+      { criterion_id: "c", label: "Python", priority: "required" },
+    ],
+    candidates: [
+      {
+        candidate_id: "id",
+        label: "Aday #id",
+        closes_required_count: 1,
+        closes_preferred_count: 0,
+        closes: [
+          {
+            criterion_id: "c",
+            label: "Python",
+            priority: "required",
+            sources: [{ family: "source_file", status: "observed", count: 1 }],
+          },
+        ],
+        resulting_required_coverage: 1,
+        resulting_preferred_coverage: 0,
+        resulting_matched_count: 1,
+      },
+    ],
+    ordering: "counts",
+    limitations: ["No inference"],
+  };
+  try {
+    for (const body of [
+      [],
+      {},
+      { ...valid, need_id: "other" },
+      { ...valid, anonymous: false },
+      { ...valid, candidates: [{}] },
+      {
+        ...valid,
+        candidates: [
+          { ...valid.candidates[0], resulting_required_coverage: 2 },
+        ],
+      },
+      {
+        ...valid,
+        candidates: [
+          {
+            ...valid.candidates[0],
+            closes: [{ ...valid.candidates[0].closes[0], sources: [{}] }],
+          },
+        ],
+      },
+    ]) {
+      globalThis.fetch = async () => Response.json(body);
+      await assert.rejects(api.teamComplements("need", ["a", "b"]), {
+        code: "INVALID_RESPONSE",
+      });
+    }
+    globalThis.fetch = async (url, options) => {
+      assert.equal(String(url), "/api/needs/need/team-complements");
+      assert.equal(options?.method, "POST");
+      assert.deepEqual(JSON.parse(options!.body as string), {
+        candidate_ids: ["a", "b"],
+        anonymous: true,
+      });
+      return Response.json(valid);
+    };
+    assert.deepEqual(await api.teamComplements("need", ["a", "b"]), valid);
+    globalThis.fetch = async () => new Response(null, { status: 204 });
+    await assert.rejects(api.teamComplements("need", ["a", "b"]), {
+      code: "INVALID_RESPONSE",
+    });
   } finally {
     globalThis.fetch = original;
   }

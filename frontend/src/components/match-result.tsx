@@ -86,6 +86,50 @@ function RequestProof({
   );
 }
 
+export function MatchCalculation({ result }: { result: Match }) {
+  const locale = useLocale();
+  const rows = [...result.matched_criteria, ...result.unmatched_criteria];
+  const required = rows.filter((c) => c.priority === "required");
+  const preferred = rows.filter((c) => c.priority === "preferred");
+  const number = (n: number) =>
+    n.toLocaleString(locale === "tr" ? "tr-TR" : "en-US", {
+      maximumFractionDigits: 6,
+    });
+  const formula =
+    required.length && preferred.length
+      ? `100 × (${number(0.8)} × ${number(result.required_coverage)} + ${number(0.2)} × ${number(result.preferred_coverage)})`
+      : `100 × ${number(required.length ? result.required_coverage : result.preferred_coverage)}`;
+  return (
+    <details className="disclosure">
+      <summary>{t("howCalculated")}</summary>
+      {[
+        {
+          label: t("requiredCriteria"),
+          rows: required,
+          coverage: result.required_coverage,
+        },
+        {
+          label: t("preferredCriteria"),
+          rows: preferred,
+          coverage: result.preferred_coverage,
+        },
+      ].map((group) => (
+        <p key={group.label}>
+          {group.label}: {group.rows.filter((c) => c.matched).length} /{" "}
+          {group.rows.length} · {number(group.coverage * 100)}%
+        </p>
+      ))}
+      <p>
+        {t("formulaLabel")}: {formula}
+      </p>
+      <p>
+        {t("m141")}: {number(result.score)} / 100
+      </p>
+      <p className="small">{t("strengthNoWeight")}</p>
+    </details>
+  );
+}
+
 export function MatchResult({ result }: { result: Match }) {
   useLocale();
 
@@ -101,6 +145,7 @@ export function MatchResult({ result }: { result: Match }) {
           </p>
           <p>{t("m303")}</p>
           <p className="small">{t("m304")}</p>
+          <MatchCalculation result={result} />
         </div>
         <div className="score-detail">
           <h2>{t("m305")}</h2>
@@ -146,10 +191,11 @@ export function MatchResult({ result }: { result: Match }) {
                 ).join(" · ")}
               </span>
             </summary>
+            {c.trace_available && <p className="small">{t("frozenTrace")}</p>}
             {!c.trace_available ? (
               <p>{t("m315")}</p>
             ) : !c.trace_items?.length ? (
-              <p>{t("m316")}</p>
+              <p>{t("noCriterionEvidence")}</p>
             ) : (
               c.trace_items.map((e, i) => {
                 const url = safeProfileSource(e.source_url);
@@ -174,11 +220,18 @@ export function MatchResult({ result }: { result: Match }) {
                       </p>
                     )}
                     <p>
-                      {e.status === "declared_only"
-                        ? t("m319")
-                        : e.status === "not_found"
-                          ? t("m320")
-                          : t("m321")}
+                      {e.status === "not_found"
+                        ? t("noCriterionEvidence")
+                        : e.status === "declared_only" &&
+                            (c.kind === "technical_skill" ||
+                              c.kind === "project_experience" ||
+                              !c.matched)
+                          ? t("uncountedDeclaration")
+                          : e.status === "observed" && c.matched
+                            ? t("countedEvidence")
+                            : c.matched
+                              ? t("profileRecordCounted")
+                              : t("noCriterionEvidence")}
                     </p>
                   </div>
                 );

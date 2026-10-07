@@ -10,23 +10,9 @@ import { api, userError, type Model } from "@/lib/api/client";
 import { useSession } from "@/components/session";
 import { PageHeader, Notes, Empty } from "@/components/ui";
 import { LoadingState } from "@/components/feedback";
-import { sourceLabels, provenanceLabels } from "@/lib/profile";
-
-function Sources({ items }: { items: Model<"EvidenceReference">[] }) {
-  useLocale();
-
-  return (
-    <ul>
-      {items.map((s) => (
-        <li key={`${s.family}:${s.status}`}>
-          {sourceLabels[s.family] || s.family} ·{" "}
-          {provenanceLabels[s.status] || s.status} · {s.count}
-          {t("m116")}
-        </li>
-      ))}
-    </ul>
-  );
-}
+import { sourceLabels } from "@/lib/profile";
+import { Sources } from "@/components/evidence-sources";
+import { TeamComplements } from "@/components/team-complements";
 
 function DiscoveryView({
   needId,
@@ -91,7 +77,11 @@ function DiscoveryView({
   const candidateLabel = (id: string, label?: string) =>
     anonymous
       ? `${t("m252")} #${id.slice(0, 8)}`
-      : label || "#" + id.slice(0, 8);
+      : label ||
+        team?.criteria
+          .flatMap((c) => c.supporters)
+          .find((c) => c.candidate_id === id)?.label ||
+        "#" + id.slice(0, 8);
   const busy = !!session.busy;
   return (
     <>
@@ -208,6 +198,19 @@ function DiscoveryView({
                 .map((c) => c.label)
                 .join(" · ") || t("none")}
             </p>
+            <TeamComplements
+              key={`${needId}:${anonymous}:${selectionKey}:${retry}`}
+              needId={needId}
+              anonymous={anonymous}
+              selected={selected}
+              team={team}
+              onAdd={(id) => {
+                setSelected((ids) =>
+                  ids.length < 4 && !ids.includes(id) ? [...ids, id] : ids,
+                );
+                setTeamResponse(undefined);
+              }}
+            />
           </div>
         )}
       </section>

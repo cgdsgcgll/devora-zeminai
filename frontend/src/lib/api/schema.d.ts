@@ -55,6 +55,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/needs/{need_id}/team-complements": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Team Complements */
+    post: operations["team_complements_needs__need_id__team_complements_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/matches/{match_id}/gaps": {
     parameters: {
       query?: never;
@@ -1568,6 +1585,88 @@ export interface components {
       /** Evidence */
       evidence?: components["schemas"]["TraceEvidence"][];
     };
+    /** TeamComplementCandidate */
+    TeamComplementCandidate: {
+      /**
+       * Candidate Id
+       * Format: uuid
+       */
+      candidate_id: string;
+      /** Label */
+      label: string;
+      /** Closes Required Count */
+      closes_required_count: number;
+      /** Closes Preferred Count */
+      closes_preferred_count: number;
+      /** Closes */
+      closes: components["schemas"]["TeamComplementSupport"][];
+      /** Resulting Required Coverage */
+      resulting_required_coverage: number;
+      /** Resulting Preferred Coverage */
+      resulting_preferred_coverage: number;
+      /** Resulting Matched Count */
+      resulting_matched_count: number;
+    };
+    /** TeamComplementCreate */
+    TeamComplementCreate: {
+      /** Candidate Ids */
+      candidate_ids: string[];
+      /**
+       * Anonymous
+       * @default true
+       */
+      anonymous: boolean;
+    };
+    /** TeamComplementCriterion */
+    TeamComplementCriterion: {
+      /**
+       * Criterion Id
+       * Format: uuid
+       */
+      criterion_id: string;
+      /** Label */
+      label: string;
+      /**
+       * Priority
+       * @enum {string}
+       */
+      priority: "required" | "preferred";
+    };
+    /** TeamComplementSupport */
+    TeamComplementSupport: {
+      /**
+       * Criterion Id
+       * Format: uuid
+       */
+      criterion_id: string;
+      /** Label */
+      label: string;
+      /**
+       * Priority
+       * @enum {string}
+       */
+      priority: "required" | "preferred";
+      /** Sources */
+      sources: components["schemas"]["EvidenceReference"][];
+    };
+    /** TeamComplements */
+    TeamComplements: {
+      /**
+       * Need Id
+       * Format: uuid
+       */
+      need_id: string;
+      /** Anonymous */
+      anonymous: boolean;
+      /** Uncovered Criteria */
+      uncovered_criteria: components["schemas"]["TeamComplementCriterion"][];
+      /** Candidates */
+      candidates: components["schemas"]["TeamComplementCandidate"][];
+      /** Ordering */
+      ordering: string;
+      /** Limitations */
+      limitations: string[];
+    };
     /** TeamCoverage */
     TeamCoverage: {
       /**
@@ -1968,6 +2067,131 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["TeamCoverage"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Unprocessable Entity */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Too Many Requests */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Bad Gateway */
+      502: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Service Unavailable */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** @description Gateway Timeout */
+      504: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+  };
+  team_complements_needs__need_id__team_complements_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        need_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["TeamComplementCreate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TeamComplements"];
         };
       };
       /** @description Bad Request */
