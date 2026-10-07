@@ -2,9 +2,11 @@
 
 **Doğrulanabilir Yetenek ve Akıllı Eşleşme Platformu**
 
-ZeminAI, gençleri yalnızca okul, diploma veya CV anahtar kelimeleriyle değil; ürettikleri projeler, geliştirdikleri beceriler, aldıkları eğitimler, sertifikalar, hackathonlar ve topluluk katkıları üzerinden görünür kılan; kurum ihtiyaçlarıyla kanıta dayalı ve açıklanabilir şekilde eşleştiren bir yetenek platformudur.
+ZeminAI, adayın proje ve deneyim kayıtlarını belirli bir kurum ihtiyacının kriterleriyle ilişkilendirir. **Adaya genel bir yetenek puanı vermez; hangi kriter için hangi kanıtın mevcut olduğunu, hangilerinin yalnız beyan olduğunu ve hangi boşlukların kaldığını gösterir.** “Kanıt Uyumu”, bu ihtiyaca özgü kriter kapsamıdır.
 
-Çalışan MVP, GitHub teknik analizini isteğe bağlı eğitim, sertifika, hackathon, etkinlik, topluluk ve portföy kayıtlarıyla birleştirir. Yaşayan profil; zaman çizelgesi, factual yetenek haritası ve kanıt pasaportunu gösterir. Kurum tarafında belirli ihtiyaca göre aday keşfi, kanıt odaklı görünüm ve 2–4 kişinin deterministik takım kapsamı çalışır. Kullanıcı bağlantıları bağımsız doğrulama değildir. Sürekli profil senkronizasyonu ve dış provider doğrulaması henüz yoktur. [Windows demo kurulumu](docs/LOCAL_DEMO.md) · [Profil kanıtları sözleşmesi](docs/PROFILE_EVIDENCE.md) · [Yaşayan profil ve keşif](docs/LIVING_PROFILE.md).
+GitHub, kanıt sağlayıcılarından yalnızca biridir. Eğitim, sertifika, hackathon, etkinlik, topluluk ve portföy kayıtları da yaşayan profilde yer alır. Kurumlar eşleşmenin dayanağını inceleyebilir, adayları keşfedebilir, elle seçtikleri takımın kapsamını ve kalan boşlukları kapatan adayları görebilir. Eksik kanıt için Kanıt İsteği açılabilir; bu süreç otomatik doğrulama yapmaz.
+
+[Windows demo kurulumu](docs/LOCAL_DEMO.md) · [Profil kanıtları sözleşmesi](docs/PROFILE_EVIDENCE.md) · [Yaşayan profil ve keşif](docs/LIVING_PROFILE.md)
 
 ## Problem
 
@@ -14,18 +16,21 @@ CV’deki beceri beyanlarını doğrulamak ve dağınık proje bilgilerini incel
 
 ```mermaid
 flowchart LR
-    A[Aday ve proje] --> G[Public GitHub repository]
-    G --> S[Repository snapshot]
-    S --> E[Beceri ve kanıt analizi]
-    N[Kurum ihtiyacı] --> C[Required / preferred kriterler]
-    E --> M[Deterministik matching]
-    A --> P[Eğitim / sertifika / deneyim kayıtları]
-    P --> M
+    A[Hesap ve aday profili] --> P[Proje / eğitim / deneyim kayıtları]
+    P --> G[İsteğe bağlı GitHub snapshot ve analiz]
+    P --> M[Deterministik eşleşme]
+    G --> M
+    N[Kurum ihtiyacı] --> C[Zorunlu / tercih edilen kriterler]
     C --> M
-    M --> R[Skor, karşılanan kriterler ve kaynak kanıtları]
+    M --> R[Kanıt Uyumu ve nasıl hesaplandı]
+    R --> T[Evidence Trace ve boşluklar]
+    C --> D[Aday keşfi]
+    D --> U[Elle seçilen takım kapsamı]
+    U --> K[Takım Tamamlayıcıları]
+    T --> Q[Kanıt İsteği]
 ```
 
-Snapshot, incelenen dosyaları ve commit referansını saklar. Eşleşme sonucu kanıt kimlikleri, karşılanan/karşılanmayan kriterler ve belirsizliklerle birlikte okunabilir.
+Akışlar ihtiyaca göre kullanılır; her kullanıcının bütün adımları tamamlaması gerekmez. Snapshot incelenen dosyaları ve commit referansını, kayıtlı eşleşme ise o andaki kriter/kanıt ilişkilerini saklar.
 
 ## Neden Farklı?
 
@@ -35,61 +40,33 @@ Snapshot, incelenen dosyaları ve commit referansını saklar. Eşleşme sonucu 
 - LLM çıktısı ortak JSON Schema, strict Pydantic ve kaynak/alıntı kontrollerinden geçer.
 - Repository içeriği güvenilmeyen veri olarak ele alınır. Analizler provider, model ve sürüm bilgileriyle izlenir.
 
-## MVP Akışı
+## Güncel Ürün Akışı
 
-1. `Candidate` oluşturun.
-2. Adaya bir `Project` eklerken public GitHub URL’sini belirtin.
-3. Proje analizini başlatın; `RepositorySnapshot` ve `AnalysisRun` kaydedilir.
-4. Üretilen `SkillEvidence` kayıtlarının kaynaklarını ve sınırlamalarını inceleyin.
-5. `OrganizationNeed` oluşturun; doğal dil analizi `NeedCriterion` kayıtlarını üretir. Kriterler açıkça da girilebilir.
-6. Aday ve ihtiyaç için match oluşturun.
-7. Skor, required/preferred kapsamı, matched/unmatched kriterler ve ilişkili kanıtları okuyun.
+1. `/kayit` üzerinden Aday veya Kurum hesabı açın. Aday profili hesapla birlikte oluşturulur; kurum kendi ihtiyaçlarını yönetir. `/giris` ve çıkış menüsü DB tabanlı oturum kullanır.
+2. Aday, proje ve isteğe bağlı eğitim/sertifika/hackathon/etkinlik/topluluk/portföy kayıtlarını ekler. GitHub projesi analiz edildiğinde `RepositorySnapshot`, `AnalysisRun` ve kaynaklı `SkillEvidence` oluşur.
+3. Kurum ihtiyacını doğal dille anlatır veya açık kriterlerle oluşturur; zorunlu ve tercih edilen kriterleri inceler.
+4. Eşleşmedeki “Nasıl hesaplandı?” ile kriter sayılarını, kapsamı ve formülü; **Evidence Trace** ile kaynakları ve kanıt boşluklarını okur.
+5. İhtiyaca göre aday keşfini, kanıt odaklı görünümü ve elle seçilen takımın kapsamını kullanabilir; açık kriterler için **Takım Tamamlayıcıları** arayabilir.
+6. Karşılanmayan kriter için **Kanıt İsteği** açabilir. Aday mevcut proje, profil kaydı veya HTTPS bağlantısı paylaşır. Gönderim ya da kapatma, kanıtı otomatik olarak `observed` yapmaz; kayıtlı match snapshot/skorunu değiştirmez.
 
-İsteğe bağlı Gelişim ve Deneyim bölümünden profil kayıtlarını ekleyin. Match için en az bir başarılı proje analizi veya profil kaydı gerekir. Yalnız profil kaydı teknik kriterleri karşılamaz. GitHub-only akışı korunur; kanıt üretilmemesi geçerli bir analiz sonucudur.
+Match için en az bir başarılı proje analizi veya profil kaydı gerekir. Yalnız profil kaydı teknik kriteri karşılamaz; kanıt üretilmemesi geçerli bir analiz sonucudur. [Kanıt İsteği iş akışı ve API](docs/PROOF_REQUESTS.md).
 
-## Yaşayan profil ve kurum keşfi
+## Yaşayan Profil, Keşif ve Takım Kapsamı
 
-`/profil` üzerinden özet, Yetenek Haritası, kronolojik Gelişim Zaman Çizelgesi ve Kanıt Pasaportu arasında geçin. Counts kalite puanı değildir; tarihi olmayan olaylar sisteme eklenme tarihiyle açıkça etiketlenir. `/aday` içindeki açılır deneyim bölümünde portföy dahil kayıtlar düzenlenir.
+`/profil`; Gelişim Zaman Çizelgesi, kayıt sayılarına dayalı Yetenek Haritası ve **Kanıt Pasaportu** sunar. Sayılar kalite/yetenek puanı değildir; tarihi olmayan kayıtlar eklenme tarihiyle etiketlenir. `/aday` üzerinden profil kanıtları düzenlenir. Profil kayıtları ve bağlantılar bağımsız doğrulama değildir; sürekli senkronizasyon henüz yoktur.
 
-`/kesif` seçili ihtiyacın aynı 80/20 Kanıt Uyumu formülünü kullanır. En fazla 100 adaylık tam havuz önce Kanıt Uyumu ve kriter kapsamlarına göre deterministik sıralanır, ardından sayfalanır. Havuz sınırı aşılırsa kısmi sonuç yerine açık hata döner. Kanıt odaklı mod isim/okul/kaynak serbest metinlerini API yanıtından çıkarır; tam anonimlik sağlamaz; kurum rolü ve ihtiyaç sahipliği kontrolü altında sunulur. 2–4 aday seçerek criterion union kapsamını inceleyin. Takım başarısı tahmin edilmez.
+`/kesif`, en fazla **100 aktif adaylık tam havuzu** önce Kanıt Uyumu, gerekli kapsam ve tercih edilen kapsam azalan; eşitlikte aday kimliği artan sırada sıralar, sonra sayfalar. Havuz sınırı aşılırsa kısmi sonuç dönmez. Kanıt odaklı inceleme (blind review), kimlik alanlarını ve kaynak serbest metinlerini sunucuda çıkarır; tam anonimlik garantisi değildir. Yetkili kurum yalnız kendi ihtiyacı bağlamında kullanır.
 
-`/eslesme` kanıt boşluklarını dondurulmuş sonuçtan açıklar; “kanıt bulunamadı” hiçbir zaman “beceri yok” anlamına gelmez. Yeni görünümler AI veya GitHub çağrısı yapmaz. [Sözleşme, sınırlar ve gelecek kapsamı](docs/LIVING_PROFILE.md).
+| Akış | Ne yapar? |
+|---|---|
+| **Takım oluşturucu** | Elle seçilen **2–4 adayın** kriter birleşimini (union coverage) matriste gösterir. Bir kriteri birden fazla adayın karşılaması ek puan vermez. |
+| **Takım Tamamlayıcıları** | **2–3 aday seçili ve açık kriter varsa**, kullanıcı isteğiyle aynı sınırlı tam aktif havuzu değerlendirir. Seçili adayları çıkarır; yalnız en az bir açık kriteri mevcut matcher ile kapatan adayları gösterir. |
 
-## Kanıttan sonraki adım
+Tamamlayıcıların sırası: **kapatılan zorunlu boşluk sayısı DESC → tercih edilen boşluk sayısı DESC → candidate_id ASC**. Genel aday skoru tie-break değildir. Teknik `declared_only` kanıt teknik boşluğu kapatamaz; ilgili profil deneyimi kriterlerinin mevcut beyan/bağlantı semantiği korunur.
 
-Arayüz TR/EN arasında geçer; başlıktaki dil tercihi bu tarayıcıda saklanır. Kullanıcı açıklamaları, proje alıntıları ve kurum notları yazıldıkları dilde kalır. Dil seçimi matching sonucunu değiştirmez.
+Her sonuç destekleyen kaynak referanslarını ve aday eklenirse oluşacak gerekli/tercih edilen union kapsamını gösterir. “Takıma ekle” yalnız arayüz seçimini günceller; takım kapsamı yeniden hesaplanır, eski öneri temizlenir. Dört kişide ekleme sınırına ulaşılır. Otomatik takım seçimi, takım üyeliği/öneri kaydı, AI/provider çağrısı veya dış URL fetch yapılmaz. Bu araçlar takım başarısı ya da kişilik/takım uyumu tahmini değildir. [Sözleşme ve sınırlar](docs/LIVING_PROFILE.md).
 
-**Evidence Trace**, her kriterin kaynak türünü, kanıt durumunu ve dayanağını eşleşmenin oluşturulduğu anda dondurur. Eski eşleşmeler yeniden hesaplanmaz; bu alanı olmayan eski kayıtlar bunu açıkça belirtir. Discovery ve match ekranlarındaki **Kanıt odaklı inceleme**, kimlik içerebilen alanları sunucuda çıkarır. Yetkili kurum ayrıntıları açabilir; bu tam anonimleştirme değildir.
-
-**Takım oluşturucu**, 2–4 adayın mevcut kriter kapsamını anında bir matriste gösterir. Yeni bir başarı puanı veya AI değerlendirmesi üretmez. **Kanıt İsteği**, karşılanmayan bir kriter için adayın mevcut proje, profil kaydı veya HTTPS bağlantısı paylaşmasını sağlar. Gönderim ve isteği kapatma, beceri doğrulaması değildir; eski skoru değiştirmez. [İş akışı, API ve doğrulamalar](docs/PROOF_REQUESTS.md).
-
-## Mimari
-
-Tek backend içinde modüler bir yapı kullanılır; ayrı mikroservisler yoktur.
-
-```mermaid
-flowchart TD
-    U[Next.js / Swagger / API istemcisi] --> API[FastAPI endpointleri]
-    API --> W[Workflow katmanı]
-    W --> G[GitHub fetch]
-    G --> S[RepositorySnapshot]
-    S --> A[Analiz katmanı]
-    W -->|Kurum ihtiyacı| A
-    A --> P[rule_based / Gemini / OpenAI]
-    P --> V[Doğrulanmış domain çıktıları]
-    V --> W
-    W --> M[Deterministik matching]
-    W --> DB[(PostgreSQL)]
-    M --> W
-```
-
-Provider adaptörleri yalnız API iletişimi ve structured output taşır; veritabanı işlemleri workflow katmanındadır. Gemini ve OpenAI aynı project/need analyzer ve Pydantic sözleşmelerini kullanır. Analiz kayıtlarında provider/model, analiz sürümü, başlangıç/bitiş zamanı ve proje için commit SHA tutulur.
-
-## Yapay Zekâ Nerede Kullanılıyor?
-
-LLM, sınırlı proje açıklaması/README/kaynak dosya bağlamından beceri kanıtları ve açıklamalar çıkarır; kurum ihtiyacını `required` ve `preferred` kriterlere dönüştürür. Alıntıların gönderilen kaynakta bulunması ve beceriyle ilişkisi backend tarafından kontrol edilir.
-
-AI işe alınma olasılığı veya genel yetenek puanı hesaplamaz. Final matching skoru aşağıdaki sabit formülle hesaplanır. Kaynak doğrulaması kodun çalıştığını, adayın kodu yazdığını veya model yorumunun her durumda doğru olduğunu ispatlamaz.
+Arayüz **TR/EN** arasında geçer ve dil tercihini tarayıcıda saklar. Aday adları, kurum açıklamaları, beceri etiketleri, notlar ve kaynak alıntıları otomatik çevrilmez. Dil seçimi eşleşme sonucunu değiştirmez.
 
 ## Kanıt Modeli
 
@@ -101,11 +78,11 @@ AI işe alınma olasılığı veya genel yetenek puanı hesaplamaz. Final matchi
 
 LLM analizinde README/açıklama/beyan kanıtı `declared_only / weak` olarak sınırlandırılır. Dependency-only kanıt en fazla `medium`, repository dil bilgisi `weak` olur. Evidence kayıtları kaynak URL’si, varsa dosya yolu, alıntı, gerekçe ve sınırlamalar taşır.
 
-**Evidence strength ≠ skill proficiency.** Contributor sahipliği doğrulanmaz.
+**Evidence strength ≠ skill proficiency.** GitHub hesap kimliği ve contributor/katkı sahipliği doğrulanmaz; repository bağlantısı adayın tüm kodu yazdığını göstermez.
 
 ## Eşleşme / Scoring
 
-[Scorer](backend/app/services/matching/scorer.py), teknik kriterlerde normalize `skill_key` ve `observed` kanıtları, diğer kriterlerde ilgili proje/profil ailesini kullanır. Okul prestiji, GPA veya kayıt sayısı bonus getirmez. Bir kriterin birden fazla kanıtı olması kapsamı artırmaz; evidence strength bir puan çarpanı değildir.
+[Scorer](backend/app/services/matching/scorer.py), teknik kriterlerde normalize `skill_key` ve `observed` kanıtları, diğer kriterlerde ilgili proje/profil ailesini kullanır. Okul prestiji, GPA, etkinlik/kayıt sayısı, sosyal skor, kişilik veya soft-skill bonusu yoktur. Bir kriterin birden fazla kanıtı olması kapsamı artırmaz; evidence strength bir puan çarpanı değildir.
 
 `requiredCoverage` ve `preferredCoverage`, ilgili grupta kanıtla karşılanan kriter sayısının toplam kriter sayısına oranıdır.
 
@@ -116,9 +93,19 @@ LLM analizinde README/açıklama/beyan kanıtı `declared_only / weak` olarak s�
 | Yalnız preferred | `100 × preferredCoverage` |
 | Kriter yok | HTTP 422, `MATCHING_FAILED` |
 
-Skor 0–100 aralığındadır; sürüm `evidence-coverage-v0.2` olarak saklanır. Örneğin iki required kriterden biri karşılanıp tek preferred kriter karşılanmıyorsa skor 40’tır.
+Skor 0–100 aralığındadır. İhtiyaç yalnızca `technical_skill` kriterlerinden oluşuyorsa `evidence-coverage-v0.2`; en az bir `project_experience` veya profil/deneyim kriteri içeriyorsa `evidence-coverage-v0.3` sürümü saklanır. İki required kriterden biri karşılanıp tek preferred kriter karşılanmıyorsa skor 40’tır.
 
-**Skor, mevcut ihtiyaca karşı erişilebilir proje kanıtlarının uyumudur; işe alınma ihtimali veya genel yetenek skoru değildir.**
+“**Nasıl hesaplandı?**” disclosure’ı gerçek kriter listelerinden karşılanan/toplam sayıları, backend’in required/preferred coverage değerlerini ve yukarıdaki formülü gösterir. **Backend `result.score` authoritative değerdir**; frontend yeni karar skoru üretmez. Kanıt gücü skoru değiştirmez.
+
+**Evidence Trace**, kriterin kaynak ailesini, `observed / declared_only / not_found` durumunu ve neden sayılıp sayılmadığını açıklar. README/proje açıklamasındaki yalnız beyan, `declared_only / weak` kalır ve `technical_skill` kriterini karşılamaz. Tarihsel match ve kanıt izi dondurulmuştur; sessizce yeniden hesaplanmaz. Trace alanı olmayan eski kayıtlar bunu belirtir.
+
+**Kanıt Uyumu, belirli ihtiyaç için mevcut kanıt ve ilgili profil kayıtlarının kapsamıdır; işe alınma ihtimali veya genel yetenek skoru değildir.**
+
+## Yapay Zekâ Nerede Kullanılıyor?
+
+LLM, sınırlı proje açıklaması/README/kaynak dosya bağlamından beceri kanıtlarını çıkarır, normalize eder, yapılandırır ve açıklar; kurum ihtiyacını `required` ve `preferred` kriterlere dönüştürür. Alıntıların gönderilen kaynakta bulunması ve beceriyle ilişkisi backend tarafından kontrol edilir.
+
+AI işe alınma olasılığı veya genel yetenek puanı hesaplamaz. Final matching skoru Eşleşme / Scoring bölümündeki sabit formülle hesaplanır. Kaynak doğrulaması kodun çalıştığını, adayın kodu yazdığını veya model yorumunun her durumda doğru olduğunu ispatlamaz.
 
 ## Canlı AI Doğrulaması
 
@@ -151,6 +138,28 @@ Bu örnekte uydurma kriter görülmedi. Sonuç demo entegrasyonunu doğrular; pr
 
 Kod varsayılanı `rule_based`, `.env.example` demo seçimi `gemini`dir. Modeller environment üzerinden gelir; kodda sabitlenmez. Seçilen LLM için key/model eksikse `LLM_NOT_CONFIGURED` döner; sessiz fallback yoktur. Açık kriterlerle ihtiyaç oluşturmak LLM çağrısı gerektirmez.
 
+## Mimari
+
+Tek backend içinde modüler bir yapı kullanılır; ayrı mikroservisler yoktur.
+
+```mermaid
+flowchart TD
+    U[Next.js / Swagger / API istemcisi] --> API[FastAPI endpointleri]
+    API --> W[Workflow katmanı]
+    W --> G[GitHub fetch]
+    G --> S[RepositorySnapshot]
+    S --> A[Analiz katmanı]
+    W -->|Kurum ihtiyacı| A
+    A --> P[rule_based / Gemini / OpenAI]
+    P --> V[Şema ve kaynak kontrolünden geçen çıktılar]
+    V --> W
+    W --> M[Deterministik matching]
+    W --> DB[(PostgreSQL)]
+    M --> W
+```
+
+Provider adaptörleri yalnız API iletişimi ve structured output taşır; veritabanı işlemleri workflow katmanındadır. Gemini ve OpenAI aynı project/need analyzer ve Pydantic sözleşmelerini kullanır. Analiz kayıtlarında provider/model, analiz sürümü, başlangıç/bitiş zamanı ve proje için commit SHA tutulur.
+
 ## Teknoloji Yığını
 
 | Katman | Teknoloji |
@@ -170,21 +179,26 @@ Sürümler [requirements.txt](backend/requirements.txt) içinde sabittir. Fronte
 
 | Method | Endpoint | Amaç |
 |---|---|---|
-| POST | `/candidates` | Aday oluştur |
-| GET | `/candidates/{candidate_id}` | Adayı oku |
-| POST | `/candidates/{candidate_id}/projects` | GitHub URL’siyle proje ekle |
-| GET | `/projects/{project_id}` | Projeyi oku |
-| POST | `/projects/{project_id}/analyze` | Snapshot ve kanıt analizi oluştur |
-| GET | `/snapshots/{snapshot_id}` | Snapshot’ı oku |
-| GET | `/evidence/{evidence_id}` | Kanıtı oku |
-| GET | `/analysis-runs/{run_id}` | Analiz durumunu ve metadata’yı oku |
-| POST | `/needs` | İhtiyaç ve kriterleri oluştur |
-| GET | `/needs/{need_id}` | İhtiyacı oku |
-| POST | `/matches` | Eşleşme hesapla ve kaydet |
-| GET | `/matches/{match_id}` | Açıklanabilir sonucu oku |
-| GET | `/health` | Uygulama ve DB bağlantısını kontrol et |
+| POST / GET | `/auth/register`, `/auth/login`, `/auth/logout` (POST); `/auth/me` (GET) | Hesap, oturum ve mevcut kullanıcı |
+| POST / GET / PATCH | `/candidates` (POST); `/candidates/{candidate_id}` (GET/PATCH) | Aday profili |
+| GET / POST | `/candidates/{candidate_id}/projects` | Projeleri listele / GitHub projesi ekle |
+| GET / POST | `/projects/{project_id}` (GET); `/projects/{project_id}/analyze` (POST) | Projeyi oku / snapshot ve kanıt analizi |
+| GET | `/projects/{project_id}/evidence`, `/snapshots/{snapshot_id}`, `/evidence/{evidence_id}`, `/analysis-runs/{run_id}` | Kanıtlar, snapshot ve analiz durumu |
+| GET / POST | `/candidates/{candidate_id}/profile-evidence` | Profil kanıtlarını listele / ekle |
+| GET / PATCH / DELETE | `/profile-evidence/{evidence_id}` | Profil kaydını oku / düzenle / sil |
+| GET | `/candidates/{candidate_id}/living-profile` | Yaşayan profil, timeline, Yetenek Haritası, Kanıt Pasaportu |
+| GET / POST | `/needs` | Kurumun ihtiyaçları / kriterli ihtiyaç oluştur |
+| GET / PATCH | `/needs/{need_id}` | İhtiyacı oku / rol ve beklenen çıktı metadata’sını düzenle |
+| POST / GET | `/matches` (POST); `/matches/{match_id}` (GET) | Deterministik eşleşme kaydet / frozen sonucu oku |
+| GET | `/matches/{match_id}/gaps`, `/matches/{match_id}/evidence/{evidence_id}` | Kayıtlı boşluklar ve eşleşmeyle ilişkili kanıt |
+| GET | `/needs/{need_id}/discovery` | İhtiyaca özgü, tam havuzda sıralanan aday keşfi |
+| POST | `/needs/{need_id}/team-coverage` | Elle seçilen 2–4 adayın union kapsamı |
+| POST | `/needs/{need_id}/team-complements` | 2–3 farklı aktif adayın açık kriterlerini kapatan adaylar |
+| GET / POST | `/proof-requests` | Kanıt İsteklerini listele / oluştur |
+| GET / PATCH / POST | `/proof-requests/{request_id}` (GET/PATCH); `/proof-requests/{request_id}/submit` (POST) | İsteği oku / durumunu güncelle / kanıt paylaş |
+| GET | `/health`, `/health/live`, `/health/ready` | DB bağlantısı / süreç canlılığı / DB ve migration readiness |
 
-[Swagger](http://127.0.0.1:8000/docs) istek/yanıt örneklerini ve alanları gösterir; sözleşme `/openapi.json` üzerinden sunulur. Mevcut API oluşturma/okuma ve analiz işlemlerini kapsar; profil evidence PATCH/DELETE ve aday PATCH uçları da vardır; tüm özel uçlar rol/sahiplik kontrolü altındadır.
+Geliştirme ortamında [Swagger](http://127.0.0.1:8000/docs) ve `/openapi.json` ayrıntılı sözleşmeyi sunar; production’da docs varsayılan kapalıdır. Özel uçlarda rol ve sahiplik kontrolü vardır; discovery/team uçları kurumun kendi ihtiyacına bağlıdır. [Üretilen frontend sözleşmesi](frontend/openapi.json).
 
 Hatalar `error.code`, `message`, `retryable`, `details` alanlarıyla döner. LLM timeout, provider ve validation hataları sırasıyla `LLM_TIMEOUT`, `LLM_PROVIDER_ERROR`, `INVALID_MODEL_OUTPUT` olarak ayrılır.
 
@@ -232,6 +246,7 @@ Backend açıkken ayrı terminalde `frontend/` dizinine geçin. Node.js 22.13+ k
 `.env.example` dosyasını `.env.local` olarak kopyalayın. Frontend ayarı:
 
 ```env
+ZEMINAI_ENV=development
 API_BACKEND_URL=http://127.0.0.1:8000
 ```
 
@@ -240,7 +255,7 @@ npm install
 npm run dev
 ```
 
-[Web uygulamasını](http://localhost:3000) açın. `/aday`, `/ihtiyac` ve `/eslesme` sayfaları gerçek API’yi kullanır.
+[Web uygulamasını](http://localhost:3000) açıp hesap oluşturun. Profil, keşif, eşleşme ve Kanıt İstekleri gerçek API’yi kullanır. Yerel HTTP için `SESSION_COOKIE_SECURE=false` gerekir; production HTTPS ayarında `true` korunur. Tarayıcı same-origin `/api` proxy’sini kullanır; oturum token’ı localStorage’da tutulmaz.
 Frontend key içermez; Gemini/OpenAI anahtarları backend’de kalır. Kalite kontrolü için `npm run lint`,
 `npm test` ve `npm run build` kullanılır. Jüri demosunu geliştirme göstergesi olmadan,
 yalnız yerel arayüzde çalıştırmak için:
@@ -274,17 +289,16 @@ Gemini anahtarı [Google AI Studio](https://aistudio.google.com/apikey) üzerind
 
 ## Testler ve Doğrulama
 
-**6 Ekim 2026 güncel doğrulama özeti:**
+**7 Ekim 2026 — ekip tarafından bildirilen son manuel doğrulama:**
 
-- Backend SQLite: **346 PASS**.
-- Backend gerçek PostgreSQL18: **346/346 PASS** (manuel doğrulama; 38.93s).
-- `a14_proof_requests` migration: gerçek PostgreSQL18 üzerinde **head PASS**.
-- Frontend: **47 PASS**; `npm audit --omit=dev`: **0 açık**.
-- `lint`, `build`, `compileall`, `pip check` ve `alembic check` geçti.
+- Gerçek **PostgreSQL 18 full backend suite: 358/358 PASS** — `358 passed, 1 warning, 41.44s`.
+- PostgreSQL üzerinde hedefli **Team Complements: 12 PASS**.
+- **Frontend: 56 PASS**; frontend lint ve production build başarılı.
+- `compileall`, `pip check`, OpenAPI drift/check ve `git diff --check`: başarılı.
 
-PostgreSQL18 çalışmasındaki Starlette TestClient/httpx deprecation ve Windows pytest cache permission uyarıları test failure değildir. Gerçek HTTPS ingress/proxy/cookie smoke deployment aşamasında hâlâ açıktır. [Ayrıntılı doğrulama kaydı](docs/PROOF_REQUESTS.md#6-ekim-2026-doğrulama-kaydı).
+Kalan uyarı Starlette TestClient/httpx deprecation’dır; ürün testi başarısızlığı değildir. Önceki Windows temp/cache izin sorunu yazılabilir `--basetemp` ile giderilmiştir. Bu README yenilemesinde testler yeniden çalıştırılmadı; güncel SQLite toplamı veya yeni npm audit sonucu iddia edilmez. Önceki migration/operasyon doğrulamaları: [Production hardening](docs/PRODUCTION_READINESS.md), [Kanıt İsteği](docs/PROOF_REQUESTS.md).
 
-Kapsam: matching sınır durumları, API oluşturma/okuma akışları, GitHub HTTP mock’ları, evidence semantiği, provider timeout/429/5xx hataları, Gemini istek sözleşmesi, structured output doğrulaması, metadata ve migration upgrade/downgrade ile eski kayıtların korunması. Testler gerçek API anahtarı veya internet gerektirmez. Starlette TestClient’ın httpx kullanımına ilişkin deprecation uyarısı testleri başarısız kılmaz.
+Regresyon kapsamı; auth/ownership/CSRF, kalıcı bütçeler, matching/evidence sınırları, frozen trace, provider hata/grounding kontrolleri, migration’lar ve Team Complements’ın deterministik sırası, anonimliği, tam havuz sınırı ve sabit sorgu davranışını içerir. Otomatik testler gerçek API anahtarı veya internet gerektirmez.
 
 Etkin sanal ortamla `backend/` içinde:
 
@@ -301,8 +315,18 @@ python -m alembic check
 
 ## Güvenlik ve Güvenilirlik İlkeleri
 
-**MVP kontrollü yerel demo içindir.** Cookie oturumu, aday/kurum rolleri ve backend sahiplik kontrolleri uygulanır. Public deployment öncesinde AI abuse/kota koruması ve deployment güvenlik kontrolleri gerekir. [Auth modeli ve kalan işler](docs/AUTH.md). CORS authentication değildir. Kapsam, bulgular ve
-sınırlar [güvenlik değerlendirmesinde](docs/SECURITY_REVIEW.md) açıklanır.
+Production odaklı hardening uygulanmıştır; gerçek production deployment doğrulaması tamamlanmış değildir. Uygulanan kontroller:
+
+- Aday/kurum rolleri ve ownership; oturumsuz erişimde 401, yanlış rolde 403, bulunmayan veya sahip olunmayan kayıtta 404.
+- Rastgele opaque session token; DB’de yalnız hash’i tutulur. Cookie `HttpOnly`, `SameSite=Lax`; production yapılandırmasında `Secure=true`.
+- İzinli origin ile tam eşleşen Origin/Referer CSRF kontrolü ve same-origin proxy. CORS authentication değildir.
+- AI ve compute için kullanıcı + IP bazlı, DB-backed kalıcı/atomik fixed-window bütçeleri; 429/Retry-After ve DB hatasında fail-closed reddetme.
+- Açık development/test/production davranışı, güvensiz production ayarında fail-fast; trusted-host ve security-header kontrolleri.
+- `/health/live`, DB/migration kontrollü `/health/ready`, kontrollü DB pooling/timeouts; request ID ve hassas içerik taşımayan loglar.
+
+Bu bütçeler **in-flight/global concurrency limiti veya global provider harcama tavanı değildir**. Gerçek HTTPS/ingress/reverse-proxy/cookie smoke, secret manager, DB TLS, backup/restore doğrulaması, provider harcama/global concurrency sınırları, monitoring/alerting ve dependency advisory süreci deployment/operasyon işleri olarak açıktır. E-posta doğrulama, parola kurtarma ve daha kapsamlı session/device yaşam döngüsü de henüz yoktur.
+
+[Auth modeli](docs/AUTH.md) · [Güvenlik değerlendirmesi](docs/SECURITY_REVIEW.md) · [Deployment rehberi](docs/DEPLOYMENT.md) · [Production doğrulama kaydı](docs/PRODUCTION_READINESS.md)
 
 İstek gövdeleri JSON parse öncesinde 1 MiB ile sınırlıdır; aşımda
 `413 / PAYLOAD_TOO_LARGE` standart hata cevabı döner.
@@ -314,28 +338,24 @@ sınırlar [güvenlik değerlendirmesinde](docs/SECURITY_REVIEW.md) açıklanır
 - `.env` ignore edilir; örnek key alanları boştur. Provider ham hata gövdeleri ve hassas header’lar API hata cevabına konmaz.
 - Analiz hatalarında durum kaydedilir; alınmış snapshot korunur. DB bağlantı kesintisinde `running` kalan kayıtlar için otomatik toparlama henüz yoktur.
 
-## Hesapla başlangıç
-
-`/kayit` üzerinde Aday veya Kurum seçin. Aday hesabı kendi profilini otomatik oluşturur; proje ve deneyimler bu hesaba bağlıdır. Kurum hesabı kendi ihtiyaçlarını ve keşif/eşleşme akışını yönetir. `/giris` ve header çıkış menüsü gerçek DB oturumu kullanır. Yerel HTTP için `.env.example` içindeki `SESSION_COOKIE_SECURE=false`, HTTPS production için `true` kullanılmalıdır. Tarayıcı `/api` proxy’sini kullanır; token localStorage’da tutulmaz.
-
 ## Mevcut Durum
 
 ### Uygulananlar
 
-- Responsive Next.js web akışı, gerçek API entegrasyonu, loading/error/empty durumları ve DB tabanlı cookie oturumu ve rol bazlı akış.
-
-- Aday, proje, ihtiyaç ve eşleşme oluşturma/okuma; Swagger sözleşmesi.
-- Public GitHub snapshot, kaynaklı evidence, üç analiz modu ve kalıcı analiz kayıtları.
-- Deterministik scoring, kriter/kanıt ilişkileri, PostgreSQL modeli ve Alembic migration’ları.
-
-- Profil evidence CRUD, beyan/bağlantı ayrımı, deneyim kriterleri ve geçmiş sonuçlarda dondurulmuş kaynaklar.
+- GitHub teknik kanıtı ve çok kaynaklı profil kayıtları; Yaşayan Profil, zaman çizelgesi, factual Yetenek Haritası ve Kanıt Pasaportu.
+- İhtiyaca özgü deterministik Kanıt Uyumu, “Nasıl hesaplandı?”, frozen Evidence Trace ve kanıt boşlukları.
+- Candidate Discovery, kanıt odaklı inceleme, Takım oluşturucu, Takım Tamamlayıcıları ve Kanıt İsteği.
+- DB tabanlı auth/ownership ve güvenlik hardening’i; gerçek API kullanan responsive TR/EN arayüz.
 
 ### Sonraki Adımlar
 
-- Email doğrulama, parola kurtarma ve production hesap yaşam döngüsü.
-- Background jobs, analiz yeniden başlatma ve sürekli profil güncellemeleri.
-- Contributor attribution ve tam GitHub hesap aktarımı.
-- Deployment, operasyon kontrolleri ve model kalite değerlendirmeleri.
+Bunlar mevcut özellikler değil, geliştirme/operasyon öncelikleridir:
+
+- Doğrulanmış GitHub hesap/katkı sahipliği; bireysel yazarlığı varsaymadan gerçek katkı metrikleri.
+- Süre sonu, iptal ve frozen snapshot içeren seçici paylaşılabilir Kanıt Pasaportu.
+- İhtiyaç netleştirme soruları, hafif eşleşme yaşam döngüsü ve tanıştırma sonrası takip; sonuç/referans geri bildirim döngüsü.
+- Background analiz, kesilen analizleri toparlama ve sürekli senkronizasyon; model kalite değerlendirmeleri.
+- Gerçek deployment doğrulaması ve yukarıdaki operasyon kontrolleri; e-posta doğrulama, parola kurtarma ve session/device yaşam döngüsü.
 
 ## Proje Yapısı
 
@@ -362,11 +382,3 @@ docker-compose.yml         Yerel PostgreSQL
 - **Çağdaş** — AI, matching ve teknik koordinasyon.
 - **Yiğit Alp Ünal** — Backend, veritabanı ve entegrasyon.
 - **Azra Gülbahar** — Ürün, UX, veri ve kalite.
-
-
-### Deployment ve hardening
-
-Candidate/institution auth, ownership ve same-origin HttpOnly session modeli korunur.
-Kalıcı AI/işlem bütçeleri, production config ve health kontrolleri için
-[deployment rehberi](docs/DEPLOYMENT.md) ve [doğrulama kaydı](docs/PRODUCTION_READINESS.md).
-Yerel demo doğrulaması production onayı değildir. PostgreSQL18 doğrulaması tamamlandı; gerçek HTTPS/ingress/proxy/cookie smoke deployment aşamasında ayrıca yapılacaktır.
