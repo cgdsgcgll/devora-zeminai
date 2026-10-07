@@ -17,11 +17,33 @@ export function AppHeader() {
   const { busy, ready, user, logout, act } = useSession();
   const links = linksFor(user?.role);
   const [menuOpen, setMenuOpen] = useState(false);
+  const accountRef = useRef<HTMLDetailsElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+    header
+      ?.querySelectorAll("details[open]")
+      .forEach((node) => node.removeAttribute("open"));
+    const dismiss = (event: PointerEvent) => {
+      header?.querySelectorAll("details[open]").forEach((node) => {
+        if (!node.contains(event.target as Node)) node.removeAttribute("open");
+      });
+    };
+    document.addEventListener("pointerdown", dismiss);
+    return () => document.removeEventListener("pointerdown", dismiss);
+  }, [path]);
   return (
     <header
       className="app-header"
+      ref={headerRef}
       onKeyDown={(event) => {
         if (event.key === "Escape") {
+          if (accountRef.current?.open) {
+            accountRef.current.open = false;
+            accountRef.current.querySelector("summary")?.focus();
+            return;
+          }
           setMenuOpen(false);
           document.querySelector<HTMLButtonElement>(".menu-toggle")?.focus();
         }
@@ -67,7 +89,6 @@ export function AppHeader() {
             </Link>
           ))}
         </nav>
-        <LanguageSwitch />
         {ready && (
           <Link
             className="button header-cta"
@@ -87,22 +108,46 @@ export function AppHeader() {
                 : t("m403")}
           </Link>
         )}
+        <LanguageSwitch />
+        {ready && user && (
+          <details className="account-tools" ref={accountRef}>
+            <summary>
+              <span>
+                {user.display_name?.trim().split(/\s+/)[0] ||
+                  (user.role === "candidate" ? t("m252") : t("m253"))}
+              </span>
+              <svg
+                className="utility-chevron"
+                width="12"
+                height="12"
+                viewBox="0 0 12 12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.25"
+                aria-hidden="true"
+              >
+                <path d="m3 4.5 3 3 3-3" />
+              </svg>
+            </summary>
+            <div className="utility-panel account-panel">
+              <div className="account-identity">
+                <strong>
+                  {user.display_name ||
+                    (user.role === "candidate" ? t("m252") : t("m253"))}
+                </strong>
+                <span>{user.role === "candidate" ? t("m252") : t("m253")}</span>
+              </div>
+              <button
+                className="text-button"
+                disabled={!!busy}
+                onClick={() => void act(t("m404"), logout)}
+              >
+                {t("m405")}
+              </button>
+            </div>
+          </details>
+        )}
       </div>
-      {ready && user && (
-        <details className="account-tools">
-          <summary>
-            {user.display_name} ·{" "}
-            {user.role === "candidate" ? t("m252") : t("m253")}
-          </summary>
-          <button
-            className="text-button"
-            disabled={!!busy}
-            onClick={() => void act(t("m404"), logout)}
-          >
-            {t("m405")}
-          </button>
-        </details>
-      )}
     </header>
   );
 }
