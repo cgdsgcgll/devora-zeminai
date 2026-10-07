@@ -115,6 +115,12 @@ async function component(
     if (id === "../i18n/index.ts") return i18n;
     if (id === "../i18n/react")
       return {
+        LanguageSwitch: () =>
+          React.createElement(
+            "div",
+            { className: "language-switch" },
+            "TR / EN",
+          ),
         useLocale: () =>
           React.useSyncExternalStore(
             i18n.subscribeLocale,
@@ -254,4 +260,94 @@ test("auth feedback separates the fading visual copy from immediate accessible e
   );
   assert.match(empty, /data-visible="false"/);
   assert.match(empty, /role="alert"><\/span>/);
+});
+
+test("authenticated account stays inside header-inner for both roles", async () => {
+  for (const role of ["candidate", "institution"]) {
+    const a = await component("shell.tsx", {
+      ready: true,
+      user: { role, display_name: "Demo User" },
+    });
+    const html = renderToStaticMarkup(React.createElement(a.exports.AppHeader));
+    assert.match(
+      html,
+      /class="header-inner">[\s\S]*<details class="account-tools">/,
+    );
+    assert.match(html, /<\/details><\/div><\/header>$/);
+    assert.match(html, /<summary><span>Demo<\/span><svg/);
+    assert.doesNotMatch(html, /Demo User ·/);
+    assert.match(
+      html,
+      /class="account-identity"><strong>Demo User<\/strong><span>/,
+    );
+    assert.match(html, /class="utility-chevron"/);
+    assert.match(html, /Çıkış yap/);
+  }
+  const anonymous = await component("shell.tsx", { ready: true });
+  assert.doesNotMatch(
+    renderToStaticMarkup(React.createElement(anonymous.exports.AppHeader)),
+    /account-tools/,
+  );
+});
+
+test("header retains busy-aware session logout and Escape returns focus to summary", async () => {
+  const source = await readFile(
+    new URL("../src/components/shell.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(source, /disabled=\{!!busy\}/);
+  assert.match(source, /onClick=\{\(\) => void act\(t\("m404"\), logout\)\}/);
+  assert.match(source, /accountRef.current.open = false/);
+  assert.match(source, /querySelector\("summary"\)\?\.focus\(\)/);
+});
+
+test("story grid has three desktop columns, one mobile column and popup is out of flow", async () => {
+  const css = await readFile(
+    new URL("../src/app/globals.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    css,
+    /\.evidence-story\s*\{\s*display: grid;\s*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/,
+  );
+  assert.match(
+    css,
+    /@media \(max-width: 900px\)\s*\{\s*\.evidence-story\s*\{\s*grid-template-columns: 1fr/,
+  );
+  assert.match(css, /\.utility-panel\s*\{\s*position: absolute/);
+});
+
+test("header and landing visible punctuation is not mojibake", async () => {
+  for (const file of [
+    "components/shell.tsx",
+    "app/page.tsx",
+    "i18n/tr.ts",
+    "i18n/en.ts",
+  ]) {
+    const source = await readFile(
+      new URL("../src/" + file, import.meta.url),
+      "utf8",
+    );
+    assert.doesNotMatch(source, /Â·|â†’|â€|Ã¼|Ã¶/);
+  }
+});
+
+test("header utility presentation keeps marker-free triggers, quiet hover and reduced motion", async () => {
+  const css = await readFile(
+    new URL("../src/app/globals.css", import.meta.url),
+    "utf8",
+  );
+  assert.match(css, /summary::marker[\s\S]*content: ""/);
+  assert.match(css, /summary::-webkit-details-marker[\s\S]*display: none/);
+  assert.match(css, /summary:hover[\s\S]*background: transparent/);
+  assert.match(
+    css,
+    /\[open\] > summary \.utility-chevron\s*\{\s*transform: rotate\(180deg\)/,
+  );
+  assert.match(css, /@keyframes utility-reveal/);
+  assert.match(
+    css,
+    /@media \(prefers-reduced-motion: reduce\)[\s\S]*\.utility-chevron/,
+  );
+  assert.match(css, /content-visibility 200ms allow-discrete/);
 });

@@ -171,7 +171,7 @@ strong {
   padding: var(--s4) var(--s8);
   display: flex;
   align-items: center;
-  gap: var(--s8);
+  gap: var(--s4);
 }
 .brand {
   font-size: 24px;
@@ -190,7 +190,7 @@ strong {
 .header-inner nav {
   display: flex;
   gap: var(--s8);
-  margin-left: auto;
+  margin-right: auto;
 }
 .header-inner nav a {
   font-size: 14px;
@@ -926,7 +926,7 @@ pre {
 }
 .evidence-story {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   list-style: none;
   margin: 0;
   padding: 0;
@@ -2115,18 +2115,6 @@ summary {
 .auth-switch {
   margin-top: var(--s6);
 }
-.account-tools {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 var(--s6);
-  text-align: right;
-  font-size: 13px;
-}
-.account-tools summary {
-  min-height: 44px;
-  padding: 12px 0;
-  cursor: pointer;
-}
 @media (max-width: 600px) {
   .auth-roles {
     grid-template-columns: 1fr;
@@ -2183,9 +2171,6 @@ summary {
   }
 }
 
-.account-tools[open] > button {
-  animation: state-reveal var(--duration-fast) var(--ease-out);
-}
 @media (max-width: 600px) {
   .auth-form-slot[data-registration="true"] {
     min-block-size: 620px;
@@ -2264,23 +2249,156 @@ summary {
   text-align: left;
   min-width: 6rem;
 }
+/* Quiet header utilities; the contextual CTA remains the primary action. */
+.account-tools,
 .language-switch {
-  display: flex;
-  gap: 0.25rem;
-  align-items: center;
+  margin: 0;
+  position: relative;
+  min-width: 0;
+  flex-shrink: 0;
+  font-size: 13px;
 }
-.language-switch button {
-  min-width: 44px;
+.account-tools {
+  max-width: 140px;
+  flex-shrink: 1;
+}
+.account-tools > summary,
+.language-switch > summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   min-height: 44px;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  list-style: none;
+  cursor: pointer;
+  white-space: nowrap;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+.account-tools > summary span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.account-tools > summary:hover,
+.language-switch > summary:hover {
+  background: transparent;
+  color: var(--text-primary);
+}
+.account-tools > summary::marker,
+.language-switch > summary::marker {
+  content: "";
+}
+.account-tools > summary::-webkit-details-marker,
+.language-switch > summary::-webkit-details-marker {
+  display: none;
+}
+.utility-chevron {
+  flex-shrink: 0;
+  transition: transform 200ms var(--ease-out);
+}
+[open] > summary .utility-chevron {
+  transform: rotate(180deg);
+}
+.utility-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 240px;
+  max-width: calc(100vw - 48px);
+  padding: var(--s3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 10%);
+  z-index: 20;
+  animation: utility-reveal 200ms var(--ease-out);
+}
+.account-identity {
+  display: grid;
+  gap: 4px;
+  padding: var(--s2);
+  border-bottom: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
+.account-identity strong {
+  font-weight: 500;
+}
+.account-identity span {
+  color: var(--text-secondary);
+}
+.utility-panel button {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: var(--s2);
+  text-align: left;
   background: transparent;
   border: 0;
-  padding: 0.4rem;
-  border-radius: 0.4rem;
+  font: inherit;
   cursor: pointer;
 }
-.language-switch [aria-pressed="true"] {
-  background: #e8edf0;
-  color: #142b3c;
+.locale-panel {
+  width: 140px;
+}
+.locale-panel [aria-pressed="true"] {
+  color: var(--accent);
+  font-weight: 600;
+}
+@keyframes utility-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* Discrete content visibility allows native details to finish its closing transition. */
+@supports (transition-behavior: allow-discrete) {
+  .account-tools::details-content,
+  .language-switch::details-content {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    width: 240px;
+    max-width: calc(100vw - 48px);
+    z-index: 20;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition:
+      opacity 200ms var(--ease-out),
+      transform 200ms var(--ease-out),
+      content-visibility 200ms allow-discrete;
+  }
+  .account-tools[open]::details-content,
+  .language-switch[open]::details-content {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .language-switch::details-content { width: 140px; }
+  .utility-panel {
+    position: static;
+    width: 100%;
+    animation: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .utility-chevron,
+  .utility-panel {
+    transition: none;
+    animation: none;
+  }
+  .account-tools::details-content,
+  .language-switch::details-content {
+    transition: none;
+    transform: none;
+  }
 }
 @media (max-width: 600px) {
   .team-builder {
@@ -2295,4 +2413,71 @@ summary {
 
 html[data-locale-pending="true"] body {
   visibility: hidden;
+}
+
+/* Keep navigation and account controls in the same header at narrow widths. */
+@media (max-width: 1100px) {
+  .header-inner {
+    flex-wrap: wrap;
+    gap: var(--s3);
+  }
+  .brand {
+    margin-right: auto;
+  }
+  .menu-toggle {
+    display: inline-flex !important;
+    order: 2;
+  }
+  .header-inner nav {
+    display: none;
+    order: 3;
+    flex-basis: 100%;
+    margin: 0;
+  }
+  .header-inner nav.nav-open {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .account-tools {
+    order: 1;
+  }
+}
+@media (max-width: 900px) {
+  .evidence-story {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .header-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+  .brand {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .language-switch {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .menu-toggle {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .header-cta {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
+    white-space: nowrap;
+  }
+  .account-tools {
+    grid-column: 2 / 4;
+    grid-row: 2;
+    justify-self: end;
+    max-width: 100%;
+  }
+  .header-inner nav {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
 }
