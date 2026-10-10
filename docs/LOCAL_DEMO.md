@@ -1,36 +1,49 @@
-# Yerel demo başlangıcı
+# Yerel demo
 
-Uvicorn `startup complete` yalnız uygulamanın açıldığını gösterir. SQLAlchemy bağlantıyı ilk sorguda kurar. `/health` gerçek DB sorgusu yapar; erişim yoksa 503 ve standart `DATABASE_ERROR` döner. Başarısızlıkta SQLite'a geçilmez.
+Windows ve macOS için güncel ilk kurulum [README](../README.md#hızlı-başlangıç)
+içindedir. Python 3.12, Node 22.21.0, PostgreSQL 18 ve tek origin kullanın:
+frontend `http://127.0.0.1:3000`, backend `http://127.0.0.1:8000`, GitHub callback
+`http://127.0.0.1:8000/github/callback`.
 
-İncelenen clone'da kök `.env` yoktu. Varsayılan örnek bağlantı bilgileri 5432'de çalışan PostgreSQL tarafından **password authentication failed** ile reddedildi. Aday/ihtiyaç POST istekleri 503 verdi. Bağlantı kurulamadığından o veritabanının migration durumu doğrulanamadı. Mevcut PostgreSQL şifresi değiştirilmedi. Açıkça yapılandırılmış ayrı yerel PostgreSQL ile migration ve gerçek GitHub/rule_based akışı doğrulandı.
+## Windows preflight yardımcısı
 
-## Windows / PowerShell
+İlk kurulumu ve yerel DB oluşturmayı tamamladıktan sonra repo kökünde:
 
-1. Repository kökünde Python virtualenv oluşturun ve backend bağımlılıklarını kurun:
-   ```powershell
-   python -m venv .venv
-   .\.venv\Scripts\python.exe -m pip install -r backend/requirements.txt
-   ```
-2. `.env.example` dosyasını kök `.env` olarak kopyalayın. `DATABASE_URL` gerçek yerel PostgreSQL'inizle eşleşmeli. Compose örneği yalnız yerel demo içindir; başka PostgreSQL 5432'yi kullanıyorsa önce port çakışmasını çözün. Mevcut volume'un şifresi env değiştirince değişmez; volume silmeyin.
-3. API key gerektirmeyen demo için `LLM_PROVIDER=rule_based`. Gemini için `LLM_PROVIDER=gemini`, `GEMINI_MODEL=gemini-3.1-flash-lite`, `LLM_TIMEOUT_SECONDS=120`; anahtarı yalnız yerel ortamınızda ayarlayın. `.env` commit edilmez. Frontend'e key aktarılmaz.
-4. Kök dizinde `./scripts/start-demo.ps1` çalıştırın. Docker Compose DB'yi başlatır, hazır olmasını bekler, `alembic upgrade head` uygular ve bağlantı/migration head kontrolü yapar. Başarısız adımda durur.
-   Mevcut PostgreSQL kullanıyorsanız `./scripts/start-demo.ps1 -UseExistingPostgres`. Başka virtualenv için `-Python <python.exe yolu>` verin. Script hiçbir parolayı değiştirmez, DB oluşturmaz ve sunucuları arka planda başlatmaz.
-5. Aynı ortam değişkenleriyle `backend/` içinde `../.venv/Scripts/python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000` çalıştırın.
-6. `Invoke-RestMethod http://127.0.0.1:8000/health`: HTTP 200 ve `database=ok` olmalı. Ayrı kontrol: `python scripts/demo_preflight.py` migration head'i de doğrular.
-7. İkinci terminalde `frontend/`: `npm.cmd ci`, `npm.cmd run build`, `npm.cmd start`. Frontend API adresi `API_BACKEND_URL`; varsayılan `http://127.0.0.1:8000`. Özel adres build sırasında ayarlanmalıdır.
+```powershell
+./scripts/start-demo.ps1 -UseExistingPostgres
+```
 
-`DATABASE_URL` process environment değeri `.env` değerini geçersiz kılar. Kök `.env` mutlak dosya yolu ile okunur; backend çalışma dizini değişse de başka `.env` seçilmez. CORS için frontend origin'ini backend `CORS_ORIGINS` listesine açıkça ekleyin.
+Script `.venv/Scripts/python.exe` kullanır; başka venv için `-Python <python.exe>`
+verilebilir. Migration uygular, DB bağlantısı/head kontrol eder; kullanıcı veya DB
+oluşturmaz, parolayı değiştirmez, uygulama sunucularını başlatmaz. Bayraksız kullanım
+eski PostgreSQL 16 Docker Compose alternatifini başlatır; PG18 doğrulaması değildir.
+Mevcut volume'u silmeyin veya major sürümünü yerinde değiştirmeyin.
 
-Auth/ownership ve login/register deneme bütçesi uygulanmıştır. AI quota ve deployment hardening eksikleri nedeniyle demo kontrollü yerel ortam içindir. `/kayit` ile ayrı Aday/Kurum hesapları oluşturun; eski sahipsiz demo kayıtları otomatik aktarılmaz. [Auth kurulumu](AUTH.md).
+## Demo sunumu
 
-## Profil ve eşleşme demosu
+1. Root `.env` dosyasını yalnız ilk kurulumda oluşturun. Yerel PostgreSQL bağlantısını
+   düzenleyin; HTTP için `SESSION_COOKIE_SECURE=false`,
+   `CORS_ORIGINS=["http://127.0.0.1:3000"]` kullanın. Mevcut encryption key sabit kalır.
+2. Anahtarsız akış için `LLM_PROVIDER=rule_based`; Gemini seçilecekse key/model yerel
+   backend ayarında kalır. Eksik key veya kota hatası sahte başarıya dönüştürülmez.
+3. Backend dizininde etkin venv ile
+   `python -m uvicorn app.main:app --host 127.0.0.1 --port 8000` çalıştırın.
+   `/health/ready` DB ve migration hazırlığını doğrulamalıdır; yalnız startup mesajı yeterli değildir.
+4. Frontend env örneğini ilk kurulumda `.env.local` olarak kopyalayın.
+   `ZEMINAI_ENV=development`, `API_BACKEND_URL=http://127.0.0.1:8000` korunur.
+   Frontend dizininde `npm ci`, `npm run build`,
+   `npm run start -- --hostname 127.0.0.1` çalıştırın.
+5. Ayrı aday/kurum hesapları oluşturun. Adaya public proje ve/veya profil beyanı
+   ekleyin; GitHub App bağlantısı isteğe bağlı ve kurulumu ayrı adımdır.
+   İçe aktarılan projeler hemen görünür; analiz durumları ve hataları proje bazındadır.
+6. Kurumda açık kriterli bir ihtiyaç oluşturun; eşleşme, Evidence Trace ve boşlukları
+   gösterin. Profil beyanı teknik kriteri karşılamaz. Kanıt İsteği kapatmak doğrulama değildir.
 
-Aday oluşturun; isteğe bağlı GitHub projesi ekleyip analiz edin. Gelişim ve Deneyim bölümünden eğitim, sertifika, hackathon, etkinlik veya topluluk kaydı oluşturun. Link olmadan “Beyan”, HTTPS linkiyle “Kaynak bağlantısı mevcut” görünür; bu provider doğrulaması değildir.
+`DATABASE_URL` process environment değeri root `.env` değerinden önceliklidir.
+Origin/port veya kod/config değişirse ilgili sunucuyu yeniden başlatın. Port
+değişikliği CORS ve OAuth callback ayarlarıyla tutarlı olmalıdır; kolay demo için
+3000/8000'i koruyun. Production HTTPS ayarında Secure=true ve deployment kontrolleri
+ayrıdır; yerel build production güvenliği onayı değildir.
 
-Örnek ihtiyaç: `Python gerekli; hackathon deneyimi tercih edilir; topluluk deneyimi tercih edilir`. Teknik kriter yalnız observed proje kanıtıyla karşılanır. Teknik kanıt yoksa profil kayıtları Python puanını yükseltmez. Profil değişikliğinden sonra “Eşleşmeyi Yenile” kullanın; eski sonuç kayıt kopyasını korur. “Demoyu sıfırla” yalnız tarayıcının seçimini temizler, backend verilerini silmez.
-
-Anonim GitHub kotası dolarsa gerçek analiz kontrollü hata verir. Tekrar tekrar denemeyin; kota yenilenmesini bekleyin veya yetkili operatör kendi yerel `GITHUB_TOKEN` ayarını kullanabilir. Token'ı arayüze, loga veya commit'e yazmayın. Gemini anahtarı yoksa canlı test `BLOCKED_BY_MISSING_KEY`; rule_based modu anahtarsız çalışır.
-
-3000 meşgulse production frontend `npm.cmd start -- --hostname 127.0.0.1 --port 3001` ile açılabilir. Backend'i başlatan terminalde `CORS_ORIGINS` içine yalnız gerekli local origin'i açıkça koyun; örnek PowerShell: `$env:CORS_ORIGINS='["http://127.0.0.1:3001"]'`. CORS değişikliği backend restart gerektirir. Eski sürecin yeni kodu çalıştırdığını varsaymayın.
-
-Yerel HTTP için `SESSION_COOKIE_SECURE=false`; production HTTPS için `true`. CORS_ORIGINS frontend origin/portunu açıkça içermelidir. Frontend `/api` proxy’si backend 127.0.0.1 adresine bağlanır; localhost cookie’si same-origin kalır.
+Güncel otomatik/sentetik QA sonuçları ve gerçek provider ayrımı:
+[VALIDATION](VALIDATION.md). Operasyonel sınırlar: [DEPLOYMENT](DEPLOYMENT.md).

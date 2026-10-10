@@ -4,22 +4,23 @@ Next.js 16.3.8, React 19.3 ve TypeScript App Router ile gerçek FastAPI servisle
 
 ## Çalıştırma
 
-Node.js 22.13+ ve npm gerekir. Önce ana README’deki backend kurulumunu tamamlayın ve API’yi `http://127.0.0.1:8000` üzerinde başlatın.
+Node.js 22.21.0 (`../.nvmrc`) ve npm kullanın. Önce ana README'deki Windows/macOS backend kurulumunu tamamlayın ve API'yi `http://127.0.0.1:8000` üzerinde başlatın.
 
-`frontend/` içinde `.env.example` dosyasını `.env.local` adıyla kopyalayın (PowerShell: `Copy-Item .env.example .env.local`; Linux/macOS: `cp .env.example .env.local`).
+`frontend/` içinde `.env.example` dosyasını yalnız ilk kurulumda `.env.local` adıyla kopyalayın (PowerShell: `Copy-Item .env.example .env.local`; Linux/macOS: `cp .env.example .env.local`). Mevcut dosyayı ezmeyin.
 
 ```env
+ZEMINAI_ENV=development
 API_BACKEND_URL=http://127.0.0.1:8000
 ```
 
 ```bash
-npm install
-npm run dev
+npm ci
+npm run dev -- --hostname 127.0.0.1
 ```
 
-[Uygulamayı açın](http://localhost:3000). `NEXT_PUBLIC_*` değerleri tarayıcıya açıktır ve build sırasında yerleştirilir; API key veya başka secret eklemeyin. Anahtarlar yalnız backend environment’ında kalır.
+[Uygulamayı açın](http://127.0.0.1:3000). `NEXT_PUBLIC_*` değerleri tarayıcıya açıktır ve build sırasında yerleştirilir; API key veya başka secret eklemeyin. Anahtarlar yalnız backend environment’ında kalır.
 
-Backend `CORS_ORIGINS` JSON listesi varsayılan olarak `http://localhost:3000` ve `http://127.0.0.1:3000` adreslerini kabul eder. Farklı bir frontend portu kullanırsanız bu listeyi backend tarafında güncelleyin; wildcard kullanmayın.
+Yerel `CORS_ORIGINS` JSON listesinde `http://127.0.0.1:3000` kullanın; `localhost` ile karıştırmayın. Yerel HTTP backend ayarı `SESSION_COOKIE_SECURE=false`; production HTTPS güvenli varsayılanı korunur. Port değişirse origin ayarlarını açıkça güncelleyin; wildcard kullanmayın.
 
 ## Akış
 
@@ -71,7 +72,7 @@ npm run start -- --hostname 127.0.0.1
 
 `npm test` Node’un yerleşik test runner’ıyla API hata ayrıştırma, label semantiği, form validation ve güvenli kaynak linklerini sınar. Ağ veya canlı AI gerekmez. `npm run format` kaynak dosyalarını Prettier ile biçimlendirir.
 
-Bu turda backend 346, frontend 47 test geçti. Backend CORS, auth/ownership ve production-hardening regresyonları korunur. Canlı Gemini backend smoke testi daha önce ekip tarafından doğrulandı; bu frontend ortamında key/model bulunmadığı için canlı Gemini E2E ayrıca blokludur. Tarayıcı kontrollerinin ayrıntıları [doğrulama kaydında](../docs/FRONTEND_VALIDATION.md) bulunur.
+10 Ekim stabilizasyonunda backend SQLite ve PostgreSQL'de ayrı ayrı 506, frontend'de 91 test geçti; lint/build başarılı. Sentetik tarayıcı QA'sı gerçek OAuth/provider smoke değildir. Güncel kapsam [VALIDATION](../docs/VALIDATION.md), önceki fazın tarihsel kaydı [FRONTEND_VALIDATION](../docs/FRONTEND_VALIDATION.md) içindedir.
 
 Cookie authentication ve aday/kurum ownership uygulanır. Deployment hardening mevcuttur; gerçek HTTPS ingress/cookie smoke ve operasyonel sınırlar için [deployment kaydına](../docs/PRODUCTION_READINESS.md) bakın. [AUTH](../docs/AUTH.md).
 

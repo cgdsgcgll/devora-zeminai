@@ -143,8 +143,10 @@ hazırlayın. a13 downgrade aktif rate bütçeleri varken reddedilir; bütçe s�
 satır silmeyin. Expiry sonrası tablo kaldırma auth/profile verisini değiştirmez.
 Migration downgrade yerine yeni şemayla uyumlu önceki sürüm tercih edilir.
 
-Deploy'da gerçek PostgreSQL18 ile fresh/upgrade/legacy/downgrade, eşzamanlı rate tests
-ve bağımsız bağlantı persistence doğrulaması **zorunlu**. Bu çalışma ortamında engelli.
+Deploy öncesinde hedef PostgreSQL18 ortamında fresh/upgrade/legacy/downgrade,
+eşzamanlı rate testleri ve bağımsız bağlantı persistence kontrol edilmelidir.
+Yerel gerçek PostgreSQL18 doğrulaması tamamlandı; [güncel kayıt](VALIDATION.md).
+Bu sonuç hedef deployment ortamının ayrıca doğrulanması gereğini kaldırmaz.
 Sonrasında HTTPS browser smoke: candidate login→project→analyze→profile;
 institution login→need→discovery→match; küçük test bütçesinde 429, loading sonlanması,
 session korunması; sonra normal bütçeye dönüş. Wrong role/IDOR/CSRF/host reddi,
