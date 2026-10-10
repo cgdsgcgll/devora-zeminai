@@ -13,7 +13,7 @@ Bu sürüm kontrollü demo içindir; genel Talent/Social/Activity/Potential Scor
 
 ## Zaman ve factual counts
 
-Timeline yalnız mevcut Project ve ProfileEvidenceItem satırlarından oluşur. Artan tarih, eşitlikte UUID sırası kullanılır; arayüz ay bazında gruplar. Profil tarihi sırasıyla `started_at`, sertifika `issued_at`, `ended_at`, `created_at` içinden ilk mevcut değerdir. Projelerde yalnız sisteme eklenme tarihi bulunur. `date_basis=recorded_at` açıkça etiketlenir; deneyimin o gün gerçekleştiği iddia edilmez. Son 6/12 ay filtreleri yalnız timeline'ı daraltır, tüm profil sayılarını değiştirmez.
+Timeline yalnız arşivlenmemiş Project ve mevcut ProfileEvidenceItem satırlarından oluşur. Artan tarih, eşitlikte UUID sırası kullanılır; arayüz ay bazında gruplar. Profil tarihi sırasıyla `started_at`, sertifika `issued_at`, `ended_at`, `created_at` içinden ilk mevcut değerdir. Projelerde yalnız sisteme eklenme tarihi bulunur. `date_basis=recorded_at` açıkça etiketlenir; deneyimin o gün gerçekleştiği iddia edilmez. Son 6/12 ay filtreleri yalnız timeline'ı daraltır, tüm profil sayılarını değiştirmez.
 
 Harita proje/teknik kanıt, eğitim/sertifika, hackathon/bağlantı, topluluk/organizatör ve portföy/etkinlik kayıt sayılarını gösterir. Bunlar kalite, gelişim hızı, liderlik veya beceri seviyesi puanı değildir. Teknik kanıtlar her projenin son başarılı analizinden gelir; yeniden analiz eski evidence'ı iki kez saydırmaz. Sonraki başarısız analiz varsa son başarılı snapshot kullanıldığı belirtilir.
 
@@ -66,7 +66,7 @@ Standart 404/422/error envelope korunur. Material okuyucu projeleri, pencere fon
 
 ## GitHub attribution kararı
 
-GitHub hesabını aday kimliğine doğrulanmış biçimde bağlayan auth akışı yoktur. Public contributor, commit author, PR author veya changed files tek başına aday yazarlığını doğrulamaz; bu fazda contribution fetch eklenmedi. Yeni contribution fetch bütçeleri dolayısıyla **0 commit / 0 contributor / 0 PR / 0 changed file**; mevcut bounded repository fetch ve GitHub allow-list korunur. UI/API “Repository-level evidence; individual authorship not verified” sınırlamasını gösterir. Repo bir adaya bağlı olduğu için kişisel katkı kanıtı oluşturulmaz. Mevcut snapshot yeniden kullanılabilir, quota 0 ise tekrar fetch döngüsü yapılmaz.
+GitHub hesabı OAuth/PKCE ile adaya bağlanabilir; bu yalnız hesap/erişim ilişkisidir. Public contributor, commit author, PR author veya changed files tek başına aday yazarlığını doğrulamaz; bu fazda contribution fetch eklenmedi. Yeni contribution fetch bütçeleri dolayısıyla **0 commit / 0 contributor / 0 PR / 0 changed file**; mevcut bounded repository fetch ve GitHub allow-list korunur. UI/API “Repository-level evidence; individual authorship not verified” sınırlamasını gösterir. Repo bir adaya bağlı olduğu için kişisel katkı kanıtı oluşturulmaz. Mevcut snapshot yeniden kullanılabilir, quota 0 ise tekrar fetch döngüsü yapılmaz.
 
 ## FUTURE — uygulanmadı
 
@@ -97,3 +97,13 @@ Eşleşmedeki “Nasıl hesaplandı?” açıklaması kayıtlı kriter sayılar�
 coverage değerlerini gösterir; `result.score` authoritative kalır. 80/20 veya tek
 öncelik grubunda %100 ağırlık açıklanır; strength puan katsayısı değildir.
 Frozen trace yeniden hesaplanmaz; tarihsel kayıt olduğu açıkça gösterilir.
+
+
+## 8 Ekim 2026 — Kaynak ve proje yaşam döngüsü
+
+Arşivlenen proje yeni profil, discovery ve match hesaplarında kullanılmaz; eski analiz/evidence FK satırları ve frozen match/trace sonuçları korunur.
+Public GitHub import sonrası yalnız mevcut analyzer'ın ürettiği kanıtlar görünür olur. Repository adı veya README beyanı observed'a yükselmez.
+LinkedIn URL'si linked referanstır; pasted_text kayıtları URL içerse bile declared_only kalır. Kaynak/import metadata'sı düzenleme sırasında korunur.
+İş/staj/project metinleri mevcut portfolio ailesinde, diğer açık kayıt türleri mevcut education/certification/community/event/hackathon ailesinde saklanır.
+Mevcut resolver'ın desteklemediği work/internship/portfolio kriterleri için yeni eşleşme kuralı eklenmedi; project_experience hâlâ observed source_file kanıtı ister.
+Detaylar: [Proje yaşam döngüsü ve profesyonel profil](PROJECT_LIFECYCLE.md).

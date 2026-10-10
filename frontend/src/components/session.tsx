@@ -48,6 +48,7 @@ type Session = {
   logout: () => Promise<void>;
   saveCandidate: (v: Pick<Candidate, "id" | "name">) => void;
   saveProject: (v: Project) => void;
+  clearProject: () => void;
   saveNeed: (v: Need) => void;
   saveAnalysis: (run: Model<"AnalysisRun">, evidence: Evidence[]) => void;
   saveMatch: (v: Match) => void;
@@ -161,6 +162,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           clear();
         },
         saveCandidate: (candidate) => save((d) => ({ ...d, candidate })),
+        clearProject: () =>
+          save((d) => ({
+            ...d,
+            project: undefined,
+            run: undefined,
+            evidence: [],
+            match: undefined,
+          })),
         saveProject: (project) =>
           save((d) => ({
             ...d,

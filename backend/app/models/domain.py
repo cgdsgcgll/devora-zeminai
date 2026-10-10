@@ -80,10 +80,16 @@ class ProfileEvidenceItem(Identity, Updated, Base):
 class Project(Identity, Updated, Base):
     __tablename__ = 'projects'
     __table_args__ = (UniqueConstraint('id', 'candidate_id'),
-                      CheckConstraint("source_type = 'github'"))
+                      CheckConstraint("source_type = 'github'"),
+                      Index('uq_active_import_repository', 'candidate_id', 'github_repository_id', unique=True,
+                            sqlite_where=text('archived_at IS NULL AND github_repository_id IS NOT NULL'),
+                            postgresql_where=text('archived_at IS NULL AND github_repository_id IS NOT NULL')))
     candidate_id: Mapped[UUID] = mapped_column(ForeignKey('candidates.id'), index=True)
     name: Mapped[str] = mapped_column(String(200))
     description: Mapped[str] = mapped_column(Text)
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    github_repository_id: Mapped[str | None] = mapped_column(String(20))
+    repository_private: Mapped[bool | None] = mapped_column(Boolean)
     source_type: Mapped[str] = mapped_column(String(20), default='github')
     source_url: Mapped[str] = mapped_column(String(500))
     candidate: Mapped[Candidate] = relationship(back_populates='projects')
@@ -243,3 +249,21 @@ class ProofRequest(Identity, Updated, Base):
     submission: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class AnalysisJob(Identity, Created, Base):
+    __tablename__ = 'analysis_jobs'
+    __table_args__ = (
+        CheckConstraint("status IN ('queued','analyzing','succeeded','failed')", name='ck_analysis_job_status'),
+        Index('uq_active_analysis_job', 'project_id', unique=True,
+            sqlite_where=text("status IN ('queued','analyzing')"),
+            postgresql_where=text("status IN ('queued','analyzing')")),
+    )
+    project_id: Mapped[UUID] = mapped_column(ForeignKey('projects.id'), index=True)
+    run_id: Mapped[UUID | None] = mapped_column(ForeignKey('analysis_runs.id'), unique=True)
+    status: Mapped[str] = mapped_column(String(20))
+    deadline: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    error_code: Mapped[str | None] = mapped_column(String(100))
+    retryable: Mapped[bool | None] = mapped_column(Boolean)
+    diagnostics: Mapped[dict | None] = mapped_column(JSON)

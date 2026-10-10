@@ -140,9 +140,9 @@ def test_throttle_cleanup_and_ip_budget_bounds_email_rows(accounts, db, monkeypa
 
 
 @pytest.fixture
-def independent_db(tmp_path, monkeypatch):
+def independent_db(tmp_path, monkeypatch, postgres_independent_database):
     """Separate connections, real commits; optional dedicated migrated PostgreSQL DB."""
-    url = os.environ.get('TEST_AUTH_CONCURRENCY_URL') or 'sqlite:///' + (tmp_path/'concurrent.db').as_posix()
+    url = postgres_independent_database or 'sqlite:///' + (tmp_path/'concurrent.db').as_posix()
     engine = create_engine(url)
     if engine.dialect.name == 'sqlite':
         @event.listens_for(engine, 'connect')
@@ -151,7 +151,8 @@ def independent_db(tmp_path, monkeypatch):
         m.Base.metadata.create_all(engine)
     else:
         with engine.connect() as connection:
-            assert connection.scalar(text('SELECT version_num FROM alembic_version')) == 'a14_proof_requests'
+            from postgres_support import assert_current_schema
+            assert_current_schema(connection)
     def sessions():
         with Session(engine, expire_on_commit=False) as db:
             yield db

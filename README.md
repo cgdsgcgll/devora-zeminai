@@ -2,11 +2,15 @@
 
 **Doğrulanabilir Yetenek ve Akıllı Eşleşme Platformu**
 
+[MIT License](LICENSE) · [Hızlı başlangıç](#hızlı-başlangıç) · [Demo akışı](#güncel-ürün-akışı) · [Mimari ve tercihler](#mimari) · [Testler](#testler-ve-doğrulama) · [Bilinen sınırlar](#bilinen-sınırlar) · [Katkı](CONTRIBUTING.md)
+
 ZeminAI, adayın proje ve deneyim kayıtlarını belirli bir kurum ihtiyacının kriterleriyle ilişkilendirir. **Adaya genel bir yetenek puanı vermez; hangi kriter için hangi kanıtın mevcut olduğunu, hangilerinin yalnız beyan olduğunu ve hangi boşlukların kaldığını gösterir.** “Kanıt Uyumu”, bu ihtiyaca özgü kriter kapsamıdır.
 
 GitHub, kanıt sağlayıcılarından yalnızca biridir. Eğitim, sertifika, hackathon, etkinlik, topluluk ve portföy kayıtları da yaşayan profilde yer alır. Kurumlar eşleşmenin dayanağını inceleyebilir, adayları keşfedebilir, elle seçtikleri takımın kapsamını ve kalan boşlukları kapatan adayları görebilir. Eksik kanıt için Kanıt İsteği açılabilir; bu süreç otomatik doğrulama yapmaz.
 
-[Windows demo kurulumu](docs/LOCAL_DEMO.md) · [Profil kanıtları sözleşmesi](docs/PROFILE_EVIDENCE.md) · [Yaşayan profil ve keşif](docs/LIVING_PROFILE.md)
+**30 saniyede:** Dağınık CV/proje beyanlarını incelemek zordur. ZeminAI, kaynaklı kanıtları kurumun açık kriterleriyle eşleştirip dayanağını gösterir. **AI**, proje içeriğini ve ihtiyaç metnini yapılandırır; **skoru deterministik kurallar hesaplar**. Next.js + FastAPI modüler monoliti + PostgreSQL, MVP'de tek transaction sınırı ve düşük operasyon yükü sağlar. Anahtarsız `rule_based` başlangıcı ve GitHub/AI kurulumu aşağıdadır.
+
+[Windows / macOS kurulumu](#hızlı-başlangıç) · [Doküman haritası](docs/README.md) · [Güncel doğrulama](docs/VALIDATION.md)
 
 ## Problem
 
@@ -76,9 +80,11 @@ Arayüz **TR/EN** arasında geçer ve dil tercihini tarayıcıda saklar. Aday ad
 | `evidence_strength` | `weak`, `medium`, `strong` | Kanıtın destek gücü; kişinin beceri seviyesi değil |
 | `evidence_type` | `project_description`, `readme`, `source_file`, `dependency_file`, `repository_language`, `user_claim` | Kanıtın kaynak türü |
 
-LLM analizinde README/açıklama/beyan kanıtı `declared_only / weak` olarak sınırlandırılır. Dependency-only kanıt en fazla `medium`, repository dil bilgisi `weak` olur. Evidence kayıtları kaynak URL’si, varsa dosya yolu, alıntı, gerekçe ve sınırlamalar taşır.
+LLM analizinde README/açıklama/beyan ve repository dil metadatası `declared_only / weak` olarak sınırlandırılır; tek başına `observed` teknik kanıt veya teknik kriter karşılığı olamaz. Dependency-only kanıt en fazla `medium` olur. Evidence kayıtları kaynak URL’si, varsa dosya yolu, alıntı, gerekçe ve sınırlamalar taşır.
 
-**Evidence strength ≠ skill proficiency.** GitHub hesap kimliği ve contributor/katkı sahipliği doğrulanmaz; repository bağlantısı adayın tüm kodu yazdığını göstermez.
+**Evidence strength ≠ skill proficiency.** İsteğe bağlı GitHub App bağlantısı hesap kontrolünü ve repository erişimini doğrular; katkı sahipliği/yazarlık doğrulamaz ve skoru değiştirmez. [Kurulum ve sınırlar](docs/GITHUB_ACCOUNT_VERIFICATION.md).
+
+Adaylar birden fazla projeyi ekleyebilir, ad/açıklamasını düzenleyebilir ve geçmiş eşleşmeleri koruyarak arşivleyebilir. Seçili GitHub repository’leri doğrudan içe aktarılır; public kaynaklar mevcut analizden geçer, private kaynak analizi desteklenmez. LinkedIn profil URL’si ve adayın yapıştırdığı metin, önizleme/onay ile mevcut profil kayıtlarına eklenir; scraping veya teknik beceri doğrulaması yapılmaz. [Yaşam döngüsü, veri sınırları ve doğrulama](docs/PROJECT_LIFECYCLE.md).
 
 ## Eşleşme / Scoring
 
@@ -109,7 +115,7 @@ AI işe alınma olasılığı veya genel yetenek puanı hesaplamaz. Final matchi
 
 ## Canlı AI Doğrulaması
 
-Ekip tarafından çalıştırılan gerçek Gemini smoke testi başarılıdır (*live integration validated*). Doğrulanan demo ayarları:
+Önceki fazda ekip gerçek Gemini project/need structured output ve grounding smoke testinin geçtiğini bildirdi. Bu tarihsel entegrasyon sonucu, güncel worker/C++ akışının canlı doğrulaması değildir. O testte kullanılan demo ayarları:
 
 ```env
 LLM_PROVIDER=gemini
@@ -118,35 +124,30 @@ GEMINI_MODEL=gemini-3.1-flash-lite
 LLM_TIMEOUT_SECONDS=120
 ```
 
-Project ve need structured output Pydantic doğrulamasından, proje kanıtları evidence grounding kontrolünden geçti.
-
-| Örnek | Doğrulanan sonuç |
-|---|---|
-| Python proje kanıtı | `observed / repository_language / weak` |
-| FastAPI proje kanıtı | `observed / source_file / strong` |
-| İhtiyaç kriterleri | Python required, FastAPI required, Docker preferred |
-
-Bu örnekte uydurma kriter görülmedi. Sonuç demo entegrasyonunu doğrular; production sertifikasyonu veya genel model kalite garantisi değildir. Demo için 120 saniyelik HTTP timeout kullanılır; retry toplam süreyi uzatabilir.
+Eski smoke kaydındaki `observed / repository_language` örneği güncel kanıt kuralına uygun değildir ve geçerli örnek olarak kullanılmaz: metadata tek başına yalnız beyandır. Gerçek kaynak içeriğiyle desteklenen kanıt gerekir. Güncel test kapsamı ve canlı doğrulama sınırları [VALIDATION](docs/VALIDATION.md) içinde ayrılır. Demo için 120 saniyelik HTTP timeout kullanılır; retry toplam süreyi uzatabilir.
 
 ## Desteklenen Analiz Modları
 
 | `LLM_PROVIDER` | Kullanım ve doğrulama |
 |---|---|
 | `rule_based` | Anahtarsız geliştirme/test; sınırlı kural tabanlı analiz |
-| `gemini` | generateContent REST adaptörü; mock testler ve canlı demo doğrulandı |
+| `gemini` | generateContent REST adaptörü; otomatik mock testler, önceki faza ait canlı smoke kaydı |
 | `openai` | Responses REST adaptörü; mock testler geçti, canlı OpenAI testi henüz yapılmadı |
 
 Kod varsayılanı `rule_based`, `.env.example` demo seçimi `gemini`dir. Modeller environment üzerinden gelir; kodda sabitlenmez. Seçilen LLM için key/model eksikse `LLM_NOT_CONFIGURED` döner; sessiz fallback yoktur. Açık kriterlerle ihtiyaç oluşturmak LLM çağrısı gerektirmez.
 
 ## Mimari
 
-Tek backend içinde modüler bir yapı kullanılır; ayrı mikroservisler yoktur.
+Backend **modüler monolit** olarak tasarlandı: API, auth, GitHub, analiz/provider ve matching modülleri aynı uygulama ve veritabanı sınırında çalışır. Frontend ayrı Next.js uygulamasıdır.
+
+**Neden mikroservis değil?** Küçük MVP ekibinde bağımsız servis deploy'u, servisler arası auth, dağıtık transaction ve ağ hatalarının maliyeti ürün doğrulamasına katkı sağlamıyordu. Tek PostgreSQL transaction sınırı import/provenance tutarlılığını, ortak tipli sözleşmeler ise test ve hata ayıklamayı kolaylaştırır. Yavaş analiz HTTP import isteğinden ayrılmış, DB'de kalıcı job ve worker ile yürütülür; bunun için ayrı mikroservis gerekmez. Dezavantajı ortak deploy ve hata/ölçekleme sınırıdır. Ölçülen yük gerektirirse provider/analiz worker'ı bu modül sınırından ayrılabilir; bugün dağıtık mikroservis ölçeği iddia edilmez.
 
 ```mermaid
 flowchart TD
     U[Next.js / Swagger / API istemcisi] --> API[FastAPI endpointleri]
     API --> W[Workflow katmanı]
-    W --> G[GitHub fetch]
+    W --> J[Kalıcı analiz job / worker]
+    J --> G[Sınırlı GitHub kaynak okuma]
     G --> S[RepositorySnapshot]
     S --> A[Analiz katmanı]
     W -->|Kurum ihtiyacı| A
@@ -165,13 +166,13 @@ Provider adaptörleri yalnız API iletişimi ve structured output taşır; verit
 | Katman | Teknoloji |
 |---|---|
 | Frontend | Next.js 16.3.8, React 19.3, TypeScript, App Router |
-| Backend | Python 3.12+, FastAPI, Uvicorn |
+| Backend | Python 3.12 doğrulanmış hedef, FastAPI, Uvicorn |
 | Validation | Pydantic 2, pydantic-settings |
 | ORM / migration | SQLAlchemy 2, Alembic |
 | Veritabanı | PostgreSQL; varsayılan testlerde SQLite |
 | HTTP / AI | httpx; Gemini ve OpenAI REST adaptörleri |
 | Test | pytest, HTTP mock transport |
-| Yerel veritabanı | Docker Compose, PostgreSQL 16 |
+| Yerel veritabanı | PostgreSQL 18; eski Docker Compose alternatifi PostgreSQL 16 |
 
 Sürümler [requirements.txt](backend/requirements.txt) içinde sabittir. Frontend kurulumu ve sözleşme üretimi [frontend/README.md](frontend/README.md) içinde açıklanır.
 
@@ -204,37 +205,117 @@ Hatalar `error.code`, `message`, `retryable`, `details` alanlarıyla döner. LLM
 
 ## Hızlı Başlangıç
 
-Python 3.12+, Git ve Docker Compose gerekir. Docker yerine erişilebilir bir yerel PostgreSQL de kullanılabilir.
+Yerel hedef: **Python 3.12**, **Node 22.21.0** (`.python-version`, `.nvmrc`),
+**PostgreSQL 18**. Node test runner için minimum 22.13; Next 16.3.8 için minimum
+20.9 olduğundan 22.21.0 ikisini de karşılar. macOS 14+ Apple Silicon hedeflenir;
+bu Windows ortamında gerçek macOS smoke çalıştırılmadı.
 
-```bash
-git clone https://github.com/cgdsgcgll/devora-zeminai.git
-cd devora-zeminai
-python -m venv .venv
-```
+Git clone sonrası repo kökünde çalışın. Root `.env` backend tarafından her yeni
+süreçte otomatik okunur; frontend için ayrı `frontend/.env.local` kullanılır.
+İki dosya da Git tarafından ignore edilir. Örnekleri yalnız **ilk kurulumda**
+kopyalayın; mevcut secret dosyasını ezmeyin. `DATABASE_URL` placeholder'ını yerel
+DB'nize göre düzenleyin. Anahtarsız başlangıç için `LLM_PROVIDER=rule_based` seçin.
+GitHub App/AI özellikleri için [ayrıntılı güvenli kurulum](docs/GITHUB_ACCOUNT_VERIFICATION.md).
+Mevcut `GITHUB_APP_ENCRYPTION_KEY` sabit kalmalıdır; startup anahtar üretmez.
 
-Platformunuza göre environment dosyasını kopyalayın ve sanal ortamı etkinleştirin:
+### Local Development — Windows
 
-| Windows PowerShell | Linux/macOS |
-|---|---|
-| `Copy-Item .env.example .env` | `cp .env.example .env` |
-| `.\.venv\Scripts\Activate.ps1` | `source .venv/bin/activate` |
+Python 3.12, Node 22.21.0 ve yerel PostgreSQL 18 kurulmuş olmalıdır.
+PostgreSQL'de geliştirme kullanıcınızı ve `zeminai`, `zeminai_test` veritabanlarını
+oluşturun (pgAdmin veya aşağıdaki `createuser`/`createdb` komutları kullanılabilir).
 
-Repo kökündeki `.env` içinde Gemini anahtarınızı yerel olarak tanımlayın; anahtarı Git’e eklemeyin. Anahtarsız deneme için `LLM_PROVIDER=rule_based` seçin. Ardından ortak adımları çalıştırın:
-
-```bash
-python -m pip install --upgrade --upgrade-strategy eager -r backend/requirements.txt
-docker compose up -d --wait
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+Copy-Item .env.example .env
+Copy-Item frontend/.env.example frontend/.env.local
+python -m pip install -r backend/requirements.txt
+# .env içindeki DATABASE_URL ve seçilen provider ayarlarını yerel editörde düzenleyin.
 cd backend
 python -m alembic upgrade head
-python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+python -m alembic current
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
-Swagger’ı açıp MVP akışını izleyin. Sunucuyu durdurduktan sonra aynı ortamda `python -m pytest -q` çalıştırabilirsiniz. Yerel PostgreSQL kullanıyorsanız Compose adımını atlayıp `DATABASE_URL` değerini kendi geliştirme veritabanınıza göre düzenleyin. Uygulama başlangıcı tablo oluşturmaz; migration adımı gereklidir.
+Ayrı terminal, repo kökü:
+
+```powershell
+cd frontend
+npm ci
+npm run dev -- --hostname 127.0.0.1
+```
+
+Yeni backend terminalinde yalnız venv'i etkinleştirip `cd backend` ve uvicorn
+komutunu tekrarlayın. Aktivasyon policy'si engellerse `..\.venv\Scripts\python.exe`
+ile backend komutlarını çalıştırın; sistem execution policy'sini gevşetmeyin.
+
+### Local Development — macOS
+
+[Homebrew PostgreSQL 18](https://formulae.brew.sh/formula/postgresql@18) yolu:
+
+```sh
+brew install python@3.12 postgresql@18
+brew services start postgresql@18
+export PATH="$(brew --prefix postgresql@18)/bin:$PATH"
+createuser --pwprompt zeminai_dev
+createdb --owner=zeminai_dev zeminai
+createdb --owner=zeminai_dev zeminai_test
+# Node version manager kuruluysa repo kökünde:
+nvm install
+nvm use
+python3.12 -m venv .venv
+source .venv/bin/activate
+cp .env.example .env
+cp frontend/.env.example frontend/.env.local
+python -m pip install -r backend/requirements.txt
+# .env DATABASE_URL: postgresql+psycopg://zeminai_dev:<URL-encoded-password>@127.0.0.1:5432/zeminai
+cd backend
+python -m alembic upgrade head
+python -m alembic current
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+Node version manager yoksa Node 22.21.0 kurup `node --version` doğrulayın.
+Ayrı zsh terminalinde repo kökünden `nvm use`, `cd frontend`, `npm ci`,
+`npm run dev -- --hostname 127.0.0.1` çalıştırın. Sonraki backend terminalinde
+`source .venv/bin/activate`, `cd backend`, yukarıdaki uvicorn komutu yeterlidir.
+`.env` dosyalarını her terminalde yeniden kopyalamayın. Parolayı shell history'ye
+yazmayın; `createuser --pwprompt` yerel olarak sorar.
+
+Apple Silicon'da native ARM64 Python/Node kullanın; Windows venv veya node_modules
+klasörünü taşımayın. Python binary wheel çözümlemesi ayrı kontrol edilir; bu gerçek
+macOS kurulumu/çalıştırması değildir. [cryptography platformları](https://cryptography.io/en/50.0.2/installation/),
+[psycopg binary dosyaları](https://pypi.org/project/psycopg-binary/3.2.9/).
+Mevcut `docker-compose.yml` eski PostgreSQL 16 demo alternatifidir; PG18 doğrulaması
+yerine geçmez. Mevcut DB volume'unun major sürümünü yerinde değiştirmeyin.
+
+### Yerel origin, test DB ve kalite kontrolü
+
+Frontend **http://127.0.0.1:3000**, backend **http://127.0.0.1:8000**,
+GitHub callback **http://127.0.0.1:8000/github/callback**. `localhost` ile karıştırmayın.
+Yerel HTTP `.env`: `SESSION_COOKIE_SECURE=false`; production HTTPS/Secure şartları değişmez.
+Migration mevcut head'e (şu anda `a18_analysis_diagnostics`) ulaşmalıdır. Kod/config
+veya encryption key dosyası değişikliklerinden sonra backend/embedded worker'ları yeniden başlatın.
+`--reload` geliştirmede isteğe bağlıdır; worker restart/deadline davranışı için
+[analiz yaşam döngüsü](docs/PROJECT_LIFECYCLE.md).
+
+Backend dizininde `python -m pytest -q -p no:cacheprovider`,
+`python -m compileall -q app tests migrations scripts`, `python -m pip check`,
+`python -m alembic check` çalışır. Gerçek PostgreSQL için yalnız test DB sahibinin
+bağlantısını ignored `work/pg-test.env` içine `TEST_DATABASE_URL=...` olarak kaydedin.
+Repo kökünden `python backend/scripts/test_postgres.py` çalıştırın. Test fixture'ı
+rastgele izole şemalar oluşturur, head'e migrate eder ve yalnız kendi şemalarını
+siler; production DB kullanmayın. URL/parola komut satırına veya rapora yazılmaz.
+
+Frontend dizininde `npm test`, `npm run lint`, `npm run build`. `.env.local` içindeki
+`ZEMINAI_ENV=development` yerel build'i açıkça tanımlar; production build için gerçek
+HTTPS `API_BACKEND_URL`, `FRONTEND_ORIGIN`, `ZEMINAI_ENV=production` gerekir.
 
 Dependency hardening ile FastAPI **0.142.2**, transitif Starlette **1.7.0** ve
 pytest **9.0.3** temiz Python 3.12 ortamında doğrulandı. Starlette doğrudan pinlenmez.
-Mevcut venv'de eski transitif sürümün korunmaması için yukarıdaki `--upgrade-strategy eager`
-önemlidir; tercihen temiz venv kullanın. Kurulumdan sonra doğrulayın:
+Tercihen yukarıdaki gibi temiz venv kullanın. Mevcut venv güncelleniyorsa
+`python -m pip install --upgrade --upgrade-strategy eager -r backend/requirements.txt`
+komutunu repo kökünden çalıştırın. Kurulumdan sonra doğrulayın:
 
 ```bash
 python -c "import fastapi, starlette; from packaging.version import Version; print(fastapi.__version__, starlette.__version__); assert Version(starlette.__version__) >= Version('1.3.1')"
@@ -251,11 +332,11 @@ API_BACKEND_URL=http://127.0.0.1:8000
 ```
 
 ```bash
-npm install
-npm run dev
+npm ci
+npm run dev -- --hostname 127.0.0.1
 ```
 
-[Web uygulamasını](http://localhost:3000) açıp hesap oluşturun. Profil, keşif, eşleşme ve Kanıt İstekleri gerçek API’yi kullanır. Yerel HTTP için `SESSION_COOKIE_SECURE=false` gerekir; production HTTPS ayarında `true` korunur. Tarayıcı same-origin `/api` proxy’sini kullanır; oturum token’ı localStorage’da tutulmaz.
+[Web uygulamasını](http://127.0.0.1:3000) açıp hesap oluşturun. Profil, keşif, eşleşme ve Kanıt İstekleri gerçek API’yi kullanır. Yerel HTTP için `SESSION_COOKIE_SECURE=false` gerekir; production HTTPS ayarında `true` korunur. Tarayıcı same-origin `/api` proxy’sini kullanır; oturum token’ı localStorage’da tutulmaz.
 Frontend key içermez; Gemini/OpenAI anahtarları backend’de kalır. Kalite kontrolü için `npm run lint`,
 `npm test` ve `npm run build` kullanılır. Jüri demosunu geliştirme göstergesi olmadan,
 yalnız yerel arayüzde çalıştırmak için:
@@ -273,8 +354,8 @@ Production build modu, uygulamanın production güvenliğine hazır olduğu anla
 
 | Değişken | Örnek / kullanım |
 |---|---|
-| `DATABASE_URL` | `postgresql+psycopg://postgres:postgres@localhost:5432/zeminai`; yalnız yerel Compose örneği |
-| `CORS_ORIGINS` | `["http://localhost:3000","http://127.0.0.1:3000"]`; izin verilen frontend origin’leri |
+| `DATABASE_URL` | `postgresql+psycopg://zeminai_dev:REPLACE_LOCALLY@127.0.0.1:5432/zeminai`; yerel PostgreSQL placeholder'ı |
+| `CORS_ORIGINS` | `["http://127.0.0.1:3000"]`; izin verilen frontend origin’leri |
 | `GITHUB_TOKEN` | Boş; public repository erişimi için isteğe bağlı |
 | `LLM_PROVIDER` | `gemini` |
 | `GEMINI_API_KEY` | Boş; Gemini için yerel olarak doldurun |
@@ -289,14 +370,14 @@ Gemini anahtarı [Google AI Studio](https://aistudio.google.com/apikey) üzerind
 
 ## Testler ve Doğrulama
 
-**7 Ekim 2026 — ekip tarafından bildirilen son manuel doğrulama:**
+**10 Ekim 2026 — commit öncesi stabilizasyon doğrulaması:**
 
-- Gerçek **PostgreSQL 18 full backend suite: 358/358 PASS** — `358 passed, 1 warning, 41.44s`.
-- PostgreSQL üzerinde hedefli **Team Complements: 12 PASS**.
-- **Frontend: 56 PASS**; frontend lint ve production build başarılı.
-- `compileall`, `pip check`, OpenAPI drift/check ve `git diff --check`: başarılı.
+- **SQLite full backend: 506 PASS**; **gerçek PostgreSQL 18 full backend: 506 PASS**.
+- **Frontend: 91 PASS**; lint ve production build başarılı.
+- PostgreSQL migration `a18_analysis_diagnostics` head; Alembic current/check başarılı.
+- `compileall`, `pip check`, OpenAPI/types drift ve `git diff --check`: başarılı.
 
-Kalan uyarı Starlette TestClient/httpx deprecation’dır; ürün testi başarısızlığı değildir. Önceki Windows temp/cache izin sorunu yazılabilir `--basetemp` ile giderilmiştir. Bu README yenilemesinde testler yeniden çalıştırılmadı; güncel SQLite toplamı veya yeni npm audit sonucu iddia edilmez. Önceki migration/operasyon doğrulamaları: [Production hardening](docs/PRODUCTION_READINESS.md), [Kanıt İsteği](docs/PROOF_REQUESTS.md).
+Backend'de tek Starlette TestClient/httpx deprecation uyarısı vardır; test başarısızlığı değildir. Sentetik browser QA, gerçek PostgreSQL testleri ve canlı provider doğrulaması birbirinden ayrıdır. [Kapsam ve sınırlar](docs/VALIDATION.md). Bu dokümantasyon turunda ürün kodu değişmedi; önceki stabilizasyon sonuçları korunur, yeni npm audit sonucu iddia edilmez.
 
 Regresyon kapsamı; auth/ownership/CSRF, kalıcı bütçeler, matching/evidence sınırları, frozen trace, provider hata/grounding kontrolleri, migration’lar ve Team Complements’ın deterministik sırası, anonimliği, tam havuz sınırı ve sabit sorgu davranışını içerir. Otomatik testler gerçek API anahtarı veya internet gerektirmez.
 
@@ -309,7 +390,7 @@ python -m pip check
 python -m alembic check
 ```
 
-`alembic check` migrate edilmiş, erişilebilir DB gerektirir. PostgreSQL suite’i için ayrı bir test DB’sini migrate edin; `DATABASE_URL` ve `TEST_DATABASE_URL` değişkenlerini bu DB’ye ayarlayıp pytest çalıştırın. Test fixture’ları dış transaction/savepoint kullanır; üretim DB’sini kullanmayın.
+`alembic check` migrate edilmiş, erişilebilir geliştirme DB'si gerektirir. PostgreSQL suite'i için ayrı test DB bağlantısını ignored `work/pg-test.env` içine `TEST_DATABASE_URL=...` olarak kaydedin; repo kökünden `python backend/scripts/test_postgres.py` çalıştırın. Fixture'lar kendi rastgele izole şemalarını oluşturur, migrate eder ve temizler; üretim DB'sini kullanmayın.
 
 İsteğe bağlı canlı test: `python scripts/smoke_llm.py`. Seçilen provider’ın key/model ayarı yoksa `SKIPPED` döner; varsa iki gerçek API çağrısı yapar ve ücret doğurabilir. Docker Compose başlatma bu doğrulama ortamında çalıştırılmadı; DB kontrollerinde yerel PostgreSQL kullanıldı.
 
@@ -336,7 +417,16 @@ Bu bütçeler **in-flight/global concurrency limiti veya global provider harcama
 - GitHub okuyucusu yalnız public repository kabul eder; en fazla 30 dosya, dosya başına 100 KB ve toplam 1 MB içerik alır. LLM bağlamında dosya alıntıları ayrıca sınırlandırılır; tüm repository’nin analiz edildiği iddia edilmez.
 - GitHub dil metadatası güncel repository durumudur; dosyalar gibi commit anına sabitlenmez.
 - `.env` ignore edilir; örnek key alanları boştur. Provider ham hata gövdeleri ve hassas header’lar API hata cevabına konmaz.
-- Analiz hatalarında durum kaydedilir; alınmış snapshot korunur. DB bağlantı kesintisinde `running` kalan kayıtlar için otomatik toparlama henüz yoktur.
+- Kalıcı analiz job'ları deadline ile sınırlandırılır; worker/DB yeniden erişilebilir olduğunda süresi aşılmış işlerin durumu uzlaştırılır. Bu, kesintisiz çalışma veya anında failover garantisi değildir. [Restart/retry davranışı](docs/PROJECT_LIFECYCLE.md).
+
+## Bilinen Sınırlar
+
+- Public kaynak okuması dosya/süre/boyut sınırları içerir; tüm repository veya private kaynak analiz edilmez.
+- Dil metadatası, README ve profil beyanı tek başına observed teknik kanıt değildir; GitHub erişimi yazarlık değildir.
+- Keşif tam havuzu 100 aktif adayla sınırlıdır; daha büyük üretim ölçeği ayrıca tasarlanmalıdır.
+- Provider kota/maliyet/ağ hataları mümkündür. Sahte başarı veya sessiz fallback yoktur.
+- macOS için kurulum ve wheel taşınabilirliği kontrol edildi; gerçek macOS smoke yapılmadı.
+- Gerçek HTTPS/proxy/cookie deployment smoke ve yukarıdaki operasyon işleri açıktır. Production güvenliği garantisi verilmez.
 
 ## Mevcut Durum
 
@@ -351,10 +441,10 @@ Bu bütçeler **in-flight/global concurrency limiti veya global provider harcama
 
 Bunlar mevcut özellikler değil, geliştirme/operasyon öncelikleridir:
 
-- Doğrulanmış GitHub hesap/katkı sahipliği; bireysel yazarlığı varsaymadan gerçek katkı metrikleri.
+- GitHub katkı metrikleri; mevcut hesap/erişim doğrulamasından ayrı, bireysel yazarlığı varsaymadan.
 - Süre sonu, iptal ve frozen snapshot içeren seçici paylaşılabilir Kanıt Pasaportu.
 - İhtiyaç netleştirme soruları, hafif eşleşme yaşam döngüsü ve tanıştırma sonrası takip; sonuç/referans geri bildirim döngüsü.
-- Background analiz, kesilen analizleri toparlama ve sürekli senkronizasyon; model kalite değerlendirmeleri.
+- Dağıtık worker ölçekleme, global provider concurrency/spend sınırları ve sürekli senkronizasyon; model kalite değerlendirmeleri. Kalıcı proje analiz kuyruğu ve deadline recovery için [yaşam döngüsü notları](docs/PROJECT_LIFECYCLE.md).
 - Gerçek deployment doğrulaması ve yukarıdaki operasyon kontrolleri; e-posta doğrulama, parola kurtarma ve session/device yaşam döngüsü.
 
 ## Proje Yapısı
@@ -368,14 +458,22 @@ backend/
   app/services/            GitHub, analiz, LLM, matching ve workflow
   migrations/              Alembic migration’ları
   tests/                   Otomatik testler
-  scripts/                 Canlı smoke testi
+  scripts/                 Preflight, canlı smoke ve izole PostgreSQL test launcher
 frontend/                  Next.js App Router, API client ve arayüz testleri
-docs/                      Vizyon ve geliştirme kayıtları
-docker-compose.yml         Yerel PostgreSQL
+scripts/                   Windows demo preflight yardımcısı
+docs/                      Rehberler, sözleşmeler ve tarihli doğrulamalar; docs/README.md
+docker-compose.yml         Eski yerel PostgreSQL 16 alternatifi
 .env.example               Secretsız demo ayarları
+.python-version / .nvmrc    Python ve Node geliştirme sürümleri
+CONTRIBUTING.md             Katkı, test ve güvenli paylaşım kuralları
+LICENSE                    MIT License
 ```
 
 [Orijinal ürün vizyonu](docs/VISION.md) daha geniş hedefleri içerir; mevcut uygulama kapsamı bu README’de açıklanır.
+
+## Lisans
+
+ZeminAI kaynak kodu **[MIT License](LICENSE)** ile sunulur. Üçüncü taraf bağımlılıklar kendi lisanslarına tabidir.
 
 ## Ekip
 

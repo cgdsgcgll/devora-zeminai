@@ -5,6 +5,8 @@ import time
 import httpx
 
 from app.core.errors import AppError
+from app.services.llm import diagnostics, retry
+from app.services.llm.capacity import provider_slot
 
 
 class GeminiProvider:
@@ -20,6 +22,7 @@ class GeminiProvider:
         self.max_output_tokens = max_output_tokens
         self.transport = transport
 
+    @provider_slot
     def generate_structured(self, *, instructions: str, context: str,
                             schema: dict, schema_name: str) -> str:
         model_id = self.model.removeprefix('models/')
@@ -36,35 +39,43 @@ class GeminiProvider:
         url = f'https://generativelanguage.googleapis.com/v1beta/models/{model_id}:generateContent'
         with httpx.Client(timeout=self.timeout, transport=self.transport, follow_redirects=False) as client:
             for attempt in range(self.max_retries + 1):
+                retry_delay = None
+                started = time.perf_counter()
                 try:
+                    remaining = diagnostics.remaining()
+                    client.timeout = httpx.Timeout(min(self.timeout, remaining) if remaining is not None else self.timeout)
                     with client.stream('POST', url, headers={'x-goog-api-key': self._api_key}, json=payload) as response:
                         if response.status_code != 200:
-                            retryable = response.status_code in {408, 429} or response.status_code >= 500
-                            raise AppError('LLM_PROVIDER_ERROR', 'Gemini isteği tamamlanamadı.', 502,
-                                           retryable, {'upstream_status': response.status_code})
+                            retry_delay = retry.retry_after(response.headers.get("retry-after"))
+                            raise diagnostics.http_error(response.status_code)
                         raw = bytearray()
                         for chunk in response.iter_bytes():
                             raw.extend(chunk)
                             if len(raw) > 1_000_000:
                                 raise AppError('INVALID_MODEL_OUTPUT', 'Gemini yanıtı boyut sınırını aştı.', 502)
-                        return self._output_text(json.loads(raw))
+                        result = self._output_text(json.loads(raw))
+                        diagnostics.event('llm_request', provider=self.name, model=self.model,
+                            attempt=attempt + 1, duration_ms=(time.perf_counter()-started)*1000)
+                        return result
                 except httpx.TimeoutException:
                     error = AppError('LLM_TIMEOUT', 'Gemini isteği zaman aşımına uğradı.', 504, True)
                 except httpx.RequestError:
-                    error = AppError('LLM_PROVIDER_ERROR', 'Gemini sağlayıcısına erişilemedi.', 502, True)
+                    error = AppError('LLM_UNAVAILABLE', 'Gemini sağlayıcısına erişilemedi.', 502, True)
                 except (ValueError, KeyError, TypeError, AttributeError):
                     error = AppError('INVALID_MODEL_OUTPUT', 'Gemini yanıtı geçerli yapılandırılmış çıktı içermiyor.', 502)
                 except AppError as exc:
                     error = exc
+                diagnostics.event('llm_request', provider=self.name, model=self.model, attempt=attempt + 1,
+                    duration_ms=(time.perf_counter()-started)*1000, error=error)
                 if not error.retryable or attempt == self.max_retries:
                     raise error from None
-                time.sleep(0.25 * 2**attempt)
+                retry.pause(attempt, error, retry_delay)
         raise AssertionError('Unreachable')
 
     @staticmethod
     def _output_text(body: dict) -> str:
         if body.get('promptFeedback', {}).get('blockReason'):
-            raise AppError('LLM_PROVIDER_ERROR', 'Gemini sağlayıcısı analizi reddetti.', 502)
+            raise AppError('LLM_REQUEST_REJECTED', 'Gemini sağlayıcısı analizi reddetti.', 502)
         candidates = body.get('candidates', [])
         if not isinstance(candidates, list) or len(candidates) != 1:
             raise AppError('INVALID_MODEL_OUTPUT', 'Tek bir Gemini yanıtı bekleniyordu.', 502)

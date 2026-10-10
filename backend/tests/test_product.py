@@ -210,7 +210,8 @@ def test_proof_migration_fresh_upgrade_and_downgrade_guard(tmp_path, monkeypatch
         before = conn.scalar(text('SELECT count(*) FROM users'))
     command.upgrade(config,'head'); command.check(config)
     with engine.begin() as conn:
-        assert conn.scalar(text('SELECT version_num FROM alembic_version'))=='a14_proof_requests'
+        from alembic.script import ScriptDirectory
+        assert conn.scalar(text('SELECT version_num FROM alembic_version'))==ScriptDirectory.from_config(config).get_current_head()
         assert conn.scalar(text('SELECT count(*) FROM users'))==before
     command.downgrade(config,'a13_operation_budgets')
     command.upgrade(config,'head'); command.check(config)

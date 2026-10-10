@@ -64,6 +64,16 @@ test("actual evidence and criterion cards show Turkish explanations and preserve
   assert.match(html, /Beyan/);
   assert.match(html, /Original OSPF source text/);
   assert.doesNotMatch(html, /is explicitly mentioned/);
+  const cpp = renderToStaticMarkup(createElement(EvidenceCard, { item: {
+    skill_label: "C++", evidence_status: "observed", evidence_strength: "strong",
+    evidence_type: "source_file", path: "src/complex.cpp",
+    source_url: "https://github.com/test/repo/blob/abc/src/complex.cpp",
+    excerpt: "class Complex { public: int value; };", limitations: [],
+  }}));
+  assert.match(cpp, /Kaynak dosya/);
+  assert.match(cpp, /src\/complex\.cpp/);
+  assert.match(cpp, /class Complex/);
+  assert.doesNotMatch(cpp, /Depo dili|Repo dili/);
   const criterion = renderToStaticMarkup(
     createElement(CriterionCard, {
       item: {

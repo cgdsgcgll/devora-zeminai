@@ -1,6 +1,7 @@
 "use client";
 import { t } from "../../i18n/index.ts";
 import { validComplements } from "./team-complements.ts";
+import { validGitHub } from "./github.ts";
 import type { components } from "./schema";
 export type Model<K extends keyof components["schemas"]> =
   components["schemas"][K];
@@ -61,6 +62,18 @@ export function parseApiError(body: unknown, status: number): ApiError {
 export function userError(error: unknown): string {
   if (!(error instanceof ApiError)) return t("m416");
   const codes: Record<string, string> = {
+    PROFILE_IMPORT_FORMAT: t("professionalFormat"),
+    IMPORT_LIMIT_EXCEEDED: t("professionalFormat"),
+    PRIVATE_ANALYSIS_UNSUPPORTED: t("privateAnalysisUnsupported"),
+    ANALYSIS_IN_PROGRESS: t("projectAnalyzing"),
+    GITHUB_APP_NOT_CONFIGURED: t("githubNotConfigured"),
+    GITHUB_CONNECTION_REQUIRED: t("githubDisconnected"),
+    GITHUB_CONNECTION_REVOKED: t("githubRevoked"),
+    GITHUB_IDENTITY_ALREADY_LINKED: t("githubConflict"),
+    GITHUB_REPOSITORY_MISMATCH: t("githubMismatch"),
+    GITHUB_REPOSITORY_NOT_ACCESSIBLE: t("githubUnavailable"),
+    GITHUB_POOL_LIMIT_EXCEEDED: t("githubLimit"),
+    GITHUB_PROVIDER_ERROR: t("errorProvider"),
     UNAUTHENTICATED: t("errorUnauthorized"),
     UNAUTHORIZED: t("errorUnauthorized"),
     FORBIDDEN: t("errorForbidden"),
@@ -123,6 +136,11 @@ async function request<T>(
     throw new ApiError("NETWORK_ERROR", t("m417"), true);
   }
   if (response.ok && response.status === 204) {
+    if (
+      (path.startsWith("/github/") || path.endsWith("/github-relationship")) &&
+      method !== "DELETE"
+    )
+      throw new ApiError("INVALID_RESPONSE", t("m423"));
     if (path.endsWith("/team-complements"))
       throw new ApiError("INVALID_RESPONSE", t("m423"));
     return undefined as T;
@@ -140,7 +158,42 @@ async function request<T>(
   if (!data) throw new ApiError("INVALID_RESPONSE", t("m418"));
   const hasId = (v: unknown) =>
     !!v && typeof v === "object" && "id" in v && typeof v.id === "string";
-  if (path.endsWith("/team-complements")) {
+  if (path.startsWith("/github/") || path.endsWith("/github-relationship")) {
+    if (!validGitHub(path, data))
+      throw new ApiError("INVALID_RESPONSE", t("m423"));
+  } else if (path.endsWith("/analysis-jobs")) {
+    if (
+      typeof data !== "object" ||
+      !("state" in data) ||
+      !["not_started", "queued", "analyzing", "succeeded", "failed"].includes(
+        String(data.state),
+      )
+    )
+      throw new ApiError("INVALID_RESPONSE", t("m423"));
+  } else if (path.endsWith("/activity")) {
+    if (
+      typeof data !== "object" ||
+      !("project" in data) ||
+      !hasId(data.project) ||
+      !("evidence" in data) ||
+      !Array.isArray(data.evidence) ||
+      !("analysis" in data) ||
+      !data.analysis ||
+      typeof data.analysis !== "object" ||
+      !("state" in data.analysis) ||
+      !["not_started", "queued", "analyzing", "succeeded", "failed"].includes(
+        String(data.analysis.state),
+      )
+    )
+      throw new ApiError("INVALID_RESPONSE", t("m423"));
+  } else if (path.endsWith("/professional-preview")) {
+    if (
+      typeof data !== "object" ||
+      !("records" in data) ||
+      !Array.isArray(data.records)
+    )
+      throw new ApiError("INVALID_RESPONSE", t("m423"));
+  } else if (path.endsWith("/team-complements")) {
     if (
       !validComplements(
         data,
@@ -191,6 +244,55 @@ async function request<T>(
   return data as T;
 }
 export const api = {
+  githubImportBatch: (data: Model<"GitHubBatchInput">) =>
+    request<Model<"GitHubBatchResult">>("/github/import-batch", data),
+  queueAnalysis: (id: string) =>
+    request<Model<"AnalysisState">>(`/projects/${id}/analysis-jobs`, {}),
+  githubImport: (data: Model<"GitHubLinkInput">) =>
+    request<Model<"GitHubImportResult">>("/github/import", data),
+  projectActivity: (id: string) =>
+    request<
+      Omit<Model<"ProjectActivity">, "project" | "evidence"> & {
+        project: Project;
+        evidence: Evidence[];
+      }
+    >(`/projects/${id}/activity`),
+  updateProject: (id: string, data: Model<"ProjectPatch">) =>
+    request<Project>(`/projects/${id}`, data, "PATCH"),
+  deleteProject: (id: string) =>
+    request<void>(`/projects/${id}`, undefined, "DELETE"),
+  professionalPreview: (id: string, data: Model<"ProfessionalInput">) =>
+    request<Model<"ProfessionalPreview">>(
+      `/candidates/${id}/professional-preview`,
+      data,
+    ),
+  professionalImport: (id: string, data: Model<"ProfessionalConfirm">) =>
+    request<ProfileEvidence[]>(`/candidates/${id}/professional-import`, data),
+  githubConnection: () =>
+    request<Model<"GitHubConnectionStatus">>("/github/connection"),
+  githubConnect: () =>
+    request<Model<"GitHubConnectURL">>("/github/connect", {}),
+  githubDisconnect: () =>
+    request<void>("/github/connection", undefined, "DELETE"),
+  githubInstallationURL: () =>
+    request<Model<"GitHubInstallationURL">>("/github/installation-url"),
+  githubInstallations: () =>
+    request<Model<"GitHubInstallation">[]>("/github/installations"),
+  githubRepositories: (id: string) =>
+    request<Model<"GitHubRepository">[]>(
+      `/github/installations/${id}/repositories`,
+    ),
+  githubRelationship: (id: string) =>
+    request<Model<"GitHubRelationshipStatus">>(
+      `/projects/${id}/github-relationship`,
+    ),
+  githubLink: (id: string, data: Model<"GitHubLinkInput">) =>
+    request<Model<"GitHubRelationshipStatus">>(
+      `/projects/${id}/github-relationship`,
+      data,
+    ),
+  githubUnlink: (id: string) =>
+    request<void>(`/projects/${id}/github-relationship`, undefined, "DELETE"),
   updateNeed: (id: string, data: Model<"NeedDetailsPatch">) =>
     request<Need>(`/needs/${id}`, data, "PATCH"),
   me: () => request<Model<"AuthState">>("/auth/me"),

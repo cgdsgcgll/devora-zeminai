@@ -79,7 +79,14 @@ class ProjectCreate(Contract):
         return normalize_repository_url(value)
 
 
+class ProjectPatch(Contract):
+    name: Name
+    description: str = Field(default='', max_length=20000)
+
+
 class Project(Entity, ProjectCreate):
+    github_repository_id: str | None = None
+    repository_private: bool | None = None
     candidate_id: UUID
     updated_at: datetime
 

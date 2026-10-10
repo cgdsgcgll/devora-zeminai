@@ -14,8 +14,9 @@ MAX_FILES = 30
 MAX_FILE_BYTES = 100_000
 MAX_TOTAL_BYTES = 1_000_000
 MAX_RESPONSE_BYTES = 8_000_000
-TEXT_SUFFIXES = {'.py', '.js', '.jsx', '.ts', '.tsx', '.json', '.toml', '.txt', '.md', '.yml', '.yaml', '.sql'}
-SKIP_PARTS = {'node_modules', 'vendor', 'dist', 'build', '.git', '.venv', 'venv'}
+TEXT_SUFFIXES = {'.py', '.js', '.jsx', '.ts', '.tsx', '.json', '.toml', '.txt', '.md', '.yml', '.yaml', '.sql',
+                 '.c', '.cc', '.cpp', '.cxx', '.h', '.hh', '.hpp', '.hxx'}
+SKIP_PARTS = {'node_modules', 'vendor', 'dist', 'build', '.git', '.venv', 'venv', 'generated', 'CMakeFiles'}
 
 
 class GitHubProvider:

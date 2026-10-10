@@ -6,6 +6,7 @@ frontend/next-env.d.ts
 .venv/
 __pycache__/
 .pytest_cache/
+.pytest-tmp*/
 *.pyc
 *.db
 node_modules/

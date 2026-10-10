@@ -1,8 +1,10 @@
 # ZeminAI v0.2 — 30 Eylül 2026
 
+> Tarihsel geliştirme kaydıdır. Güncel kurulum, kanıt semantiği ve test sonuçları için [README](../README.md) ve [VALIDATION](VALIDATION.md) kullanın.
+
 ## Doğrulanan önceki durum
 
-Yeni çalışma klasörü `C:\Users\yqt_1\OneDrive\Belgeler\ChatGPT\ZeminAI` başlangıçta yalnızca boş,
+Yeni yerel çalışma klasörü başlangıçta yalnızca boş,
 commit içermeyen bir `.git` dizini içeriyordu. Önceki gerçek backend teslimi eski çalışma klasöründe bulundu.
 Kaynaklar, testler ve migration'lar bu klasöre kopyalandı; `.git`, sanal ortam, cache ve geçici DB aktarılmadı.
 Önceki uygulama sıfırdan yeniden yazılmadı. GitHub fetch modülü ve requirements dosyası değiştirilmedi.
