@@ -477,6 +477,6 @@ ZeminAI kaynak kodu **[MIT License](LICENSE)** ile sunulur. Üçüncü taraf ba�
 
 ## Ekip
 
-- **Çağdaş** — AI, matching ve teknik koordinasyon.
+- **Ahmet Çağdaş Geçgül** — AI, matching ve teknik koordinasyon.
 - **Yiğit Alp Ünal** — Backend, veritabanı ve entegrasyon.
 - **Azra Gülbahar** — Ürün, UX, veri ve kalite.
