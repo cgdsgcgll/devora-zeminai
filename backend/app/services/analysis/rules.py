@@ -43,7 +43,7 @@ def dependency_skills(path: str, content: str) -> list[str]:
 
 
 class RuleSkillAnalyzer:
-    version = 'rules-project-v0.1'
+    version = 'rules-project-v0.2'
     provider = 'rule_based'
     model = None
 
@@ -89,7 +89,7 @@ class RuleSkillAnalyzer:
                         break
         for language in sorted(data.snapshot.languages):
             for key in mentioned(language):
-                add(key, 'repository_language', 'observed', 'weak', language,
+                add(key, 'repository_language', 'declared_only', 'weak', language,
                     data.snapshot.repository_url, None, 'GitHub dil metadatası; kişisel katkı doğrulanmadı.')
         return ProjectAnalysisResult(skills=sorted({e.skill_key for e in evidence}), evidence=evidence,
             limitations=[AUTHOR_LIMIT, *data.snapshot.limitations],

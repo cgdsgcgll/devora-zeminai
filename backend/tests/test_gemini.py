@@ -66,9 +66,9 @@ def test_missing_configuration_does_not_send_request(key, model):
     assert caught.value.code == 'LLM_NOT_CONFIGURED'
 
 
-@pytest.mark.parametrize('failure,code,attempts', [(401, 'LLM_PROVIDER_ERROR', 1),
-    (429, 'LLM_PROVIDER_ERROR', 3), (503, 'LLM_PROVIDER_ERROR', 3),
-    ('timeout', 'LLM_TIMEOUT', 3), ('network', 'LLM_PROVIDER_ERROR', 3)])
+@pytest.mark.parametrize('failure,code,attempts', [(401, 'LLM_CONFIGURATION_ERROR', 1),
+    (429, 'LLM_RATE_LIMITED', 3), (503, 'LLM_UNAVAILABLE', 3),
+    ('timeout', 'LLM_TIMEOUT', 3), ('network', 'LLM_UNAVAILABLE', 3)])
 def test_errors_sanitized_and_retries_bounded(monkeypatch, failure, code, attempts):
     monkeypatch.setattr('app.services.llm.gemini_provider.time.sleep', lambda _: None)
     calls = []
@@ -104,7 +104,7 @@ def test_retry_success_and_thought_parts_ignored(monkeypatch):
 
 def test_refusal_and_oversize():
     for response, code in [
-        (httpx.Response(200, json={'promptFeedback': {'blockReason': 'SAFETY'}}), 'LLM_PROVIDER_ERROR'),
+        (httpx.Response(200, json={'promptFeedback': {'blockReason': 'SAFETY'}}), 'LLM_REQUEST_REJECTED'),
         (httpx.Response(200, content=b'x'*1_000_001), 'INVALID_MODEL_OUTPUT')]:
         with pytest.raises(AppError) as caught:
             generate(GeminiProvider('key', 'model', transport=httpx.MockTransport(lambda _: response)))

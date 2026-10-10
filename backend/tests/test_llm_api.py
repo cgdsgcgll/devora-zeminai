@@ -36,7 +36,7 @@ def test_llm_full_api_flow_and_metadata(client, db, monkeypatch, mode):
     assert analyzed.status_code == 201, analyzed.text
     run = analyzed.json()['run']
     assert (run['provider'], run['model'], run['commit_sha']) == (mode, 'configured-model', 'a'*40)
-    assert run['analysis_version'] == 'project-analysis-v0.3'
+    assert run['analysis_version'] == 'project-analysis-v0.4'
     need = client.post('/needs', json={'description': 'FastAPI tercih edilir'})
     assert need.status_code == 201, need.text
     assert need.json()['analysis_version'] == 'need-analysis-v0.4'
@@ -77,7 +77,7 @@ def test_config_error_persisted_no_silent_fallback(client, db, monkeypatch, mode
 
 @pytest.mark.parametrize('mode', ['openai', 'gemini'])
 @pytest.mark.parametrize('kind,code,status', [('timeout', 'LLM_TIMEOUT', 504),
-    ('provider', 'LLM_PROVIDER_ERROR', 502), ('invalid', 'INVALID_MODEL_OUTPUT', 502)])
+    ('provider', 'LLM_CONFIGURATION_ERROR', 502), ('invalid', 'INVALID_MODEL_OUTPUT', 502)])
 def test_project_failures_preserve_snapshot_and_record_failure(client, db, monkeypatch, kind, code, status, mode):
     app.dependency_overrides[get_github] = lambda: GitHubProvider(transport=mock_transport())
     _, pid, _ = create_entities(client)

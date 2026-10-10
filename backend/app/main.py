@@ -17,8 +17,22 @@ from app.core.observability import RequestTelemetry, request_id, error_event
 import json
 
 logger = logging.getLogger(__name__)
+from contextlib import asynccontextmanager
+
+
+@asynccontextmanager
+async def lifespan(app):
+    from app.db.session import SessionLocal
+    from app.services.analysis_jobs import start_workers
+    stop = start_workers(SessionLocal) if settings.analysis_worker_enabled else None
+    try:
+        yield
+    finally:
+        if stop: stop.set()  # Durable jobs survive; unfinished claims expire and are retryable.
+
+
 docs_enabled = settings.api_docs_enabled if settings.api_docs_enabled is not None else settings.environment != 'production'
-app = FastAPI(title='ZeminAI', version='0.1.0',
+app = FastAPI(title='ZeminAI', version='0.1.0', lifespan=lifespan,
     docs_url='/docs' if docs_enabled else None, redoc_url='/redoc' if docs_enabled else None,
     openapi_url='/openapi.json' if docs_enabled else None)
 app.add_middleware(RequestSizeLimitMiddleware)
@@ -26,11 +40,15 @@ app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins,
                    allow_credentials=True, allow_methods=['GET', 'POST', 'PATCH', 'DELETE'], allow_headers=['Content-Type'],
                    expose_headers=['X-Request-ID', 'Retry-After'])
 app.add_middleware(RequestTelemetry, config=settings)
+from app.core.github_callback_privacy import GitHubCallbackPrivacy
+app.add_middleware(GitHubCallbackPrivacy)
 app.include_router(router)
 app.include_router(auth_router)
 app.include_router(health_router)
 from app.api.proof import router as proof_router
 app.include_router(proof_router)
+from app.api.github_account import router as github_account_router
+app.include_router(github_account_router)
 
 
 @app.exception_handler(AppError)

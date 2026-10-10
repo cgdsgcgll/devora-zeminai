@@ -35,6 +35,10 @@ class ProfileContract(BaseModel):
 
 
 class ProfileMetadata(ProfileContract):
+    source_type: Literal['linkedin_profile', 'professional_profile'] | None = None
+    import_method: Literal['url', 'pasted_text'] | None = None
+    imported_at: datetime | None = None
+    record_kind: Literal['work', 'internship', 'project', 'profile'] | None = None
     output_type: Literal['web_app', 'demo', 'package', 'article', 'service'] | None = None
     program: str | None = Field(default=None, max_length=200)
     education_type: Literal['degree', 'course', 'bootcamp', 'other'] | None = None
@@ -85,7 +89,7 @@ class ProfileEvidenceCreate(ProfileContract):
         if self.started_at and self.ended_at and self.ended_at < self.started_at:
             raise ValueError('End date cannot precede start date.')
         provided = set(self.metadata_json.model_dump(exclude_none=True))
-        if provided - METADATA_FIELDS[self.category]:
+        if provided - METADATA_FIELDS[self.category] - {'source_type','import_method','imported_at','record_kind'}:
             raise ValueError('Metadata fields do not belong to this category.')
         return self
 
@@ -110,3 +114,28 @@ class ProfileEvidenceItem(ProfileEvidenceCreate):
     verification_status: Literal['declared_only', 'linked', 'verified']
     created_at: datetime
     updated_at: datetime
+
+
+class ProfessionalInput(ProfileContract):
+    source_url: str = Field(max_length=2000)
+    text: str = Field(default='', max_length=20000)
+
+    @field_validator('source_url')
+    @classmethod
+    def linkedin(cls, value):
+        import re
+        safe_profile_url(value)
+        parts = urlsplit(value)
+        if (parts.hostname not in ('linkedin.com', 'www.linkedin.com') or parts.query or parts.fragment or
+                not re.fullmatch(r'/in/[A-Za-z0-9_-]{1,100}/?', parts.path)):
+            raise ValueError('Use an HTTPS linkedin.com/in/profile URL.')
+        return value
+
+
+class ProfessionalPreview(ProfileContract):
+    records: list[ProfileEvidenceCreate]
+
+
+class ProfessionalConfirm(ProfessionalInput):
+    confirmed: Literal[True]
+    selected: list[int] = Field(min_length=1, max_length=20)

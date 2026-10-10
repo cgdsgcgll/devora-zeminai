@@ -53,7 +53,7 @@ def profile(db: Session, candidate_id: UUID, since: date | None = None):
             'Proje & Üretim Çıktıları': facts(Portföy=categories['portfolio'], Etkinlik=categories['event']),
         }, passport=[s.PassportFact(family=f, status=status, count=n) for (f, status), n in sorted(passport.items())],
         limitations=[COUNTS, AUTHORSHIP, 'Yalnız son başarılı proje analizleri sayılır. Tarihi olmayan kayıtlar eklenme tarihiyle gösterilir; bu tarih deneyimin tarihi değildir.',
-            'Bağlantılar bağımsız doğrulanmaz. Sürekli senkronizasyon ve adayla doğrulanmış GitHub kimlik bağlantısı yoktur.'] + data.uncertainties)
+            'Bağlantılar bağımsız doğrulanmaz. Sürekli senkronizasyon yoktur; GitHub hesap ilişkisi teknik kanıt değildir.'] + data.uncertainties)
 
 
 def gap_items(result):

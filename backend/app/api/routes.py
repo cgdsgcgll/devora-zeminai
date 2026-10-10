@@ -153,7 +153,30 @@ def get_project(project_id: UUID, db: Session = Depends(get_db), user=Depends(au
     return workflows.get_or_404(db, m.Project, project_id)
 
 
-@router.post('/projects/{project_id}/analyze', response_model=s.AnalysisResponse, status_code=201)
+@router.patch('/projects/{project_id}', response_model=s.Project)
+def update_project(project_id: UUID, data:s.ProjectPatch, db:Session=Depends(get_db), user=Depends(auth.require_candidate)):
+    row = auth.project_record(db, project_id, user)
+    row.name, row.description = data.name, data.description
+    db.commit()
+    return row
+
+
+@router.delete('/projects/{project_id}', status_code=204)
+def archive_project(project_id:UUID, db:Session=Depends(get_db), user=Depends(auth.require_candidate)):
+    from app.models.github_account import GitHubRepositoryLink
+    from sqlalchemy import update
+    row = auth.project_record(db, project_id, user)
+    db.refresh(row, with_for_update=True)
+    row.archived_at = s.utcnow()
+    from app.services.analysis_jobs import fail, ACTIVE
+    for job in db.scalars(select(m.AnalysisJob).where(m.AnalysisJob.project_id==project_id,m.AnalysisJob.status.in_(ACTIVE)).with_for_update()):
+        fail(db,job,'PROJECT_ARCHIVED')
+    db.execute(update(GitHubRepositoryLink).where(GitHubRepositoryLink.project_id==project_id).values(revoked_at=s.utcnow()))
+    db.commit()
+    return Response(status_code=204)
+
+
+@router.post('/projects/{project_id}/analyze' , response_model=s.AnalysisResponse, status_code=201)
 def analyze_project(project_id: UUID, request: Request, db: Session = Depends(get_db),
                     provider: GitHubProvider = Depends(get_github),
                     analyzer: SkillAnalyzer = Depends(get_skill_analyzer), user=Depends(auth.get_current_user)):
@@ -231,7 +254,7 @@ def match_evidence(match_id: UUID, evidence_id: UUID, db: Session = Depends(get_
 @router.get('/candidates/{candidate_id}/projects', response_model=list[s.Project])
 def list_projects(candidate_id: UUID, db: Session = Depends(get_db), user=Depends(auth.require_candidate)):
     auth.candidate_record(db, candidate_id, user)
-    return db.scalars(select(m.Project).where(m.Project.candidate_id == candidate_id)
+    return db.scalars(select(m.Project).where(m.Project.candidate_id == candidate_id, m.Project.archived_at.is_(None))
         .order_by(m.Project.created_at.desc(), m.Project.id).limit(100)).all()
 
 
@@ -265,3 +288,33 @@ def update_candidate(candidate_id: UUID, data: s.CandidateCreate, db: Session = 
     user.display_name = data.name
     db.commit()
     return candidate
+
+
+from app.schemas.profile import ProfessionalInput, ProfessionalPreview, ProfessionalConfirm
+from app.services import professional
+
+
+@router.post('/candidates/{candidate_id}/professional-preview', response_model=ProfessionalPreview)
+def professional_preview(candidate_id:UUID, data:ProfessionalInput, request:Request,
+        db:Session=Depends(get_db),user=Depends(auth.require_candidate)):
+    auth.candidate_record(db,candidate_id,user)
+    consume(request,db,user,'compute')
+    return {'records':professional.preview(data)}
+
+
+@router.post('/candidates/{candidate_id}/professional-import', response_model=list[ProfileEvidenceItem], status_code=201)
+def professional_import(candidate_id:UUID,data:ProfessionalConfirm,request:Request,
+        db:Session=Depends(get_db),user=Depends(auth.require_candidate)):
+    auth.candidate_record(db,candidate_id,user)
+    consume(request,db,user,'compute')
+    records=professional.preview(data)
+    if len(set(data.selected)) != len(data.selected) or any(i<0 or i>=len(records) for i in data.selected):
+        raise AppError('PROFILE_IMPORT_FORMAT','Kayıt seçimi geçersiz.',422)
+    rows=[]
+    for i in data.selected:
+        record=records[i]
+        record.metadata_json.imported_at=s.utcnow()
+        row=m.ProfileEvidenceItem(candidate_id=candidate_id,**profile.values(record))
+        db.add(row);rows.append(row)
+    db.commit()
+    return rows

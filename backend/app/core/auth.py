@@ -53,7 +53,7 @@ def candidate_record(db, candidate_id, user):
 def project_record(db, project_id, user):
     require_role(user, 'candidate')
     project = db.get(m.Project, project_id)
-    if project is None:
+    if project is None or project.archived_at is not None:
         raise AppError('NOT_FOUND', 'İstenen kayıt bulunamadı.', 404)
     candidate_record(db, project.candidate_id, user)
     return project

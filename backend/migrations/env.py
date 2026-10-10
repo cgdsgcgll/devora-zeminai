@@ -3,6 +3,7 @@ from sqlalchemy import create_engine, pool
 
 from app.core.config import settings
 from app.models.domain import Base
+from app.models import github_account  # register provenance tables
 
 target_metadata = Base.metadata
 

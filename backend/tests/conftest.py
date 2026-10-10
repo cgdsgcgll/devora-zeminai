@@ -2,6 +2,7 @@ import os
 
 os.environ['DATABASE_URL'] = 'sqlite://'
 os.environ['LLM_PROVIDER'] = 'rule_based'
+os.environ['ANALYSIS_WORKER_ENABLED'] = 'false'
 
 import pytest
 from domain_client import DomainClient
@@ -12,12 +13,34 @@ from sqlalchemy.pool import StaticPool
 from app.db.session import get_db
 from app.main import app
 from app.models.domain import Base
+from postgres_support import isolated_postgres_schema
+
+
+@pytest.fixture(scope='session')
+def postgres_test_database():
+    url=os.environ.get('TEST_DATABASE_URL')
+    if not url:
+        yield None
+        return
+    with isolated_postgres_schema(url) as isolated:
+        yield isolated
 
 
 @pytest.fixture
-def db():
-    if os.environ.get('TEST_DATABASE_URL'):
-        engine = create_engine(os.environ['TEST_DATABASE_URL'])
+def postgres_independent_database(postgres_test_database):
+    """Real-commit tests get their own schema, never polluting rollback-based tests."""
+    url=os.environ.get('TEST_AUTH_CONCURRENCY_URL') or postgres_test_database
+    if url is None:
+        yield None
+        return
+    with isolated_postgres_schema(url) as isolated:
+        yield isolated
+
+
+@pytest.fixture
+def db(postgres_test_database):
+    if postgres_test_database is not None:
+        engine = create_engine(postgres_test_database)
         with engine.connect() as connection:
             transaction = connection.begin()
             with Session(connection, expire_on_commit=False, join_transaction_mode='create_savepoint') as session:

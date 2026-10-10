@@ -32,7 +32,7 @@ def load_material(db: Session, candidate_ids: list[UUID]) -> dict[UUID, Material
     result = {cid: Material() for cid in candidate_ids}
     if not candidate_ids:
         return result
-    projects = bounded(db, select(m.Project).where(m.Project.candidate_id.in_(candidate_ids)).order_by(m.Project.id))
+    projects = bounded(db, select(m.Project).where(m.Project.candidate_id.in_(candidate_ids), m.Project.archived_at.is_(None)).order_by(m.Project.id))
     for project in projects:
         result[project.candidate_id].projects.append(project)
     project_ids = [p.id for p in projects]

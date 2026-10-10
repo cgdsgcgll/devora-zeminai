@@ -1,5 +1,8 @@
 from uuid import UUID
+from time import perf_counter
+from app.services.llm import diagnostics
 
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -61,16 +64,37 @@ def create_need(db: Session, data: s.NeedCreate, analyzer: NeedAnalyzer, owner_u
 
 
 def analyze_project(db: Session, project_id: UUID, provider: GitHubProvider,
-                    analyzer: SkillAnalyzer) -> s.AnalysisResponse:
-    project = get_or_404(db, m.Project, project_id)
-    run = m.AnalysisRun(project_id=project.id, analysis_type='project', status='running',
-                        provider=getattr(analyzer, 'provider', None), model=getattr(analyzer, 'model', None),
-                        analysis_version=analyzer.version, limitations=[], uncertainties=[])
-    db.add(run)
+                    analyzer: SkillAnalyzer, *, reserved_run_id=None, job_id=None) -> s.AnalysisResponse:
+    project = db.scalar(select(m.Project).where(m.Project.id==project_id).with_for_update())
+    if project is None or project.archived_at is not None:
+        raise AppError('NOT_FOUND', 'İstenen kayıt bulunamadı.', 404)
+    if project.repository_private:
+        raise AppError('PRIVATE_ANALYSIS_UNSUPPORTED', 'Özel repository kaynak analizi bu sürümde desteklenmiyor.', 409)
+    from app.services import analysis_jobs
+    if reserved_run_id is None:
+        analysis_jobs.reconcile(db,project_id)
+        project=db.scalar(select(m.Project).where(m.Project.id==project_id).with_for_update())
+        if not project or project.archived_at:
+            raise AppError('NOT_FOUND', 'İstenen kayıt bulunamadı.', 404)
+        if (db.scalar(select(m.AnalysisRun.id).where(m.AnalysisRun.project_id==project_id, m.AnalysisRun.status=='running')) or
+            db.scalar(select(m.AnalysisJob.id).where(m.AnalysisJob.project_id==project_id,m.AnalysisJob.status.in_(analysis_jobs.ACTIVE)))):
+            raise AppError('ANALYSIS_IN_PROGRESS', 'Proje analizi devam ediyor.', 409)
+        run = m.AnalysisRun(project_id=project.id, analysis_type='project', status='running',
+            provider=getattr(analyzer,'provider',None),model=getattr(analyzer,'model',None),
+            analysis_version=analyzer.version,limitations=[],uncertainties=[])
+        db.add(run)
+    else:
+        analysis_jobs.fence(db,job_id)
+        run=db.get(m.AnalysisRun,reserved_run_id)
+        run.provider=getattr(analyzer,'provider',None);run.model=getattr(analyzer,'model',None)
+        run.analysis_version=analyzer.version
     db.commit()
-    run_id = run.id
+    run_id=run.id
+    stage='source_load'
+    started=perf_counter()
     try:
         snapshot_data = provider.fetch(project.source_url)
+        if job_id: analysis_jobs.fence(db,job_id)
         snapshot = m.RepositorySnapshot(project_id=project.id, **snapshot_data.model_dump(mode='json', exclude={'fetched_at'}),
                                         fetched_at=snapshot_data.fetched_at)
         db.add(snapshot)
@@ -78,9 +102,15 @@ def analyze_project(db: Session, project_id: UUID, provider: GitHubProvider,
         db.commit()  # Preserve fetched input even if analysis fails later.
         if not snapshot_data.files and not snapshot_data.languages:
             raise AppError('INSUFFICIENT_PROJECT_DATA', 'Analiz için erişilebilir metin veya dil bilgisi bulunamadı.', 422)
+        diagnostics.event('source_load', file_count=len(snapshot_data.files),
+            material_bytes=sum(len(f.content.encode('utf-8')) for f in snapshot_data.files),
+            duration_ms=(perf_counter()-started)*1000)
+        stage='grounding'
         result = validate_model_output(s.ProjectAnalysisResult, analyzer.analyze_project(
             s.ProjectAnalysisInput(candidate_id=project.candidate_id, project_id=project.id,
                 name=project.name, description=project.description, snapshot=snapshot_data)))
+        if job_id: analysis_jobs.fence(db,job_id)
+        stage='persist'
         evidence = [m.SkillEvidence(candidate_id=project.candidate_id, project_id=project.id,
                     snapshot_id=snapshot.id, analysis_run_id=run_id, **item.model_dump()) for item in result.evidence]
         db.add_all(evidence)
@@ -89,17 +119,28 @@ def analyze_project(db: Session, project_id: UUID, provider: GitHubProvider,
         run.analysis_version = result.analysis_version
         run.limitations = result.limitations
         run.uncertainties = result.uncertainties
+        if job_id:
+            job=analysis_jobs.fence(db,job_id)
+            job.status='succeeded';job.finished_at=s.utcnow();job.error_code=None;job.retryable=None;job.diagnostics=None
         db.commit()
         return s.AnalysisResponse(run=s.AnalysisRun.model_validate(run),
             snapshot=s.RepositorySnapshot.model_validate(snapshot), result=result,
             evidence=[s.SkillEvidence.model_validate(e) for e in evidence])
     except SQLAlchemyError:
         db.rollback()
+        if not job_id:
+            failed=db.get(m.AnalysisRun,run_id)
+            failed.status='failed';failed.completed_at=s.utcnow();failed.error_code='DATABASE_ERROR'
+            failed.error_message='Kaynak analizi kaydedilemedi; yeniden deneyebilirsiniz.'
+            db.commit()
         raise
     except Exception as exc:
         db.rollback()
-        error = exc if isinstance(exc, AppError) else AppError('ANALYSIS_FAILED', 'Proje analizi tamamlanamadı.', 502)
+        error = exc if isinstance(exc, AppError) else AppError('ANALYSIS_INTERNAL_ERROR', 'Proje analizi tamamlanamadı.', 502, True)
+        error.details['stage'] = 'llm_request' if error.code.startswith('LLM_') else stage
         failed = db.get(m.AnalysisRun, run_id)
+        if job_id:
+            raise error from exc
         failed.status = 'failed'
         failed.completed_at = s.utcnow()
         failed.error_code = error.code

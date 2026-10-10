@@ -10,7 +10,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=Path(__file__).resolve().parents[3] / '.env', extra='ignore', hide_input_in_errors=True
+        env_file=Path(__file__).resolve().parents[3] / '.env', env_file_encoding='utf-8-sig', extra='ignore', hide_input_in_errors=True
     )
     environment: Literal['development', 'test', 'production'] = 'development'
     trusted_hosts: list[str] = ['localhost', '127.0.0.1', 'testserver']
@@ -27,8 +27,18 @@ class Settings(BaseSettings):
     compute_window_seconds: int = Field(default=60, ge=1, le=3600)
     compute_user_attempts: int = Field(default=60, ge=1, le=10000)
     compute_ip_attempts: int = Field(default=180, ge=1, le=100000)
+    analysis_worker_enabled: bool = True
+    analysis_worker_threads: int = Field(default=2, ge=1, le=4)
+    analysis_provider_max_concurrency: int = Field(default=1, ge=1, le=4)
+    analysis_job_timeout_seconds: int = Field(default=600, ge=30, le=1800)
+    analysis_queue_timeout_seconds: int = Field(default=600, ge=30, le=3600)
     database_url: str = 'postgresql+psycopg://postgres:postgres@localhost:5432/zeminai'
     github_token: str = ''
+    github_app_slug: str = ''
+    github_app_client_id: str = ''
+    github_app_client_secret: str = Field(default='', repr=False)
+    github_app_callback_url: str = ''
+    github_app_encryption_key: str = Field(default='', repr=False)
     session_cookie_name: str = Field(default='zeminai_session', pattern=r'^[A-Za-z0-9_-]+$')
     session_cookie_secure: bool = True
     session_ttl: int = Field(default=604800, ge=300, le=2592000)

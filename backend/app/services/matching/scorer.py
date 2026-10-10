@@ -21,7 +21,8 @@ def calculate_match(criteria: list[NeedCriterion], evidence: list[SkillEvidence]
         items = sorted({p.id: p for p in (profile_evidence or []) if profile_matches(criterion, p)}.values(), key=lambda p: str(p.id))
         ids = sorted({e.id for e in evidence if (
             criterion.kind == 'technical_skill' and e.skill_key == criterion.skill_key
-            and e.evidence_status == EvidenceStatus.observed) or (
+            and e.evidence_status == EvidenceStatus.observed
+            and e.evidence_type in {'source_file', 'dependency_file'}) or (
             criterion.kind == 'project_experience' and project_matches(criterion, e))}, key=str)
         explanation = 'Gözlemlenebilir proje kanıtı bulundu.' if ids else MISSING
         if not ids and criterion.kind == 'technical_skill' and any(
